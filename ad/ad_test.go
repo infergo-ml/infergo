@@ -1,8 +1,8 @@
 package ad
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 	"go/token"
 	// "go/ast"
 	"go/parser"
@@ -39,11 +39,11 @@ func sourcesEqual(got, expected string) bool {
 
 	// parse it
 	gotTree, error := parser.ParseFile(fileSet, "", got, 0)
-	if(error != nil) {
+	if error != nil {
 		panic(error)
 	}
 	expectedTree, error := parser.ParseFile(fileSet, "", expected, 0)
-	if(error != nil) {
+	if error != nil {
 		panic(error)
 	}
 
@@ -61,10 +61,10 @@ func sourcesEqual(got, expected string) bool {
 
 // check that templates work and parsing normalizes
 func TestSourcesEqual(t *testing.T) {
-	for _, m := range []func (string) string {srcModel, diffModel} {
+	for _, m := range []func(string) string{srcModel, diffModel} {
 		for _, c := range []struct {
 			got, expected string
-			equal bool
+			equal         bool
 		}{
 			{"return 0.", "return 0.", true},
 			{"return 0.", "return    0.", true},
@@ -76,9 +76,9 @@ func TestSourcesEqual(t *testing.T) {
 			if sourcesEqual(g, e) != c.equal {
 				t.Errorf("'%s' and '%s' should %sbe equal",
 					g, e,
-					map[bool]string {
+					map[bool]string{
 						false: "not ",
-						true: "",
+						true:  "",
 					}[c.equal])
 			}
 		}
