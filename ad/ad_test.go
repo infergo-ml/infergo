@@ -67,7 +67,7 @@ func TestSourcesEqual(t *testing.T) {
 			equal         bool
 		}{
 			{"return 0.", "return 0.", true},
-			{"return 0.", "return    0.", true},
+			{"return 0.;", "return  0.", true},
 			{"return 0.", "return 1.", false},
 			{"return 0.", "return 0", false},
 		} {
