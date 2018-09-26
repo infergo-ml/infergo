@@ -34,16 +34,16 @@ func init() {
 	RegisterElemental(math.Sqrt, func(value float64, parameters ...float64) float64 {
 		return 0.5 / value
 	})
-	RegisterElemental(math.Sin, func(value float64, parameters ...float64) float64 {
-		return math.Cos(parameters[0])
-	})
-	RegisterElemental(math.Cos, func(value float64, parameters ...float64) float64 {
-		return -math.Sin(parameters[0])
-	})
 	RegisterElemental(math.Exp, func(value float64, parameters ...float64) float64 {
 		return value
 	})
 	RegisterElemental(math.Log, func(value float64, parameters ...float64) float64 {
 		return 1. / parameters[0]
+	})
+	RegisterElemental(math.Sin, func(value float64, parameters ...float64) float64 {
+		return math.Cos(parameters[0])
+	})
+	RegisterElemental(math.Cos, func(value float64, parameters ...float64) float64 {
+		return -math.Sin(parameters[0])
 	})
 }
