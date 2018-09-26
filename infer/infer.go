@@ -1,0 +1,2 @@
+// inference algorithms
+package infer
