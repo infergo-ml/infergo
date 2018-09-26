@@ -24,6 +24,9 @@ func (m *interface{}) Observe (parameters []float64) float64 {
 // wrapped around differentiated model body
 func diffModel(body string) string {
 	return fmt.Sprintf(`package mymodel
+import (
+	"bitbucket.org/dtolpin/infergo/ad"
+)
 
 func (m *interface{}) Observe (parameters []float64) (float64, []float64) {
 %s
