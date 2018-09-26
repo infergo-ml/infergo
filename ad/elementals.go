@@ -10,22 +10,22 @@ type Elementals map[uintptr]Derivative
 
 var elementals Elementals
 
-// Function elkey computes map key for a function.
-func elkey(function interface{}) uintptr {
+// Function fkey computes map key for a function.
+func fkey(function interface{}) uintptr {
 	return reflect.ValueOf(function).Pointer()
 }
 
 // Function RegisterElemental registers the derivative
 // for an elemental function.
 func RegisterElemental(function interface{}, derivative Derivative) {
-	elementals[elkey(function)] = derivative
+	elementals[fkey(function)] = derivative
 }
 
 // Function ElementalDerivative returns the derivative for a function.
 // If the function is not registered as elemental, the second returned
 // value is false.
 func ElementalDerivative(function interface{}) (Derivative, bool) {
-	derivative, ok := elementals[elkey(function)]
+	derivative, ok := elementals[fkey(function)]
 	return derivative, ok
 }
 
