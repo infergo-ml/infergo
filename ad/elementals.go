@@ -5,10 +5,13 @@ import (
 	"reflect"
 )
 
+// Derivative is the type of the derivative of an elemental function.  The
+// derivative returns the function value and parameters and returns the
+// derivative. Depending on the function, either the value or the parameters
+// may be ignored in the computation of the derivative.
 type Derivative func(value float64, parameters ...float64) float64
-type Elementals map[uintptr]Derivative
 
-var elementals Elementals
+var elementals map[uintptr]Derivative
 
 // Function fkey computes map key for a function.
 func fkey(function interface{}) uintptr {
@@ -30,7 +33,7 @@ func ElementalDerivative(function interface{}) (Derivative, bool) {
 }
 
 func init() {
-	elementals = make(Elementals)
+	elementals = make(map[uintptr]Derivative)
 	RegisterElemental(math.Sqrt, func(value float64, parameters ...float64) float64 {
 		return 0.5 / value
 	})
