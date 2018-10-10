@@ -3,9 +3,11 @@ package ad
 // Implementation of the AD tape
 
 type Tape struct {
-	records []record
-	bars    map[*float64]float64
+	records []record              // built during forward pass
+	bars    map[*float64]float64  // filled during backward pass
+	stack   []float64             // used for passing arguments 
+        rc, sc  int                   // record and stack counters
 }
 
-type record struct {
+type record interface {
 }
