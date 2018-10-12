@@ -14,7 +14,7 @@ type Tape struct {
 // A record specifies the record type and indexes the tape memory
 // to specify record argument. At the cost of one redirection,
 // the number of memory allocations is logarithmic in the number
-// of instructions.
+// of instructions, and a record has a fixed size.
 type record struct {
 	typ, op int // record type and opcode or index of elemental
 	il, ir  int // indices of the first pointer and value
