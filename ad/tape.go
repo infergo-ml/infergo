@@ -21,7 +21,7 @@ func init() {
 func Jacobian() []float64 {
     c := t.cstack[len(t.cstack) - 1]
 
-    // TODO: backward pass
+    backward(&t, &c)
 
     // build the Jacobian:
     // first c.i locations are parameters
@@ -33,6 +33,12 @@ func Jacobian() []float64 {
     pop(&t, &c)
 
     return jacobian
+}
+
+// Function backward runs the backward pass 
+// on the tape.
+func backward(t *tape, c *counters) {
+    // TODO
 }
 
 // Function pop deallocates current tape fragment 
