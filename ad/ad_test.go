@@ -28,8 +28,11 @@ import (
 	"bitbucket.org/dtolpin/infergo/ad"
 )
 
-func (m *interface{}) Observe (parameters []float64) (float64, []float64) {
+func (m *interface{}) Observe (parameters []float64) float64 {
 %s
+}
+
+func (m *interface{}) Jacobian () []float64 {
 }`, body)
 }
 
