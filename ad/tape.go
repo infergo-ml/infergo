@@ -12,7 +12,7 @@ type tape struct {
 	rvalues    []float64            // stored intermediate values
 	elementals []uintptr            // elemental function indices
 	bars       map[*float64]float64 // bars
-	cstack     []counters           // counter stack
+	cstack     []counters           // counter stack (see below)
 }
 
 func init() {
@@ -75,24 +75,23 @@ const (
 // differentiated function, and can be called only once
 // per call to an automatically differentiated function.
 func Gradient() []float64 {
-	c := t.cstack[len(t.cstack)-1]
-
-	backward(&t, &c)
-	gradient := partials(&t, &c)
-	pop(&t, &c)
+	backward(&t)
+	gradient := partials(&t)
+	pop(&t)
 
 	return gradient
 }
 
 // Function backward runs the backward pass
 // on the tape.
-func backward(t *tape, c *counters) {
+func backward(t *tape) {
 	// TODO
 }
 
 // Function partials collects the partial derivatives;
 // first c.i locations are parameters.
-func partials(t *tape, c *counters) []float64 {
+func partials(t *tape) []float64 {
+	c := &t.cstack[len(t.cstack)-1]
 	partials := make([]float64, c.i)
 	for i := 0; i != c.i; i++ {
 		partials[i] = t.bars[t.lvalues[c.lv+i]]
@@ -102,7 +101,8 @@ func partials(t *tape, c *counters) []float64 {
 
 // Function pop deallocates current tape fragment
 // from the tape.
-func pop(t *tape, c *counters) {
+func pop(t *tape) {
+	c := &t.cstack[len(t.cstack)-1]
 	for i := c.lv; i != len(t.lvalues); i++ {
 		delete(t.bars, t.lvalues[i])
 	}
