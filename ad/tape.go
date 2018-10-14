@@ -1,5 +1,9 @@
 package ad
 
+import (
+	"fmt"
+)
+
 // Implementation of the AD tape
 
 // There is one global tape.
@@ -85,7 +89,34 @@ func Gradient() []float64 {
 // Function backward runs the backward pass
 // on the tape.
 func backward(t *tape) {
-	// TODO
+	bottom := t.cstack[len(t.cstack)-1].r
+	for ir := len(t.records); ir != bottom; {
+		ir--
+		rec := t.records[ir]
+		switch rec.typ {
+		case typAssignment:
+			// TODO
+		case typArithmetic:
+			switch rec.op {
+			case opNeg:
+				// TODO
+			case opAdd:
+				// TODO
+			case opSub:
+				// TODO
+			case opMul:
+				// TODO
+			case opDiv:
+				// TODO
+			default:
+				panic(fmt.Sprintf("bad opcode %v", rec.op))
+			}
+		case typElemental:
+			// TODO
+		default:
+			panic(fmt.Sprintf("bad type %v", rec.typ))
+		}
+	}
 }
 
 // Function partials collects the partial derivatives;
@@ -94,7 +125,7 @@ func partials(t *tape) []float64 {
 	c := &t.cstack[len(t.cstack)-1]
 	partials := make([]float64, c.i)
 	for i := 0; i != c.i; i++ {
-		partials[i] = t.bars[t.lvalues[c.lv+i]]
+		partials[i] = t.bars[t.lvalues[c.lv + i]]
 	}
 	return partials
 }
