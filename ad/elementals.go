@@ -5,53 +5,53 @@ import (
 	"reflect"
 )
 
-// Derivative is the type of the derivative of an elemental function.  The
-// derivative returns the function value and parameters and returns the
-// derivative. Depending on the function, either the value or the parameters
-// may be ignored in the computation of the derivative.
-type Derivative func(value float64, parameters ...float64) float64
+// The gradient of an elemental function accepts the function value
+// and the parameters and returns a vector of partial gradients.
+// Depending on the function, either the value or the parameters
+// may be ignored in the computation of the gradient.
+type gradient func(value float64, parameters ...float64) []float64
 
-var elementals map[uintptr]Derivative
+var elementals map[uintptr]gradient
 
 // Function fkey computes map key for a function.
-func fkey(function interface{}) uintptr {
-	return reflect.ValueOf(function).Pointer()
+func fkey(f interface{}) uintptr {
+	return reflect.ValueOf(f).Pointer()
 }
 
-// Function RegisterElemental registers the derivative
+// Function RegisterElemental registers the deriv
 // for an elemental function.
-func RegisterElemental(function interface{}, derivative Derivative) {
-	elementals[fkey(function)] = derivative
+func RegisterElemental(f interface{}, g gradient) {
+	elementals[fkey(f)] = g
 }
 
-// Function ElementalDerivative returns the derivative for a function.
+// Function Elementalgradient returns the deriv for a function.
 // If the function is not registered as elemental, the second returned
 // value is false.
-func ElementalDerivative(function interface{}) (Derivative, bool) {
-	derivative, ok := elementals[fkey(function)]
-	return derivative, ok
+func Elementalgradient(f interface{}) (gradient, bool) {
+	deriv, ok := elementals[fkey(f)]
+	return deriv, ok
 }
 
 func init() {
-	elementals = make(map[uintptr]Derivative)
+	elementals = make(map[uintptr]gradient)
 	RegisterElemental(math.Sqrt,
-		func(value float64, _ ...float64) float64 {
-			return 0.5 / value
+		func(value float64, _ ...float64) []float64 {
+			return []float64{0.5 / value}
 		})
 	RegisterElemental(math.Exp,
-		func(value float64, _ ...float64) float64 {
-			return value
+		func(value float64, _ ...float64) []float64 {
+			return []float64{value}
 		})
 	RegisterElemental(math.Log,
-		func(_ float64, parameters ...float64) float64 {
-			return 1. / parameters[0]
+		func(_ float64, parameters ...float64) []float64 {
+			return []float64{1. / parameters[0]}
 		})
 	RegisterElemental(math.Sin,
-		func(_ float64, parameters ...float64) float64 {
-			return math.Cos(parameters[0])
+		func(_ float64, parameters ...float64) []float64 {
+			return []float64{math.Cos(parameters[0])}
 		})
 	RegisterElemental(math.Cos,
-		func(_ float64, parameters ...float64) float64 {
-			return -math.Sin(parameters[0])
+		func(_ float64, parameters ...float64) []float64 {
+			return []float64{-math.Sin(parameters[0])}
 		})
 }
