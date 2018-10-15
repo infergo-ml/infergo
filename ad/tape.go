@@ -93,29 +93,38 @@ func backward(t *tape) {
 	for ir := len(t.records); ir != bottom; {
 		ir--
 		rec := t.records[ir]
+		bar := t.bars[t.lvalues[rec.lv]]
+		// Only assignment may have the same location
+		// on both the right-hand and the left-hand.
 		switch rec.typ {
-		case typAssignment:
-			// restore previous value
+		case typAssignment: // v = u; dv/du = 1
+			// Restore previous value
 			*t.lvalues[rec.lv] = t.rvalues[rec.rv]
-			// update the bars: the bar of the left-hand side 
-			// is zero (because it is overwritten) except if 
+			// Update the bars: the bar of the left-hand side
+			// is zero (because it is overwritten) except if
 			// the right-hand side is the same location.
-			bar := t.bars[t.lvalues[rec.lv]]
 			t.bars[t.lvalues[rec.lv]] = 0.
-			t.bars[t.lvalues[rec.lv + 1]] = bar
+			t.bars[t.lvalues[rec.lv+1]] += bar
 		case typArithmetic:
 			switch rec.op {
-			case opNeg:
-				bar = t.bars[t.lvalues[rec.lv]]
-				t.bars[t.lvalues[rec.lv + 1]] = -bar
-			case opAdd:
-				// TODO
-			case opSub:
-				// TODO
-			case opMul:
-				// TODO
-			case opDiv:
-				// TODO
+			case opNeg: // v = -u; dv/du = -1
+				t.bars[t.lvalues[rec.lv+1]] -= bar
+			case opAdd: // v = u + w; dv/du = 1; dv/dw = 1
+				t.bars[t.lvalues[rec.lv+1]] += bar
+				t.bars[t.lvalues[rec.lv+2]] += bar
+			case opSub: // v = u - w; dv/du = 1; dv/dw = -1
+				t.bars[t.lvalues[rec.lv+1]] += bar
+				t.bars[t.lvalues[rec.lv+2]] -= bar
+			case opMul: // v = u*w; dv/du = w; dv/dw = u
+				dbaru := bar * *t.lvalues[rec.lv+2]
+				dbarw := bar * *t.lvalues[rec.lv+1]
+				t.bars[t.lvalues[rec.lv+1]] += dbaru
+				t.bars[t.lvalues[rec.lv+2]] += dbarw
+			case opDiv: // v = u/w; dv/du = 1/w; dv/dw = - dv/du*u
+				dbaru := bar * *t.lvalues[rec.lv+2]
+				dbarw := -dbaru * *t.lvalues[rec.lv+1]
+				t.bars[t.lvalues[rec.lv+1]] += dbaru
+				t.bars[t.lvalues[rec.lv+2]] -= dbarw
 			default:
 				panic(fmt.Sprintf("bad opcode %v", rec.op))
 			}
@@ -133,7 +142,7 @@ func partials(t *tape) []float64 {
 	c := &t.cstack[len(t.cstack)-1]
 	partials := make([]float64, c.i)
 	for i := 0; i != c.i; i++ {
-		partials[i] = t.bars[t.lvalues[c.lv + i]]
+		partials[i] = t.bars[t.lvalues[c.lv+i]]
 	}
 	return partials
 }
