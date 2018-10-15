@@ -18,18 +18,18 @@ func fkey(f interface{}) uintptr {
 	return reflect.ValueOf(f).Pointer()
 }
 
-// Function RegisterElemental registers the deriv
+// Function RegisterElemental registers the gradient
 // for an elemental function.
 func RegisterElemental(f interface{}, g gradient) {
 	elementals[fkey(f)] = g
 }
 
-// Function Elementalgradient returns the deriv for a function.
+// Function Elementalgradient returns the gradient for a function.
 // If the function is not registered as elemental, the second returned
 // value is false.
 func Elementalgradient(f interface{}) (gradient, bool) {
-	deriv, ok := elementals[fkey(f)]
-	return deriv, ok
+	g, ok := elementals[fkey(f)]
+	return g, ok
 }
 
 func init() {
