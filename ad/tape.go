@@ -36,7 +36,7 @@ func init() {
 // of instructions, and a record has a fixed size.
 type record struct {
 	typ, op int //  record type and opcode or index of elemental
-	il, ir  int // indices of the first pointer and value
+	lv, rv  int // indices of the first pointer and value
 }
 
 // The counters structure holds counters for the tape
@@ -95,11 +95,19 @@ func backward(t *tape) {
 		rec := t.records[ir]
 		switch rec.typ {
 		case typAssignment:
-			// TODO
+			// restore previous value
+			*t.lvalues[rec.lv] = t.rvalues[rec.rv]
+			// update the bars: the bar of the left-hand side 
+			// is zero (because it is overwritten) except if 
+			// the right-hand side is the same location.
+			bar := t.bars[t.lvalues[rec.lv]]
+			t.bars[t.lvalues[rec.lv]] = 0.
+			t.bars[t.lvalues[rec.lv + 1]] = bar
 		case typArithmetic:
 			switch rec.op {
 			case opNeg:
-				// TODO
+				bar = t.bars[t.lvalues[rec.lv]]
+				t.bars[t.lvalues[rec.lv + 1]] = -bar
 			case opAdd:
 				// TODO
 			case opSub:
