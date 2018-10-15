@@ -130,7 +130,7 @@ func backward(t *tape) {
 				t.bars[t.places[rec.p+1]] += baru
 				t.bars[t.places[rec.p+2]] += barw
 			case opDiv: // v = u/w; dv/du = 1/w; dv/dw = - dv/du*u
-				baru := bar * *t.places[rec.p+2]
+				baru := bar / *t.places[rec.p+2]
 				barw := -baru * *t.places[rec.p+1]
 				t.bars[t.places[rec.p+1]] += baru
 				t.bars[t.places[rec.p+2]] -= barw
