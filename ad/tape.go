@@ -16,7 +16,7 @@ type tape struct {
 	values     []float64            // stored values
 	nargs      []int                // numbers of arguments of elementals
 	elementals []elemental          // gradients of elementals
-	bars       map[*float64]float64 // bars
+	adjoints   map[*float64]float64 // adjoints
 	cstack     []counters           // counter stack (see below)
 }
 
@@ -27,7 +27,7 @@ func init() {
 		values:     make([]float64, 0),
 		nargs:      make([]int, 0),
 		elementals: make([]elemental, 0),
-		bars:       make(map[*float64]float64),
+		adjoints:   make(map[*float64]float64),
 		cstack:     make([]counters, 0),
 	}
 }
@@ -104,12 +104,6 @@ func Variable(v *float64) *float64 {
 	return v
 }
 
-// Intermediate allocates an intermediate variable
-// and returns the location of the variable.
-func Intermediate() *float64 {
-	return Variable(Constant(0))
-}
-
 // Assigment encodes an assignment.
 func Assignment(v *float64, u *float64) *float64 {
 	r := record{
@@ -177,49 +171,52 @@ func Elemental(f interface{}, v *float64, u ...*float64) *float64 {
 func Gradient() []float64 {
 	backward()
 	partials := partials()
-	pop()
+	// pop()
 	return partials
 }
 
 // Function backward runs the backward pass
 // on the tape.
 func backward() {
-	bottom := t.cstack[len(t.cstack)-1].r
+	r := t.records[len(t.records)-1]
+	// Set the adjoint of the result to 1.
+	t.adjoints[t.places[r.p]] = 1.        // set result's adjoint to 1
+	bottom := t.cstack[len(t.cstack)-1].r // bottom is the first record
 	for ir := len(t.records); ir != bottom; {
 		ir--
 		r := &t.records[ir]
-		bar := t.bars[t.places[r.p]]
+		a := t.adjoints[t.places[r.p]]
 		// Only assignment may have the same location
 		// on both the right-hand and the left-hand.
 		switch r.typ {
 		case typAssignment: // v = u; dv/du = 1
 			// Restore previous value
 			*t.places[r.p] = t.values[r.v]
-			// Update the bars: the bar of the left-hand side
+			// Update the adjoints: the adjoint of the left-hand side
 			// is zero (because it is overwritten) except if
 			// the right-hand side is the same location.
-			t.bars[t.places[r.p]] = 0.
-			t.bars[t.places[r.p+1]] += bar
+			t.adjoints[t.places[r.p]] = 0.
+			t.adjoints[t.places[r.p+1]] += a
 		case typArithmetic:
 			switch r.op {
 			case OpNeg: // v = -u; dv/du = -1
-				t.bars[t.places[r.p+1]] -= bar
+				t.adjoints[t.places[r.p+1]] -= a
 			case OpAdd: // v = u + w; dv/du = 1; dv/dw = 1
-				t.bars[t.places[r.p+1]] += bar
-				t.bars[t.places[r.p+2]] += bar
+				t.adjoints[t.places[r.p+1]] += a
+				t.adjoints[t.places[r.p+2]] += a
 			case OpSub: // v = u - w; dv/du = 1; dv/dw = -1
-				t.bars[t.places[r.p+1]] += bar
-				t.bars[t.places[r.p+2]] -= bar
+				t.adjoints[t.places[r.p+1]] += a
+				t.adjoints[t.places[r.p+2]] -= a
 			case OpMul: // v = u*w; dv/du = w; dv/dw = u
-				baru := bar * *t.places[r.p+2]
-				barw := bar * *t.places[r.p+1]
-				t.bars[t.places[r.p+1]] += baru
-				t.bars[t.places[r.p+2]] += barw
-			case OpDiv: // v = u/w; dv/du = 1/w; dv/dw = - dv/du*u
-				baru := bar / *t.places[r.p+2]
-				barw := -baru * *t.places[r.p+1]
-				t.bars[t.places[r.p+1]] += baru
-				t.bars[t.places[r.p+2]] -= barw
+				au := a * *t.places[r.p+2]
+				aw := a * *t.places[r.p+1]
+				t.adjoints[t.places[r.p+1]] += au
+				t.adjoints[t.places[r.p+2]] += aw
+			case OpDiv: // v = u/w; dv/du = 1/w; dv/dw = - dv/du*v
+				au := a / *t.places[r.p+2]
+				aw := -au * *t.places[r.p]
+				t.adjoints[t.places[r.p+1]] += au
+				t.adjoints[t.places[r.p+2]] += aw
 			default:
 				panic(fmt.Sprintf("bad opcode %v", r.op))
 			}
@@ -230,7 +227,7 @@ func backward() {
 				// the forward pass.
 				t.values[r.v:r.v+e.n]...)
 			for i := 0; i != e.n; i++ {
-				t.bars[t.places[r.p+1+i]] += bar * dv[i]
+				t.adjoints[t.places[r.p+1+i]] += a * dv[i]
 			}
 		default:
 			panic(fmt.Sprintf("bad type %v", r.typ))
@@ -244,7 +241,7 @@ func partials() []float64 {
 	c := &t.cstack[len(t.cstack)-1]
 	partials := make([]float64, c.n)
 	for i := 0; i != c.n; i++ {
-		partials[i] = t.bars[t.places[c.p+i]]
+		partials[i] = t.adjoints[t.places[c.p+i]]
 	}
 	return partials
 }
@@ -254,7 +251,7 @@ func partials() []float64 {
 func pop() {
 	c := &t.cstack[len(t.cstack)-1]
 	for i := c.p; i != len(t.places); i++ {
-		delete(t.bars, t.places[i])
+		delete(t.adjoints, t.places[i])
 	}
 	t.records = t.records[:c.r]
 	t.places = t.places[:c.p]
