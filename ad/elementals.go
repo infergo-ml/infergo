@@ -27,7 +27,7 @@ func RegisterElemental(f interface{}, g gradient) {
 // Function Elementalgradient returns the gradient for a function.
 // If the function is not registered as elemental, the second returned
 // value is false.
-func Elementalgradient(f interface{}) (gradient, bool) {
+func ElementalGradient(f interface{}) (gradient, bool) {
 	g, ok := elementals[fkey(f)]
 	return g, ok
 }
