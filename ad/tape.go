@@ -13,7 +13,7 @@ var t tape
 type tape struct {
 	records    []record             // recorded instructions
 	places     []*float64           // addresses of places
-	values     []float64            // stored intermediate values
+	values     []float64            // stored values
 	nargs      []int                // numbers of arguments of elementals
 	elementals []elemental          // gradients of elementals
 	bars       map[*float64]float64 // bars
@@ -56,7 +56,7 @@ type counters struct {
 	n, // independents
 	r, // records
 	p, // places
-	v, // intermediate values
+	v, // values
 	e int // elementals
 }
 
@@ -69,14 +69,77 @@ const (
 
 // Arithmetic operations
 const (
-	opNeg = iota
-	opAdd
-	opSub
-	opMul
-	opDiv
+	OpNeg = iota
+	OpAdd
+	OpSub
+	OpMul
+	OpDiv
 )
 
 // Forward pass
+
+// Enter set ups the tape for the forward pass. n is the number
+// of parameters of the function to to differentiate.
+func Enter(n int) {
+	c := counters{
+		n: n,
+		r: len(t.records),
+		p: len(t.places),
+		v: len(t.values),
+		e: len(t.elementals),
+	}
+	t.cstack = append(t.cstack, c)
+}
+
+
+// Constant adds constant v to the memory and returns
+// the location of the constant.
+func Constant(c float64) *float64 {
+	t.values = append(t.values, c)
+	return &t.values[len(t.values) - 1]
+}
+
+// Variable adds variable v to the memory and returns v.
+func Variable(v *float64) *float64 {
+	r.places = append(t.places, v)
+	return v
+}
+
+// Intermediate allocates an intermediate variable
+// and returns the location of the variable.
+func Intermediate() *float64 {
+	return Variable(Constant(0))
+}
+
+// Assigment encodes an assignment.
+func Assignment(v *float64, u *float64) *float64 {
+	// TODO
+	rec := record{
+		typ: typAssignment,
+		p: len(t.places),
+		v: len(t.values),
+	}
+	t.places = append(t.places, v, u)
+	t.values = append(t.values, *v)
+	t.records = append(t.records, rec)
+	return v
+}
+
+// Arithmetic encodes an arithmetic operation and returns
+// the location of the result.
+func Arithmetic(op int, v *float64, u ...*float64) *float64 {
+	rec := record{
+		typ: typArithmetic,
+		op: op,
+		p: len(t.places),
+		v: len(t.values),
+	}
+	t.places = append(t.places, v, u...)
+	t.records = append(t.records, rec)
+	return v
+}
+
+// Elemental
 
 // TODO
 
@@ -116,20 +179,20 @@ func backward(t *tape) {
 			t.bars[t.places[rec.p+1]] += bar
 		case typArithmetic:
 			switch rec.op {
-			case opNeg: // v = -u; dv/du = -1
+			case OpNeg: // v = -u; dv/du = -1
 				t.bars[t.places[rec.p+1]] -= bar
-			case opAdd: // v = u + w; dv/du = 1; dv/dw = 1
+			case OpAdd: // v = u + w; dv/du = 1; dv/dw = 1
 				t.bars[t.places[rec.p+1]] += bar
 				t.bars[t.places[rec.p+2]] += bar
-			case opSub: // v = u - w; dv/du = 1; dv/dw = -1
+			case OpSub: // v = u - w; dv/du = 1; dv/dw = -1
 				t.bars[t.places[rec.p+1]] += bar
 				t.bars[t.places[rec.p+2]] -= bar
-			case opMul: // v = u*w; dv/du = w; dv/dw = u
+			case OpMul: // v = u*w; dv/du = w; dv/dw = u
 				baru := bar * *t.places[rec.p+2]
 				barw := bar * *t.places[rec.p+1]
 				t.bars[t.places[rec.p+1]] += baru
 				t.bars[t.places[rec.p+2]] += barw
-			case opDiv: // v = u/w; dv/du = 1/w; dv/dw = - dv/du*u
+			case OpDiv: // v = u/w; dv/du = 1/w; dv/dw = - dv/du*u
 				baru := bar / *t.places[rec.p+2]
 				barw := -baru * *t.places[rec.p+1]
 				t.bars[t.places[rec.p+1]] += baru
