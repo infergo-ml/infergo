@@ -13,7 +13,7 @@ var t tape
 // A tape is a list of records and the memory
 type tape struct {
 	records    []record             // recorded instructions
-	places     []*float64           // addresses of places
+	places     []*float64           // variable places
 	values     []float64            // stored values
 	nargs      []int                // numbers of arguments of elementals
 	elementals []elemental          // gradients of elementals
@@ -39,7 +39,7 @@ func init() {
 // of instructions, and a record has a fixed size.
 type record struct {
 	typ, op int //  record type and opcode or index of gradient
-	p, v    int // indices of the first pointer and value
+	p, v    int // indices of the first place and value
 }
 
 // The structure elemental stores information required
@@ -92,74 +92,74 @@ func Enter(n int) {
 	t.cstack = append(t.cstack, c)
 }
 
-// Constant adds constant v to the memory and returns
-// the location of the constant.
-func Constant(c float64) *float64 {
-	t.values = append(t.values, c)
+// Constant adds value v to the memory and returns
+// the location of the value.
+func Value(v float64) *float64 {
+	t.values = append(t.values, v)
 	return &t.values[len(t.values)-1]
 }
 
-// Variable adds variable v to the memory and returns v.
-func Variable(v *float64) *float64 {
-	t.places = append(t.places, v)
-	return v
+// Variable adds place p to the memory and returns p.
+func Place(p *float64) *float64 {
+	t.places = append(t.places, p)
+	return p
 }
 
 // Assigment encodes an assignment.
-func Assignment(v *float64, u *float64) *float64 {
+func Assignment(p *float64, px *float64) *float64 {
 	// register
 	r := record{
 		typ: typAssignment,
 		p:   len(t.places),
 		v:   len(t.values),
 	}
-	t.places = append(t.places, v, u)
-	t.values = append(t.values, *v)
+	t.places = append(t.places, p, px)
+	t.values = append(t.values, *p)
 	t.records = append(t.records, r)
 
 	// run
-	*v = *u
+	*p = *px
 
-	return v
+	return p
 }
 
 // Arithmetic encodes an arithmetic operation and returns
 // the location of the result.
-func Arithmetic(op int, v *float64, u ...*float64) *float64 {
+func Arithmetic(op int, p *float64, px ...*float64) *float64 {
 	// register
 	r := record{
 		typ: typArithmetic,
 		op:  op,
 		p:   len(t.places),
 	}
-	t.places = append(t.places, v)
-	t.places = append(t.places, u...)
+	t.places = append(t.places, p)
+	t.places = append(t.places, px...)
 	t.records = append(t.records, r)
 
 	// run
 	switch op {
 	case OpNeg:
-		*v = -*u[0]
+		*p = -*px[0]
 	case OpAdd:
-		*v = *u[0] + *u[1]
+		*p = *px[0] + *px[1]
 	case OpSub:
-		*v = *u[0] - *u[1]
+		*p = *px[0] - *px[1]
 	case OpMul:
-		*v = *u[0] * *u[1]
+		*p = *px[0] * *px[1]
 	case OpDiv:
-		*v = *u[0] / *u[1]
+		*p = *px[0] / *px[1]
 	default:
 		panic(fmt.Sprintf("bad opcode %v", r.op))
 	}
 
-	return v
+	return p
 }
 
 // Elemental encodes a call to the elemental f.
 // To call gradient without allocation on backward pass,
 // argument values are copied to the tape memory.
 // Elemental returns the location of the result.
-func Elemental(f interface{}, v *float64, u ...*float64) *float64 {
+func Elemental(f interface{}, p *float64, px ...*float64) *float64 {
 	g, ok := ElementalGradient(f)
 	if !ok {
 		// actually an elemental
@@ -174,13 +174,13 @@ func Elemental(f interface{}, v *float64, u ...*float64) *float64 {
 		v:   len(t.values),
 	}
 	e := elemental{
-		n: len(u),
+		n: len(px),
 		g: g,
 	}
-	t.places = append(t.places, v)
-	t.places = append(t.places, u...)
-	for _, w := range u {
-		t.values = append(t.values, *w)
+	t.places = append(t.places, p)
+	t.places = append(t.places, px...)
+	for _, py := range px {
+		t.values = append(t.values, *py)
 	}
 	t.elementals = append(t.elementals, e)
 	t.records = append(t.records, r)
@@ -192,18 +192,18 @@ func Elemental(f interface{}, v *float64, u ...*float64) *float64 {
 	// reflection.
 	switch f := f.(type) {
 	case func(float64) float64:
-		*v = f(*u[0])
+		*p = f(*px[0])
 	case func(float64, float64) float64:
-		*v = f(*u[0], *u[1])
+		*p = f(*px[0], *px[1])
 	default:
 		args := make([]reflect.Value, 0)
-		for _, w := range u {
-			args = append(args, reflect.ValueOf(*w))
+		for _, py := range px {
+			args = append(args, reflect.ValueOf(*py))
 		}
-		*v = reflect.ValueOf(f).Call(args)[0].Float()
+		*p = reflect.ValueOf(f).Call(args)[0].Float()
 	}
 
-	return v
+	return p
 }
 
 // Backward pass
@@ -234,7 +234,7 @@ func backward() {
 		// Only assignment may have the same location
 		// on both the right-hand and the left-hand.
 		switch r.typ {
-		case typAssignment: // v = u; dv/du = 1
+		case typAssignment: // x; d/dx = 1
 			// Restore previous value
 			*t.places[r.p] = t.values[r.v]
 			// Update the adjoints: the adjoint of the left-hand side
@@ -244,35 +244,35 @@ func backward() {
 			t.adjoints[t.places[r.p+1]] += a
 		case typArithmetic:
 			switch r.op {
-			case OpNeg: // v = -u; dv/du = -1
+			case OpNeg: // -x; d/dx = -1
 				t.adjoints[t.places[r.p+1]] -= a
-			case OpAdd: // v = u + w; dv/du = 1; dv/dw = 1
+			case OpAdd: // x + y; d/dx = 1; d/dy = 1
 				t.adjoints[t.places[r.p+1]] += a
 				t.adjoints[t.places[r.p+2]] += a
-			case OpSub: // v = u - w; dv/du = 1; dv/dw = -1
+			case OpSub: // x - y; d/dx = 1; d/dy = -1
 				t.adjoints[t.places[r.p+1]] += a
 				t.adjoints[t.places[r.p+2]] -= a
-			case OpMul: // v = u*w; dv/du = w; dv/dw = u
-				au := a * *t.places[r.p+2]
-				aw := a * *t.places[r.p+1]
-				t.adjoints[t.places[r.p+1]] += au
-				t.adjoints[t.places[r.p+2]] += aw
-			case OpDiv: // v = u/w; dv/du = 1/w; dv/dw = - dv/du*v
-				au := a / *t.places[r.p+2]
-				aw := -au * *t.places[r.p]
-				t.adjoints[t.places[r.p+1]] += au
-				t.adjoints[t.places[r.p+2]] += aw
+			case OpMul: // x * y; d/dx = y; d/dy = x
+				ax := a * *t.places[r.p+2]
+				ay := a * *t.places[r.p+1]
+				t.adjoints[t.places[r.p+1]] += ax
+				t.adjoints[t.places[r.p+2]] += ay
+			case OpDiv: // x / y; d/dx = 1 / y; d/dy = - d/dx * p
+				ax := a / *t.places[r.p+2]
+				ay := -ax * *t.places[r.p]
+				t.adjoints[t.places[r.p+1]] += ax
+				t.adjoints[t.places[r.p+2]] += ay
 			default:
 				panic(fmt.Sprintf("bad opcode %v", r.op))
 			}
-		case typElemental: // v = f(u, w, ...)
+		case typElemental: // f(x, y, ...)
 			e := &t.elementals[r.op]
-			dv := e.g(*t.places[r.p],
+			d := e.g(*t.places[r.p],
 				// Parameters must be copied to t.values during
 				// the forward pass.
 				t.values[r.v:r.v+e.n]...)
 			for i := 0; i != e.n; i++ {
-				t.adjoints[t.places[r.p+1+i]] += a * dv[i]
+				t.adjoints[t.places[r.p+1+i]] += a * d[i]
 			}
 		default:
 			panic(fmt.Sprintf("bad type %v", r.typ))
