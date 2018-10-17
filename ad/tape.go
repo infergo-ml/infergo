@@ -2,6 +2,7 @@ package ad
 
 import (
 	"fmt"
+	"reflect"
 )
 
 // Implementation of the AD tape
@@ -106,6 +107,7 @@ func Variable(v *float64) *float64 {
 
 // Assigment encodes an assignment.
 func Assignment(v *float64, u *float64) *float64 {
+	// register
 	r := record{
 		typ: typAssignment,
 		p:   len(t.places),
@@ -114,13 +116,17 @@ func Assignment(v *float64, u *float64) *float64 {
 	t.places = append(t.places, v, u)
 	t.values = append(t.values, *v)
 	t.records = append(t.records, r)
+
+	// run
 	*v = *u
+
 	return v
 }
 
 // Arithmetic encodes an arithmetic operation and returns
 // the location of the result.
 func Arithmetic(op int, v *float64, u ...*float64) *float64 {
+	// register
 	r := record{
 		typ: typArithmetic,
 		op:  op,
@@ -129,6 +135,8 @@ func Arithmetic(op int, v *float64, u ...*float64) *float64 {
 	t.places = append(t.places, v)
 	t.places = append(t.places, u...)
 	t.records = append(t.records, r)
+
+	// run
 	switch op {
 		case OpNeg: *v = -*u[0]
 		case OpAdd: *v = *u[0] + *u[1]
@@ -138,48 +146,58 @@ func Arithmetic(op int, v *float64, u ...*float64) *float64 {
 	default:
 		panic(fmt.Sprintf("bad opcode %v", r.op))
 	}
+
 	return v
 }
 
-// Elemental encodes a call to the elemental f. If f is
-// not registered as an elemental, the call is ignored.
+// Elemental encodes a call to the elemental f.
 // To call gradient without allocation on backward pass,
 // argument values are copied to the tape memory.
 // Elemental returns the location of the result.
 func Elemental(f interface{}, v *float64, u ...*float64) *float64 {
 	g, ok := ElementalGradient(f)
-	if ok {
-		// This is indeed an elemental, we have it's gradient.
-		r := record{
-			typ: typElemental,
-			op:  len(t.elementals),
-			p:   len(t.places),
-			v:   len(t.values),
-		}
-		e := elemental{
-			n: len(u),
-			g: g,
-		}
-		t.places = append(t.places, v)
-		t.places = append(t.places, u...)
-		for _, w := range u {
-			t.values = append(t.values, *w)
-		}
-		t.elementals = append(t.elementals, e)
-		t.records = append(t.records, r)
+	if !ok {
+		// actually an elemental
+		panic("not an elemental")
 	}
+
+	// register
+	r := record{
+		typ: typElemental,
+		op:  len(t.elementals),
+		p:   len(t.places),
+		v:   len(t.values),
+	}
+	e := elemental{
+		n: len(u),
+		g: g,
+	}
+	t.places = append(t.places, v)
+	t.places = append(t.places, u...)
+	for _, w := range u {
+		t.values = append(t.values, *w)
+	}
+	t.elementals = append(t.elementals, e)
+	t.records = append(t.records, r)
+
+	// run
+	// Any elemental function can be called, but one-
+	// and two-argument elementals are called efficiently, 
+	// without allocation; other types are called through
+	// reflection.
 	switch f := f.(type) {
-	case func(float64) float64:
+	case func (float64) float64:
 		*v = f(*u[0])
-	case func(float64, float64) float64:
+	case func (float64, float64) float64:
 		*v = f(*u[0], *u[1])
-	case func(float64, float64, float64) float64:
-		*v = f(*u[0], *u[1], *u[2])
-	case func(...float64) float64:
-		*v = f(t.values[len(t.values) - len(u):]...)
 	default:
-		panic(fmt.Sprintf("bad elemental type: %T", f))
+		args := make([]reflect.Value, 0)
+		for _, w := range u {
+			args = append(args, reflect.ValueOf(*w))
+		}
+		*v = reflect.ValueOf(f).Call(args)[0].Float()
 	}
+
 	return v
 }
 

@@ -5,11 +5,13 @@ package ad
 import (
 	"math"
 	"math/rand"
-	"time"
 	"reflect"
 	"testing"
+	"time"
 )
 
+// Intermediate variables are initialized to random
+// values for testing.
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
@@ -225,5 +227,63 @@ func TestAssignment(t *testing.T) {
 			[][][]float64{
 				{{0.}, {0.}},
 				{{3.}, {6.}}}},
+	})
+}
+
+// elementals to check calling function with
+// different signatures
+func twoArgElemental(a, b float64) float64 {
+	return a * b
+}
+
+func threeArgElemental(a, b, c float64) float64 {
+	return a + b + c
+}
+
+func variadicElemental(a ...float64) float64 {
+	return a[0] - a[1]
+}
+
+func init() {
+	RegisterElemental(twoArgElemental,
+		func (v float64, a ...float64) []float64 {
+			return []float64{a[1], a[0]}
+		})
+	RegisterElemental(threeArgElemental,
+		func (v float64, a ...float64) []float64 {
+			return []float64{1., 1., 1.}
+		})
+	RegisterElemental(variadicElemental,
+		func (v float64, a ...float64) []float64 {
+			return []float64{1., -1.}
+		})
+}
+
+func TestElemental(t *testing.T) {
+	runsuite(t, []testcase{
+		{"v = twoArgElemental(u, w)",
+			func(x []float64) {
+				Elemental(twoArgElemental,
+					placeholder(), &x[0], &x[1])
+			},
+			[][][]float64{
+				{{0., 0.}, {0., 0.}},
+				{{1., 2.}, {2., 1.}}}},
+		{"v = threeArgElemental(u, w, t)",
+			func(x []float64) {
+				Elemental(threeArgElemental,
+					placeholder(), &x[0], &x[1], &x[2])
+			},
+			[][][]float64{
+				{{0., 0., 0.}, {1., 1., 1.}},
+				{{1., 2., 3.}, {1., 1., 1.}}}},
+		{"v = variadicElemental(u, w)",
+			func(x []float64) {
+				Elemental(variadicElemental,
+					placeholder(), &x[0], &x[1])
+			},
+			[][][]float64{
+				{{0., 0.}, {1., -1.}},
+				{{1., 2.}, {1., -1.}}}},
 	})
 }
