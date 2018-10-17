@@ -230,8 +230,7 @@ func TestAssignment(t *testing.T) {
 	})
 }
 
-// elementals to check calling function with
-// different signatures
+// elementals to check calling with different signatures
 func twoArgElemental(a, b float64) float64 {
 	return a * b
 }
