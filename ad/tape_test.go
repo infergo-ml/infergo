@@ -246,15 +246,15 @@ func variadicElemental(a ...float64) float64 {
 
 func init() {
 	RegisterElemental(twoArgElemental,
-		func (v float64, a ...float64) []float64 {
+		func(v float64, a ...float64) []float64 {
 			return []float64{a[1], a[0]}
 		})
 	RegisterElemental(threeArgElemental,
-		func (v float64, a ...float64) []float64 {
+		func(v float64, a ...float64) []float64 {
 			return []float64{1., 1., 1.}
 		})
 	RegisterElemental(variadicElemental,
-		func (v float64, a ...float64) []float64 {
+		func(v float64, a ...float64) []float64 {
 			return []float64{1., -1.}
 		})
 }

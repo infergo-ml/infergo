@@ -138,11 +138,16 @@ func Arithmetic(op int, v *float64, u ...*float64) *float64 {
 
 	// run
 	switch op {
-		case OpNeg: *v = -*u[0]
-		case OpAdd: *v = *u[0] + *u[1]
-		case OpSub: *v = *u[0] - *u[1]
-		case OpMul: *v = *u[0] * *u[1]
-		case OpDiv: *v = *u[0] / *u[1]
+	case OpNeg:
+		*v = -*u[0]
+	case OpAdd:
+		*v = *u[0] + *u[1]
+	case OpSub:
+		*v = *u[0] - *u[1]
+	case OpMul:
+		*v = *u[0] * *u[1]
+	case OpDiv:
+		*v = *u[0] / *u[1]
 	default:
 		panic(fmt.Sprintf("bad opcode %v", r.op))
 	}
@@ -182,13 +187,13 @@ func Elemental(f interface{}, v *float64, u ...*float64) *float64 {
 
 	// run
 	// Any elemental function can be called, but one-
-	// and two-argument elementals are called efficiently, 
+	// and two-argument elementals are called efficiently,
 	// without allocation; other types are called through
 	// reflection.
 	switch f := f.(type) {
-	case func (float64) float64:
+	case func(float64) float64:
 		*v = f(*u[0])
-	case func (float64, float64) float64:
+	case func(float64, float64) float64:
 		*v = f(*u[0], *u[1])
 	default:
 		args := make([]reflect.Value, 0)
@@ -203,7 +208,7 @@ func Elemental(f interface{}, v *float64, u ...*float64) *float64 {
 
 // Backward pass
 
-// Function Graient performs the backward pass on
+// Function Gradient performs the backward pass on
 // the tape and returns the gradient. It should be
 // called immediately after the call to an automatically
 // differentiated function, and can be called only once
