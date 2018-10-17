@@ -3,9 +3,9 @@ package ad
 // Testing the tape
 
 import (
+	"math"
 	"reflect"
 	"testing"
-	"math"
 )
 
 // dfdx differentiates the function passed in
@@ -19,12 +19,29 @@ func dfdx(x []float64, f func(x []float64)) []float64 {
 	return Gradient()
 }
 
+// testcase defines a test of a single expression on
+// several inputs.
+type testcase struct {
+	s string
+	f func(x []float64)
+	v [][][]float64
+}
+
+// runsuite evaluates a sequence of test cases.
+func runsuite(t *testing.T, suite []testcase) {
+	for _, c := range suite {
+		for _, v := range c.v {
+			g := dfdx(v[0], c.f)
+			if !reflect.DeepEqual(g, v[1]) {
+				t.Errorf("%s, x=%v: g=%v, wanted g=%v",
+					c.s, v[0], g, v[1])
+			}
+		}
+	}
+}
+
 func TestPrimitive(t *testing.T) {
-	for _, c := range []struct {
-		s string
-		f func(x []float64)
-		v [][][]float64
-	}{
+	runsuite(t, []testcase{
 		{"v = u",
 			func(x []float64) {
 				Assignment(Variable(Constant(x[0])), &x[0])
@@ -42,7 +59,7 @@ func TestPrimitive(t *testing.T) {
 		{"u + w",
 			func(x []float64) {
 				Arithmetic(OpAdd,
-					Variable(Constant(x[0] + x[1])), &x[0], &x[1])
+					Variable(Constant(x[0]+x[1])), &x[0], &x[1])
 			},
 			[][][]float64{
 				{{0., 0.}, {1., 1.}},
@@ -50,7 +67,7 @@ func TestPrimitive(t *testing.T) {
 		{"u + u",
 			func(x []float64) {
 				Arithmetic(OpAdd,
-					Variable(Constant(x[0] + x[0])), &x[0], &x[0])
+					Variable(Constant(x[0]+x[0])), &x[0], &x[0])
 			},
 			[][][]float64{
 				{{0.}, {2.}},
@@ -58,7 +75,7 @@ func TestPrimitive(t *testing.T) {
 		{"u - v",
 			func(x []float64) {
 				Arithmetic(OpSub,
-					Variable(Constant(x[0] - x[1])), &x[0], &x[1])
+					Variable(Constant(x[0]-x[1])), &x[0], &x[1])
 			},
 			[][][]float64{
 				{{0., 0.}, {1., -1.}},
@@ -66,7 +83,7 @@ func TestPrimitive(t *testing.T) {
 		{"u - u",
 			func(x []float64) {
 				Arithmetic(OpSub,
-					Variable(Constant(x[0] - x[0])), &x[0], &x[0])
+					Variable(Constant(x[0]-x[0])), &x[0], &x[0])
 			},
 			[][][]float64{
 				{{0.}, {0.}},
@@ -74,7 +91,7 @@ func TestPrimitive(t *testing.T) {
 		{"u * w",
 			func(x []float64) {
 				Arithmetic(OpMul,
-					Variable(Constant(x[0] * x[1])), &x[0], &x[1])
+					Variable(Constant(x[0]*x[1])), &x[0], &x[1])
 			},
 			[][][]float64{
 				{{0., 0.}, {0., 0.}},
@@ -82,7 +99,7 @@ func TestPrimitive(t *testing.T) {
 		{"u * u",
 			func(x []float64) {
 				Arithmetic(OpMul,
-					Variable(Constant(x[0] * x[0])), &x[0], &x[0])
+					Variable(Constant(x[0]*x[0])), &x[0], &x[0])
 			},
 			[][][]float64{
 				{{0.}, {0.}},
@@ -90,15 +107,15 @@ func TestPrimitive(t *testing.T) {
 		{"u / w",
 			func(x []float64) {
 				Arithmetic(OpDiv,
-					Variable(Constant(x[0] / x[1])), &x[0], &x[1])
+					Variable(Constant(x[0]/x[1])), &x[0], &x[1])
 			},
 			[][][]float64{
 				{{0., 1.}, {1., 0.}},
-				{{2., 4.}, {0.25, - 0.125}}}},
+				{{2., 4.}, {0.25, -0.125}}}},
 		{"u / u",
 			func(x []float64) {
 				Arithmetic(OpDiv,
-				    Variable(Constant(x[0] / x[0])), &x[0], &x[0])
+					Variable(Constant(x[0]/x[0])), &x[0], &x[0])
 			},
 			[][][]float64{
 				{{1.}, {0.}},
@@ -135,7 +152,7 @@ func TestPrimitive(t *testing.T) {
 			},
 			[][][]float64{
 				{{0.}, {0.}},
-				{{1.}, {- math.Sin(1.)}}}},
+				{{1.}, {-math.Sin(1.)}}}},
 		{"sin(u)",
 			func(x []float64) {
 				Elemental(math.Sin,
@@ -144,16 +161,94 @@ func TestPrimitive(t *testing.T) {
 			[][][]float64{
 				{{0.}, {1.}},
 				{{1.}, {math.Cos(1.)}}}},
-	} {
-		for _, v := range c.v {
-			g := dfdx(v[0], c.f)
-			if !reflect.DeepEqual(g, v[1]) {
-				t.Errorf("%s, x=%v: g=%v, wanted g=%v",
-					c.s, v[0], g, v[1])
-			}
-		}
-	}
+	})
 }
 
 func TestComposite(t *testing.T) {
+	runsuite(t, []testcase{
+		{"v = u * u + w * w",
+			func(x []float64) {
+				a := x[0] * x[0]
+				b := x[1] * x[1]
+				c := a + b
+				Arithmetic(OpAdd,
+					Variable(Constant(c)),
+					Arithmetic(OpMul,
+						Variable(Constant(a)), &x[0], &x[0]),
+					Arithmetic(OpMul,
+						Variable(Constant(b)), &x[1], &x[1]))
+			},
+			[][][]float64{
+				{{0., 0.}, {0., 0.}},
+				{{1., 1.}, {2., 2.}},
+				{{2., 3.}, {4., 6.}}}},
+		{"v = (u + w) * (u + w)",
+			func(x []float64) {
+				a := x[0] + x[1]
+				b := x[0] + x[1]
+				c := a * b
+				Arithmetic(OpMul,
+					Variable(Constant(c)),
+					Arithmetic(OpAdd,
+						Variable(Constant(a)), &x[0], &x[1]),
+					Arithmetic(OpAdd,
+						Variable(Constant(b)), &x[0], &x[1]))
+			},
+			[][][]float64{
+				{{0., 0.}, {0., 0.}},
+				{{1., 1.}, {4., 4.}},
+				{{2., 3.}, {10., 10.}}}},
+		{"v = sin(u * w)",
+			func(x []float64) {
+				a := x[0] * x[1]
+				b := math.Sin(a)
+				Elemental(math.Sin,
+					Variable(Constant(b)),
+					Arithmetic(OpMul,
+						Variable(Constant(a)), &x[0], &x[1]))
+			},
+			[][][]float64{
+				{{0., 0.}, {0., 0.}},
+				{{1., math.Pi}, {-math.Pi, -1.}},
+				{{math.Pi, 1.}, {-1., -math.Pi}}}},
+	})
+}
+
+func TestAssignment(t *testing.T) {
+	runsuite(t, []testcase{
+		{"v = sin(u * w); v1 = v",
+			func(x []float64) {
+				a := x[0] * x[1]
+				b := math.Sin(a)
+				Assignment(Variable(Constant(-1.)),
+					Elemental(math.Sin,
+						Variable(Constant(b)),
+						Arithmetic(OpMul,
+							Variable(Constant(a)), &x[0], &x[1])))
+			},
+			[][][]float64{
+				{{0., 0.}, {0., 0.}},
+				{{1., math.Pi}, {-math.Pi, -1.}},
+				{{math.Pi, 1.}, {-1., -math.Pi}}}},
+		{"u = 2.; v = u*u",
+			func(x []float64) {
+				Assignment(&x[0], Variable(Constant(2)))
+				x[0] = 2.
+				b := x[0] * x[0]
+				Arithmetic(OpMul, Variable(Constant(b)), &x[0], &x[0])
+			},
+			[][][]float64{
+				{{0.}, {0.}},
+				{{3.}, {0.}}}},
+		{"u = u; v = u*u",
+			func(x []float64) {
+				Assignment(&x[0], &x[0])
+				x[0] = x[0]
+				b := x[0] * x[0]
+				Arithmetic(OpMul, Variable(Constant(b)), &x[0], &x[0])
+			},
+			[][][]float64{
+				{{0.}, {0.}},
+				{{3.}, {6.}}}},
+	})
 }
