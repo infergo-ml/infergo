@@ -114,6 +114,7 @@ func Assignment(v *float64, u *float64) *float64 {
 	t.places = append(t.places, v, u)
 	t.values = append(t.values, *v)
 	t.records = append(t.records, r)
+	*v = *u
 	return v
 }
 
@@ -128,6 +129,15 @@ func Arithmetic(op int, v *float64, u ...*float64) *float64 {
 	t.places = append(t.places, v)
 	t.places = append(t.places, u...)
 	t.records = append(t.records, r)
+	switch op {
+		case OpNeg: *v = -*u[0]
+		case OpAdd: *v = *u[0] + *u[1]
+		case OpSub: *v = *u[0] - *u[1]
+		case OpMul: *v = *u[0] * *u[1]
+		case OpDiv: *v = *u[0] / *u[1]
+	default:
+		panic(fmt.Sprintf("bad opcode %v", r.op))
+	}
 	return v
 }
 
@@ -157,6 +167,18 @@ func Elemental(f interface{}, v *float64, u ...*float64) *float64 {
 		}
 		t.elementals = append(t.elementals, e)
 		t.records = append(t.records, r)
+	}
+	switch f := f.(type) {
+	case func(float64) float64:
+		*v = f(*u[0])
+	case func(float64, float64) float64:
+		*v = f(*u[0], *u[1])
+	case func(float64, float64, float64) float64:
+		*v = f(*u[0], *u[1], *u[2])
+	case func(...float64) float64:
+		*v = f(t.values[len(t.values) - len(u):]...)
+	default:
+		panic(fmt.Sprintf("bad elemental type: %T", f))
 	}
 	return v
 }
