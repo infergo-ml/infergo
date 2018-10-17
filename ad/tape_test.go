@@ -5,9 +5,14 @@ package ad
 import (
 	"math"
 	"math/rand"
+	"time"
 	"reflect"
 	"testing"
 )
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 // dfdx differentiates the function passed in
 // and returns the gradient.
