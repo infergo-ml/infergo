@@ -122,7 +122,7 @@ func Place(p *float64) *float64 {
 }
 
 // Assigment encodes an assignment.
-func Assignment(p *float64, px *float64) float64 {
+func Assignment(p *float64, px *float64) {
 	// register
 	r := record{
 		typ: typAssignment,
@@ -135,8 +135,6 @@ func Assignment(p *float64, px *float64) float64 {
 
 	// run
 	*p = *px
-
-	return *p
 }
 
 // Arithmetic encodes an arithmetic operation and returns
@@ -251,7 +249,8 @@ func Enter(px ...*float64) {
 
 // Return returns the result of the differentiated function.
 func Return(px *float64) float64 {
-	return Assignment(Place(Value(0.)), px)
+	Assignment(Place(Value(0.)), px)
+	return *px
 }
 
 // Backward pass

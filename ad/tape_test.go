@@ -342,6 +342,20 @@ func TestCall(t *testing.T) {
 				{{0.}, {0.}},
 				{{1.}, {2.}},
 				{{2.}, {4.}}}},
+		{"y = (x -> x * x)(x)",
+			func(x []float64) {
+				Assignment(Place(Value(0.)),
+					Call(func() {
+						func(a float64) float64 {
+							Enter(&a)
+							return Return(Arithmetic(OpMul, &a, &a))
+						}(x[0])
+					}, &x[0]))
+			},
+			[][][]float64{
+				{{0.}, {0.}},
+				{{1.}, {2.}},
+				{{2.}, {4.}}}},
 		{"(x, y -> x + y)(x, y)",
 			func(x []float64) {
 				Call(func() {
