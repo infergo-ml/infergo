@@ -226,6 +226,8 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 	return p
 }
 
+// Calling differentiated functions
+
 // Call wraps a call to a differentiated subfunction.
 func Call(f func(), px ...*float64) *float64 {
 	// Register function parameters. The function
