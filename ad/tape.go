@@ -220,7 +220,7 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 func Gradient() []float64 {
 	backward()
 	partials := partials()
-	// pop()
+	pop()
 	return partials
 }
 
