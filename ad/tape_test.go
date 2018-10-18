@@ -11,10 +11,7 @@ import (
 // ddx differentiates the function passed in
 // and returns the gradient.
 func ddx(x []float64, f func(x []float64)) []float64 {
-	Enter(len(x))
-	for i := 0; i != len(x); i++ {
-		Place(&x[i])
-	}
+	Setup(x)
 	f(x)
 	return Gradient()
 }
@@ -315,5 +312,47 @@ func TestElemental(t *testing.T) {
 			[][][]float64{
 				{{0., 0.}, {1., -1.}},
 				{{1., 2.}, {1., -1.}}}},
+	})
+}
+
+func TestCall(t *testing.T) {
+	runsuite(t, []testcase{
+		{"(x -> x)(x)",
+			func(x []float64) {
+				Call(func() {
+					func(a float64) float64 {
+						Enter(&a)
+						return Return(&a)
+					}(x[0])
+				}, &x[0])
+			},
+			[][][]float64{
+				{{0.}, {1.}},
+				{{1.}, {1.}}}},
+		{"(x -> x * x)(x)",
+			func(x []float64) {
+				Call(func() {
+					func(a float64) float64 {
+						Enter(&a)
+						return Return(Arithmetic(OpMul, &a, &a))
+					}(x[0])
+				}, &x[0])
+			},
+			[][][]float64{
+				{{0.}, {0.}},
+				{{1.}, {2.}},
+				{{2.}, {4.}}}},
+		{"(x, y -> x + y)(x, y)",
+			func(x []float64) {
+				Call(func() {
+					func(a, b float64) float64 {
+						Enter(&a, &b)
+						return Return(Arithmetic(OpAdd, &a, &b))
+					}(x[0], x[1])
+				}, &x[0], &x[1])
+			},
+			[][][]float64{
+				{{0., 0.}, {1., 1.}},
+				{{1., 2.}, {1., 1.}}}},
 	})
 }

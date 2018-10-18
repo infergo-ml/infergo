@@ -79,9 +79,15 @@ const (
 
 // Forward pass
 
-// Enter set ups the tape for the forward pass. n is the number
-// of parameters of the function to to differentiate.
-func Enter(n int) {
+// Setup set ups the tape for the forward pass.
+func Setup(x []float64) {
+	push(len(x))
+	register(x)
+}
+
+// push pushes a counter frame to the counter stack.
+// n is the number of function parameters.
+func push(n int) {
 	c := counters{
 		n: n,
 		r: len(t.records),
@@ -90,6 +96,16 @@ func Enter(n int) {
 		e: len(t.elementals),
 	}
 	t.cstack = append(t.cstack, c)
+}
+
+// register stores locations of function parameters
+// in the beginning of the current frame of places.
+// The places are then used to collect the partial
+// derivatives of the gradient.
+func register(x []float64) {
+	for i := 0; i != len(x); i++ {
+		Place(&x[i])
+	}
 }
 
 // Constant adds value v to the memory and returns
@@ -106,7 +122,7 @@ func Place(p *float64) *float64 {
 }
 
 // Assigment encodes an assignment.
-func Assignment(p *float64, px *float64) *float64 {
+func Assignment(p *float64, px *float64) float64 {
 	// register
 	r := record{
 		typ: typAssignment,
@@ -120,7 +136,7 @@ func Assignment(p *float64, px *float64) *float64 {
 	// run
 	*p = *px
 
-	return p
+	return *p
 }
 
 // Arithmetic encodes an arithmetic operation and returns
@@ -210,6 +226,32 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 	return p
 }
 
+// Call wraps a call to a differentiated subfunction.
+func Call(f func(), px ...*float64) *float64 {
+	// Register function parameters. The function
+	// will assign from the actual parameters to
+	// the formal parameters on entry.
+	for _, py := range px {
+		Place(py)
+	}
+	f()
+	// The return value is the last allocated place.
+	return t.places[len(t.places)-1]
+}
+
+// Enter copies the actual parameters to the formal parameters.
+func Enter(px ...*float64) {
+	i0 := len(t.places) - len(px)
+	for i, py := range px {
+		Assignment(py, t.places[i0+i])
+	}
+}
+
+// Return returns the result of the differentiated function.
+func Return(px *float64) float64 {
+	return Assignment(Place(Value(0.)), px)
+}
+
 // Backward pass
 
 // Function Gradient performs the backward pass on
@@ -224,8 +266,7 @@ func Gradient() []float64 {
 	return partials
 }
 
-// Function backward runs the backward pass
-// on the tape.
+// Function backward runs the backward pass on the tape.
 func backward() {
 	r := t.records[len(t.records)-1]
 	// Set the adjoint of the result to 1.
@@ -295,8 +336,7 @@ func partials() []float64 {
 	return partials
 }
 
-// Function pop deallocates current tape fragment
-// from the tape.
+// Function pop deallocates current tape fragment from the tape.
 func pop() {
 	c := &t.cstack[len(t.cstack)-1]
 	for i := c.p; i != len(t.places); i++ {
