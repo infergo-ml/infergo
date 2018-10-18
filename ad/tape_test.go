@@ -19,6 +19,54 @@ func ddx(x []float64, f func(x []float64)) []float64 {
 	return Gradient()
 }
 
+// Tape management
+
+// When we pop we must return to where we were before
+func TestPop(t *testing.T) {
+	// Top-level differentiation
+	shouldPop(t, []float64{0., 1.}, func(x []float64) {
+		Assignment(&x[1], Arithmetic(OpAdd, &x[0], &x[1]))
+	})
+	ddx([]float64{1.}, func(x []float64) {
+		Assignment(&x[0], Place(Value(1.)))
+	})
+	// Nested differentiation
+	shouldPop(t, []float64{0., 1.}, func(x []float64) {
+		Assignment(&x[1], Arithmetic(OpAdd, &x[0], &x[1]))
+	})
+}
+
+func shouldPop(test *testing.T, x []float64, f func(x []float64)) {
+	lr := len(t.records)
+	lp := len(t.places)
+	lv := len(t.values)
+	le := len(t.elementals)
+	lc := len(t.cstack)
+	ddx([]float64{0., 1.}, f)
+	if lr != len(t.records) {
+		test.Errorf("wrong number of records: got %d, want %d",
+			len(t.records), lr)
+	}
+	if lp != len(t.places) {
+		test.Errorf("wrong number of places: got %d, want %d",
+			len(t.places), lp)
+	}
+	if lv != len(t.values) {
+		test.Errorf("wrong number of values: got %d, want %d",
+			len(t.values), lv)
+	}
+	if le != len(t.elementals) {
+		test.Errorf("wrong number of elementals: got %d, want %d",
+			len(t.elementals), le)
+	}
+	if lc != len(t.cstack) {
+		test.Errorf("wrong number of counters: got %d, want %d",
+			len(t.cstack), lc)
+	}
+}
+
+// Differentiation rules
+
 // testcase defines a test of a single expression on
 // several inputs.
 type testcase struct {
@@ -268,36 +316,4 @@ func TestElemental(t *testing.T) {
 				{{0., 0.}, {1., -1.}},
 				{{1., 2.}, {1., -1.}}}},
 	})
-}
-
-// When we pop we must return to where we were before
-func TestPop(test *testing.T) {
-	lr := len(t.records)
-	lp := len(t.places)
-	lv := len(t.values)
-	le := len(t.elementals)
-	lc := len(t.cstack)
-	ddx([]float64{0., 1.}, func(x []float64) {
-		Assignment(&x[1], Arithmetic(OpAdd, &x[0], &x[1]))
-	})
-	if lr != len(t.records) {
-		test.Errorf("wrong number of records: got %d, want %d",
-			len(t.records), lr)
-	}
-	if lp != len(t.places) {
-		test.Errorf("wrong number of places: got %d, want %d",
-			len(t.places), lp)
-	}
-	if lv != len(t.values) {
-		test.Errorf("wrong number of values: got %d, want %d",
-			len(t.values), lv)
-	}
-	if le != len(t.elementals) {
-		test.Errorf("wrong number of elementals: got %d, want %d",
-			len(t.elementals), le)
-	}
-	if lc != len(t.cstack) {
-		test.Errorf("wrong number of counters: got %d, want %d",
-			len(t.cstack), lc)
-	}
 }
