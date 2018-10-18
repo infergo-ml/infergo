@@ -33,10 +33,10 @@ func init() {
 	}
 }
 
-// A record specifies the record type and indexes the tape memory
-// to specify record argument. At the cost of one redirection,
-// the number of memory alplaces is logarithmic in the number
-// of instructions, and a record has a fixed size.
+// A record specifies the record type and indexes the tape
+// memory to specify the record arguments. At the cost of one
+// redirection, the number of memory allocations is logarithmic
+// in the number of instructions, and a record has a fixed size.
 type record struct {
 	typ, op int //  record type and opcode or index of gradient
 	p, v    int // indices of the first place and value
