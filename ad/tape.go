@@ -125,7 +125,9 @@ func Assignment(p *float64, px *float64) *float64 {
 
 // Arithmetic encodes an arithmetic operation and returns
 // the location of the result.
-func Arithmetic(op int, p *float64, px ...*float64) *float64 {
+func Arithmetic(op int, px ...*float64) *float64 {
+	p := Place(Value(0.))
+
 	// register
 	r := record{
 		typ: typArithmetic,
@@ -159,7 +161,9 @@ func Arithmetic(op int, p *float64, px ...*float64) *float64 {
 // To call gradient without allocation on backward pass,
 // argument values are copied to the tape memory.
 // Elemental returns the location of the result.
-func Elemental(f interface{}, p *float64, px ...*float64) *float64 {
+func Elemental(f interface{}, px ...*float64) *float64 {
+	p := Place(Value(0.))
+
 	g, ok := ElementalGradient(f)
 	if !ok {
 		// actually an elemental
