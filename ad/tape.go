@@ -8,29 +8,30 @@ import (
 // Implementation of the AD tape
 
 // There is one global tape.
-var t tape
+var t *tape
 
 // A tape is a list of records and the memory
 type tape struct {
 	records    []record             // recorded instructions
 	places     []*float64           // variable places
 	values     []float64            // stored values
-	nargs      []int                // numbers of arguments of elementals
 	elementals []elemental          // gradients of elementals
 	adjoints   map[*float64]float64 // adjoints
 	cstack     []counters           // counter stack (see below)
 }
 
 func init() {
-	t = tape{
+	t = &tape{
 		records:    make([]record, 0),
 		places:     make([]*float64, 0),
 		values:     make([]float64, 0),
-		nargs:      make([]int, 0),
 		elementals: make([]elemental, 0),
 		adjoints:   make(map[*float64]float64),
 		cstack:     make([]counters, 0),
 	}
+	// Returned value is passed through the first place
+	// and value.
+	Place(Value(0.))
 }
 
 // A record specifies the record type and indexes the tape
@@ -235,8 +236,8 @@ func Call(f func(), px ...*float64) *float64 {
 		Place(py)
 	}
 	f()
-	// The return value is the last allocated place.
-	return t.places[len(t.places)-1]
+	// The returned value is in the first place.
+	return t.places[0]
 }
 
 // Enter copies the actual parameters to the formal parameters.
@@ -249,7 +250,7 @@ func Enter(px ...*float64) {
 
 // Return returns the result of the differentiated function.
 func Return(px *float64) float64 {
-	Assignment(Place(Value(0.)), px)
+	Assignment(t.places[0], px)
 	return *px
 }
 

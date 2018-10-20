@@ -368,5 +368,30 @@ func TestCall(t *testing.T) {
 			[][][]float64{
 				{{0., 0.}, {1., 1.}},
 				{{1., 2.}, {1., 1.}}}},
+		{"(px, py -> *px = *py)(&x, &y); x + y",
+			func(x []float64) {
+				Call(func() {
+					func(a, b *float64) {
+						Assignment(a, b)
+					}(&x[0], &x[1])
+				})
+				Arithmetic(OpAdd, &x[0], &x[1])
+			},
+			[][][]float64{
+				{{0., 0.}, {0., 2.}},
+				{{1., 2.}, {0., 2.}}}},
+		{"(px, py -> *px = *py)(&x, &y); x * y",
+			func(x []float64) {
+				Call(func() {
+					func(a, b *float64) {
+						Assignment(a, b)
+					}(&x[0], &x[1])
+				})
+				Arithmetic(OpMul, &x[0], &x[1])
+			},
+			[][][]float64{
+				{{0., 0.}, {0., 0.}},
+				{{1., 2.}, {0., 4.}},
+				{{1., 3.}, {0., 6.}}}},
 	})
 }
