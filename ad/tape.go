@@ -29,8 +29,8 @@ func init() {
 		adjoints:   make(map[*float64]float64),
 		cstack:     make([]counters, 0),
 	}
-	// Returned value is passed through the first place
-	// and value.
+	// The returned value is in the first place;
+	// see Call and Return below.
 	Place(Value(0.))
 }
 
@@ -250,6 +250,7 @@ func Enter(px ...*float64) {
 
 // Return returns the result of the differentiated function.
 func Return(px *float64) float64 {
+	// The returned value goes into the first place.
 	Assignment(t.places[0], px)
 	return *px
 }
