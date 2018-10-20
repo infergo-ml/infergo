@@ -8,7 +8,7 @@ import (
 // Implementation of the AD tape
 
 // There is one global tape.
-var t *tape
+var t tape
 
 // A tape is a list of records and the memory
 type tape struct {
@@ -21,7 +21,7 @@ type tape struct {
 }
 
 func init() {
-	t = &tape{
+	t = tape{
 		records:    make([]record, 0),
 		places:     make([]*float64, 0),
 		values:     make([]float64, 0),
