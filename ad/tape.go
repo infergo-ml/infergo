@@ -1,11 +1,11 @@
 package ad
 
+// Implementation of the AD tape
+
 import (
 	"fmt"
 	"reflect"
 )
-
-// Implementation of the AD tape
 
 // There is one global tape.
 var t tape

@@ -1,2 +1,2 @@
-// inference algorithms
+// Inference algorithms
 package infer
