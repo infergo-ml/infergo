@@ -96,19 +96,19 @@ End:
 // writePackage writes the differentiated model as
 // a Go package source.
 func writePackage(adModel string, pkg *ast.Package) error {
-    // Create the directory for the differentiated model.
+	// Create the directory for the differentiated model.
 	err := os.Mkdir(adModel, os.ModePerm)
 	if err != nil &&
-        // The only error we can tolerate is that the directory
-        // already exists (for example from an earlier
-        // differentiation).
+		// The only error we can tolerate is that the directory
+		// already exists (for example from an earlier
+		// differentiation).
 		!strings.Contains(err.Error(), "file exists") {
 		return err
 	}
 
-    // Write files to the ad subpackage under the same names.
-    // A fresh file set is created because it is mainly useful
-    // for comments, and we dropped the comments anyway.
+	// Write files to the ad subpackage under the same names.
+	// A fresh file set is created because it is mainly useful
+	// for comments, and we dropped the comments anyway.
 	fset := token.NewFileSet()
 	for fPath, fAst := range pkg.Files {
 		_, fName := path.Split(fPath)
