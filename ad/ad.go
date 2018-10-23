@@ -36,6 +36,7 @@ package ad
 // of the model's package.
 
 import (
+    "strings"
     "os"
     "path"
     "fmt"
@@ -53,7 +54,7 @@ func Differentiate(model string) error {
     // Read the source code.
     // If there are any errors in the source code, stop.
     fset := token.NewFileSet()
-    pkgs, err := parser.ParseDir(fset, model, nil, parser.ParseComments) 
+    pkgs, err := parser.ParseDir(fset, model, nil, 0)
     if(err != nil) {
         return err
     }
@@ -72,15 +73,26 @@ func Differentiate(model string) error {
     // Rewrite the AST to add automatic differentation.
 
     // Write the source code to the updated package.
-    f, err := os.Create(path.Join(model, "ad/ad.go"))
-    defer f.Close()
-    if err != nil {
+    
+    adPath := path.Join(model, "ad")
+    err = os.Mkdir(adPath, os.ModePerm)
+    if err != nil && 
+        !strings.Contains(err.Error(), "file exists") {
         return err
     }
 
-    w := bufio.NewWriter(f)
-    defer w.Flush()
-    printer.Fprint(w, fset, pkg)
+    for fPath, fAst := range pkg.Files {
+        _, fName := path.Split(fPath)
+        f, err := os.Create(path.Join(adPath, fName))
+        defer f.Close()
+        if err != nil {
+            return err
+        }
+
+        w := bufio.NewWriter(f)
+        defer w.Flush()
+        printer.Fprint(w, fset, fAst)
+    }
 
     return nil
 }
