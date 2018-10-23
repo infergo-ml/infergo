@@ -1,6 +1,8 @@
 all: deriv
 
-deriv: deriv.go
+.PHONY: deriv
+
+deriv:
 	go test ./...
 	go build deriv.go
 

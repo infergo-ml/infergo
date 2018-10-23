@@ -17,7 +17,7 @@ package ad
 // Functions are considered elementals (and must have a
 // registered derivative):
 //   a) if they are defined in a different package, and
-//   b) their signature is of kind 
+//   b) their signature is of kind
 //                  func (float64, ...float64) float64
 //      that is, at least one float64 argument and float64 return
 //      value. For example, function
@@ -26,7 +26,7 @@ package ad
 //                  func ([]float64) float64
 //                  func (int, float64) float64
 //      are not.
-//  
+//
 // Derivatives do not propagate through a function that is not
 // an elemental or a call to a model method. If a derivative is
 // not registered for an elemental, calling the elemental in a
@@ -36,64 +36,91 @@ package ad
 // of the model's package.
 
 import (
-    "strings"
-    "os"
-    "path"
-    "fmt"
-    "bufio"
-    "go/token"
-    "go/ast"
-    "go/parser"
-    "go/printer"
+	"bufio"
+	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/printer"
+	"go/token"
+	"os"
+	"path"
+	"strings"
 )
 
 // Differentiate differentiates a model. The original model is
 // in the package located at model. The differentiated model
 // is written to model/ad.
 func Differentiate(model string) error {
-    // Read the source code.
-    // If there are any errors in the source code, stop.
-    fset := token.NewFileSet()
-    pkgs, err := parser.ParseDir(fset, model, nil, 0)
-    // Comments are hard to be moved 
-    if(err != nil) {
-        return err
-    }
-    // there should be a single package, retrieve it
-    var pkg *ast.Package
-    for k, v := range pkgs {
-        if pkg != nil {
-            return fmt.Errorf("multiple packages: %s and %s",
-                pkg.Name, k)
-        }
-        pkg = v
-    }
+	// Read the source code.
+	// If there are any errors in the source code, stop.
+	pkg, err := parsePackage(model)
+	if err != nil {
+		return err
+	}
 
-    // Typecheck the package.
+	// Typecheck the package.
 
-    // Rewrite the AST to add automatic differentation.
+	// Rewrite the AST to add automatic differentation.
 
-    // Write the source code to the updated package.
-    
-    adPath := path.Join(model, "ad")
-    err = os.Mkdir(adPath, os.ModePerm)
-    if err != nil && 
-        !strings.Contains(err.Error(), "file exists") {
-        return err
-    }
+	// Write the source code to the updated package.
+	return writePackage(path.Join(model, "ad"), pkg)
+}
 
-    for fPath, fAst := range pkg.Files {
-        _, fName := path.Split(fPath)
-        f, err := os.Create(path.Join(adPath, fName))
-        defer f.Close()
-        if err != nil {
-            return err
-        }
+// parsePackage parses the model's source code and returns
+// the parsed package and an error. If the model was parsed
+// successfully, the error is nil.
+func parsePackage(model string) (pkg *ast.Package, err error) {
+	// Read the source code.
+	// If there are any errors in the source code, stop.
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseDir(fset, model, nil, 0)
+	if err != nil { // parse error
+		goto End
+	}
 
-        w := bufio.NewWriter(f)
-        defer w.Flush()
-        printer.Fprint(w, fset, fAst)
-    }
+	// There should be a single package, retrieve it.
+	// If there is more than a single package, stop.
+	for k, v := range pkgs {
+		if pkg != nil {
+			err = fmt.Errorf("multiple packages: %s and %s",
+				pkg.Name, k)
+			goto End
+		}
+		pkg = v
+	}
 
-    return nil
+End:
+	return pkg, err
+}
+
+// writePackage writes the differentiated model as
+// a Go package source.
+func writePackage(adModel string, pkg *ast.Package) error {
+    // Create the directory for the differentiated model.
+	err := os.Mkdir(adModel, os.ModePerm)
+	if err != nil &&
+        // The only error we can tolerate is that the directory
+        // already exists (for example from an earlier
+        // differentiation).
+		!strings.Contains(err.Error(), "file exists") {
+		return err
+	}
+
+    // Write files to the ad subpackage under the same names.
+    // A fresh file set is created because it is mainly useful
+    // for comments, and we dropped the comments anyway.
+	fset := token.NewFileSet()
+	for fPath, fAst := range pkg.Files {
+		_, fName := path.Split(fPath)
+		f, err := os.Create(path.Join(adModel, fName))
+		defer f.Close()
+		if err != nil {
+			return err
+		}
+		w := bufio.NewWriter(f)
+		defer w.Flush()
+		printer.Fprint(w, fset, fAst)
+	}
+
+	return nil
 }
