@@ -4,18 +4,14 @@ import (
 	"bitbucket.org/dtolpin/infergo/ad"
 	"flag"
 	"log"
-	"os"
 )
 
 var (
 // command line flags
 )
 
-// l is the global logger
-var l *log.Logger
-
 func init() {
-	l = log.New(os.Stderr, "deriv: ", 0)
+	log.SetFlags(0)
 }
 
 func main() {
@@ -36,6 +32,6 @@ func main() {
 func deriv(model string) {
     err := ad.Deriv(model)
     if err != nil {
-        l.Printf("ERROR: %v", err.Error())
+        log.Printf("ERROR: %v", err.Error())
     }
 }
