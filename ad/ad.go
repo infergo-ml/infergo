@@ -55,6 +55,7 @@ func Differentiate(model string) error {
     // If there are any errors in the source code, stop.
     fset := token.NewFileSet()
     pkgs, err := parser.ParseDir(fset, model, nil, 0)
+    // Comments are hard to be moved 
     if(err != nil) {
         return err
     }
