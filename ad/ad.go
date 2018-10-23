@@ -47,10 +47,10 @@ import (
 	"strings"
 )
 
-// Differentiate differentiates a model. The original model is
+// Deriv differentiates a model. The original model is
 // in the package located at model. The differentiated model
 // is written to model/ad.
-func Differentiate(model string) error {
+func Deriv(model string) error {
 	// Read the source code.
 	// If there are any errors in the source code, stop.
 	pkg, err := parsePackage(model)
@@ -82,8 +82,8 @@ func parsePackage(model string) (pkg *ast.Package, err error) {
 	// If there is more than a single package, stop.
 	for k, v := range pkgs {
 		if pkg != nil {
-			err = fmt.Errorf("multiple packages: %s and %s",
-				pkg.Name, k)
+			err = fmt.Errorf("multiple packages in %s: %s and %s",
+				model, pkg.Name, k)
 			goto End
 		}
 		pkg = v
