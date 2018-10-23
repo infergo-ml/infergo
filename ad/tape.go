@@ -100,7 +100,7 @@ func push(n int) {
 }
 
 // register stores locations of function parameters
-// in the beginning of the current frame of places.
+// at the beginning of the current frame's places.
 // The places are then used to collect the partial
 // derivatives of the gradient.
 func register(x []float64) {
@@ -257,19 +257,34 @@ func Return(px *float64) float64 {
 
 // Backward pass
 
-// Function Gradient performs the backward pass on
-// the tape and returns the gradient. It should be
-// called immediately after the call to an automatically
-// differentiated function, and can be called only once
-// per call to an automatically differentiated function.
+// Gradient performs the backward pass on the tape and returns
+// the gradient. It should be called immediately after the call
+// to an automatically differentiated function, and can be
+// called only once per call to an automatically differentiated
+// function.
 func Gradient() []float64 {
 	backward()
 	partials := partials()
-	pop()
+	Pop()
 	return partials
 }
 
-// Function backward runs the backward pass on the tape.
+// Pop deallocates current tape fragment from the tape.
+// Gradient calls Pop; when the gradient is not needed, Pop can
+// be called directly to skip gradient computation.
+func Pop() {
+	c := &t.cstack[len(t.cstack)-1]
+	for i := c.p; i != len(t.places); i++ {
+		delete(t.adjoints, t.places[i])
+	}
+	t.records = t.records[:c.r]
+	t.places = t.places[:c.p]
+	t.values = t.values[:c.v]
+	t.elementals = t.elementals[:c.e]
+	t.cstack = t.cstack[:len(t.cstack)-1]
+}
+
+// backward runs the backward pass on the tape.
 func backward() {
 	r := t.records[len(t.records)-1]
 	// Set the adjoint of the result to 1.
@@ -328,8 +343,8 @@ func backward() {
 	}
 }
 
-// Function partials collects the partial derivatives;
-// first c.n places are parameters.
+// partials collects the partial derivatives; first c.n places
+// are parameters.
 func partials() []float64 {
 	c := &t.cstack[len(t.cstack)-1]
 	partials := make([]float64, c.n)
@@ -337,17 +352,4 @@ func partials() []float64 {
 		partials[i] = t.adjoints[t.places[c.p+i]]
 	}
 	return partials
-}
-
-// Function pop deallocates current tape fragment from the tape.
-func pop() {
-	c := &t.cstack[len(t.cstack)-1]
-	for i := c.p; i != len(t.places); i++ {
-		delete(t.adjoints, t.places[i])
-	}
-	t.records = t.records[:c.r]
-	t.places = t.places[:c.p]
-	t.values = t.values[:c.v]
-	t.elementals = t.elementals[:c.e]
-	t.cstack = t.cstack[:len(t.cstack)-1]
 }
