@@ -35,4 +35,52 @@ package ad
 // The differentiated model is put into subpackage 'ad'
 // of the model's package.
 
-import ()
+import (
+    "os"
+    "path"
+    "fmt"
+    "bufio"
+    "go/token"
+    "go/ast"
+    "go/parser"
+    "go/printer"
+)
+
+// Differentiate differentiates a model. The original model is
+// in the package located at model. The differentiated model
+// is written to model/ad.
+func Differentiate(model string) error {
+    // Read the source code.
+    // If there are any errors in the source code, stop.
+    fset := token.NewFileSet()
+    pkgs, err := parser.ParseDir(fset, model, nil, parser.ParseComments) 
+    if(err != nil) {
+        return err
+    }
+    // there should be a single package, retrieve it
+    var pkg *ast.Package
+    for k, v := range pkgs {
+        if pkg != nil {
+            return fmt.Errorf("multiple packages: %s and %s",
+                pkg.Name, k)
+        }
+        pkg = v
+    }
+
+    // Typecheck the package.
+
+    // Rewrite the AST to add automatic differentation.
+
+    // Write the source code to the updated package.
+    f, err := os.Create(path.Join(model, "ad/ad.go"))
+    defer f.Close()
+    if err != nil {
+        return err
+    }
+
+    w := bufio.NewWriter(f)
+    defer w.Flush()
+    printer.Fprint(w, fset, pkg)
+
+    return nil
+}
