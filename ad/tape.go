@@ -8,10 +8,10 @@ import (
 )
 
 // There is one global tape.
-var t tape
+var tape oneGlobalTape
 
 // A tape is a list of records and the memory
-type tape struct {
+type oneGlobalTape struct {
 	records    []record             // recorded instructions
 	places     []*float64           // variable places
 	values     []float64            // stored values
@@ -21,7 +21,7 @@ type tape struct {
 }
 
 func init() {
-	t = tape{
+	tape = oneGlobalTape{
 		records:    make([]record, 0),
 		places:     make([]*float64, 0),
 		values:     make([]float64, 0),
@@ -91,12 +91,12 @@ func Setup(x []float64) {
 func push(n int) {
 	c := counters{
 		n: n,
-		r: len(t.records),
-		p: len(t.places),
-		v: len(t.values),
-		e: len(t.elementals),
+		r: len(tape.records),
+		p: len(tape.places),
+		v: len(tape.values),
+		e: len(tape.elementals),
 	}
-	t.cstack = append(t.cstack, c)
+	tape.cstack = append(tape.cstack, c)
 }
 
 // register stores locations of function parameters
@@ -112,13 +112,13 @@ func register(x []float64) {
 // Constant adds value v to the memory and returns
 // the location of the value.
 func Value(v float64) *float64 {
-	t.values = append(t.values, v)
-	return &t.values[len(t.values)-1]
+	tape.values = append(tape.values, v)
+	return &tape.values[len(tape.values)-1]
 }
 
 // Variable adds place p to the memory and returns p.
 func Place(p *float64) *float64 {
-	t.places = append(t.places, p)
+	tape.places = append(tape.places, p)
 	return p
 }
 
@@ -127,12 +127,12 @@ func Assignment(p *float64, px *float64) {
 	// register
 	r := record{
 		typ: typAssignment,
-		p:   len(t.places),
-		v:   len(t.values),
+		p:   len(tape.places),
+		v:   len(tape.values),
 	}
-	t.places = append(t.places, p, px)
-	t.values = append(t.values, *p)
-	t.records = append(t.records, r)
+	tape.places = append(tape.places, p, px)
+	tape.values = append(tape.values, *p)
+	tape.records = append(tape.records, r)
 
 	// run
 	*p = *px
@@ -147,11 +147,11 @@ func Arithmetic(op int, px ...*float64) *float64 {
 	r := record{
 		typ: typArithmetic,
 		op:  op,
-		p:   len(t.places),
+		p:   len(tape.places),
 	}
-	t.places = append(t.places, p)
-	t.places = append(t.places, px...)
-	t.records = append(t.records, r)
+	tape.places = append(tape.places, p)
+	tape.places = append(tape.places, px...)
+	tape.records = append(tape.records, r)
 
 	// run
 	switch op {
@@ -188,21 +188,21 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 	// register
 	r := record{
 		typ: typElemental,
-		op:  len(t.elementals),
-		p:   len(t.places),
-		v:   len(t.values),
+		op:  len(tape.elementals),
+		p:   len(tape.places),
+		v:   len(tape.values),
 	}
 	e := elemental{
 		n: len(px),
 		g: g,
 	}
-	t.places = append(t.places, p)
-	t.places = append(t.places, px...)
+	tape.places = append(tape.places, p)
+	tape.places = append(tape.places, px...)
 	for _, py := range px {
-		t.values = append(t.values, *py)
+		tape.values = append(tape.values, *py)
 	}
-	t.elementals = append(t.elementals, e)
-	t.records = append(t.records, r)
+	tape.elementals = append(tape.elementals, e)
+	tape.records = append(tape.records, r)
 
 	// run
 	// Any elemental function can be called, but one-
@@ -237,21 +237,21 @@ func Call(f func(), px ...*float64) *float64 {
 	}
 	f()
 	// The returned value is in the first place.
-	return t.places[0]
+	return tape.places[0]
 }
 
 // Enter copies the actual parameters to the formal parameters.
 func Enter(px ...*float64) {
-	i0 := len(t.places) - len(px)
+	i0 := len(tape.places) - len(px)
 	for i, py := range px {
-		Assignment(py, t.places[i0+i])
+		Assignment(py, tape.places[i0+i])
 	}
 }
 
 // Return returns the result of the differentiated function.
 func Return(px *float64) float64 {
 	// The returned value goes into the first place.
-	Assignment(t.places[0], px)
+	Assignment(tape.places[0], px)
 	return *px
 }
 
@@ -273,69 +273,69 @@ func Gradient() []float64 {
 // Gradient calls Pop; when the gradient is not needed, Pop can
 // be called directly to skip gradient computation.
 func Pop() {
-	c := &t.cstack[len(t.cstack)-1]
-	for i := c.p; i != len(t.places); i++ {
-		delete(t.adjoints, t.places[i])
+	c := &tape.cstack[len(tape.cstack)-1]
+	for i := c.p; i != len(tape.places); i++ {
+		delete(tape.adjoints, tape.places[i])
 	}
-	t.records = t.records[:c.r]
-	t.places = t.places[:c.p]
-	t.values = t.values[:c.v]
-	t.elementals = t.elementals[:c.e]
-	t.cstack = t.cstack[:len(t.cstack)-1]
+	tape.records = tape.records[:c.r]
+	tape.places = tape.places[:c.p]
+	tape.values = tape.values[:c.v]
+	tape.elementals = tape.elementals[:c.e]
+	tape.cstack = tape.cstack[:len(tape.cstack)-1]
 }
 
 // backward runs the backward pass on the tape.
 func backward() {
-	r := t.records[len(t.records)-1]
+	r := tape.records[len(tape.records)-1]
 	// Set the adjoint of the result to 1.
-	t.adjoints[t.places[r.p]] = 1.        // set result's adjoint to 1
-	bottom := t.cstack[len(t.cstack)-1].r // bottom is the first record
-	for ir := len(t.records); ir != bottom; {
+	tape.adjoints[tape.places[r.p]] = 1.        // set result's adjoint to 1
+	bottom := tape.cstack[len(tape.cstack)-1].r // bottom is the first record
+	for ir := len(tape.records); ir != bottom; {
 		ir--
-		r := &t.records[ir]
-		a := t.adjoints[t.places[r.p]]
+		r := &tape.records[ir]
+		a := tape.adjoints[tape.places[r.p]]
 		// Only assignment may have the same location
 		// on both the right-hand and the left-hand.
 		switch r.typ {
 		case typAssignment: // x; d/dx = 1
 			// Restore previous value
-			*t.places[r.p] = t.values[r.v]
+			*tape.places[r.p] = tape.values[r.v]
 			// Update the adjoints: the adjoint of the left-hand side
 			// is zero (because it is overwritten) except if
 			// the right-hand side is the same location.
-			t.adjoints[t.places[r.p]] = 0.
-			t.adjoints[t.places[r.p+1]] += a
+			tape.adjoints[tape.places[r.p]] = 0.
+			tape.adjoints[tape.places[r.p+1]] += a
 		case typArithmetic:
 			switch r.op {
 			case OpNeg: // -x; d/dx = -1
-				t.adjoints[t.places[r.p+1]] -= a
+				tape.adjoints[tape.places[r.p+1]] -= a
 			case OpAdd: // x + y; d/dx = 1; d/dy = 1
-				t.adjoints[t.places[r.p+1]] += a
-				t.adjoints[t.places[r.p+2]] += a
+				tape.adjoints[tape.places[r.p+1]] += a
+				tape.adjoints[tape.places[r.p+2]] += a
 			case OpSub: // x - y; d/dx = 1; d/dy = -1
-				t.adjoints[t.places[r.p+1]] += a
-				t.adjoints[t.places[r.p+2]] -= a
+				tape.adjoints[tape.places[r.p+1]] += a
+				tape.adjoints[tape.places[r.p+2]] -= a
 			case OpMul: // x * y; d/dx = y; d/dy = x
-				ax := a * *t.places[r.p+2]
-				ay := a * *t.places[r.p+1]
-				t.adjoints[t.places[r.p+1]] += ax
-				t.adjoints[t.places[r.p+2]] += ay
+				ax := a * *tape.places[r.p+2]
+				ay := a * *tape.places[r.p+1]
+				tape.adjoints[tape.places[r.p+1]] += ax
+				tape.adjoints[tape.places[r.p+2]] += ay
 			case OpDiv: // x / y; d/dx = 1 / y; d/dy = - d/dx * p
-				ax := a / *t.places[r.p+2]
-				ay := -ax * *t.places[r.p]
-				t.adjoints[t.places[r.p+1]] += ax
-				t.adjoints[t.places[r.p+2]] += ay
+				ax := a / *tape.places[r.p+2]
+				ay := -ax * *tape.places[r.p]
+				tape.adjoints[tape.places[r.p+1]] += ax
+				tape.adjoints[tape.places[r.p+2]] += ay
 			default:
 				panic(fmt.Sprintf("bad opcode %v", r.op))
 			}
 		case typElemental: // f(x, y, ...)
-			e := &t.elementals[r.op]
-			d := e.g(*t.places[r.p],
-				// Parameters must be copied to t.values during
+			e := &tape.elementals[r.op]
+			d := e.g(*tape.places[r.p],
+				// Parameters must be copied to tape.values during
 				// the forward pass.
-				t.values[r.v:r.v+e.n]...)
+				tape.values[r.v:r.v+e.n]...)
 			for i := 0; i != e.n; i++ {
-				t.adjoints[t.places[r.p+1+i]] += a * d[i]
+				tape.adjoints[tape.places[r.p+1+i]] += a * d[i]
 			}
 		default:
 			panic(fmt.Sprintf("bad type %v", r.typ))
@@ -346,10 +346,10 @@ func backward() {
 // partials collects the partial derivatives; first c.n places
 // are parameters.
 func partials() []float64 {
-	c := &t.cstack[len(t.cstack)-1]
+	c := &tape.cstack[len(tape.cstack)-1]
 	partials := make([]float64, c.n)
 	for i := 0; i != c.n; i++ {
-		partials[i] = t.adjoints[t.places[c.p+i]]
+		partials[i] = tape.adjoints[tape.places[c.p+i]]
 	}
 	return partials
 }

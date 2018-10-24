@@ -82,9 +82,13 @@ func Deriv(model string) (err error) {
 // the parsed package and an error. If the model was parsed
 // successfully, the error is nil.
 func parseModel(model string) (
-	fset *token.FileSet, pkg *ast.Package, err error) {
+	fset *token.FileSet,
+	pkg *ast.Package,
+	err error,
+) {
 	// Read the source code.
 	// If there are any errors in the source code, stop.
+	fset = token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, model, nil, 0)
 	if err != nil { // parse error
 		goto End
@@ -94,7 +98,7 @@ func parseModel(model string) (
 	// If there is more than a single package, stop.
 	for k, v := range pkgs {
 		if pkg != nil {
-			err = fmt.Errorf("multiple packages in %s: %s and %s",
+			err = fmt.Errorf("multiple packages in %q: %s and %s",
 				model, pkg.Name, k)
 			goto End
 		}
@@ -108,8 +112,10 @@ End:
 // checkModel typechecks the model and builds the info
 // structure.
 func checkModel(
-	model string, fset *token.FileSet, pkg *ast.Package) (
-	info *types.Info, err error) {
+	model string,
+	fset *token.FileSet,
+	pkg *ast.Package,
+) (info *types.Info, err error) {
 	conf := types.Config{Importer: importer.Default()}
 	// Check expects the package as a slice of file ASTs.
 	var files []*ast.File
@@ -127,15 +133,90 @@ func checkModel(
 // derivModel differentiates the model through rewriting
 // the ASTs.
 func derivModel(
-	fset *token.FileSet, pkg *ast.Package, info *types.Info) (
-	err error) {
+	fset *token.FileSet,
+	pkg *ast.Package,
+	info *types.Info,
+) (err error) {
+    modelTypes, err := collectModelTypes(fset, pkg, info)
+    modelTypes = modelTypes
 	return err
+}
+
+// collectModelTypes collects and returns the types of models
+// defined in the package.
+func collectModelTypes(
+	fset *token.FileSet,
+	pkg *ast.Package,
+	info *types.Info,
+) (modelTypes []types.Type, err error) {
+	// Identify the model type (or types)
+    modelTypes = make([]types.Type, 0, 1)
+	for _, file := range pkg.Files {
+		for _, d := range file.Decls {
+			if d, ok := d.(*ast.FuncDecl); ok {
+				if strings.Compare(d.Name.Name, "Observe") == 0 {
+					// May be the observe method, but check the
+					// signature.
+					t := info.TypeOf(d.Name).(*types.Signature)
+					if isObserveSignature(t) {
+                        modelTypes = append(modelTypes,
+                            t.Recv().Type())
+					}
+				}
+			}
+		}
+	}
+    if len(modelTypes) == 0 {
+        err = fmt.Errorf("no model in package %s", pkg.Name)
+    }
+	return modelTypes, err
+}
+
+// isObserveSignature returns true iff the signature is that of
+// the Observe method: func ([]float64) float64
+func isObserveSignature(t *types.Signature) (ok bool) {
+	// Consider pattern matching for go/types
+	ok = true
+
+	// Is a method
+	ok = ok && t.Recv() != nil
+
+	// Returns a single float64
+	ok = ok && t.Results().Len() == 1 // returns a single result
+	if !ok {
+		return ok
+	}
+	rt, ok := t.Results().At(0).Type().(*types.Basic)
+	if !ok {
+		return ok
+	}
+	ok = rt.Kind() == types.Float64 // the result is float64
+
+	// Accepts a single []float64
+	ok = ok && t.Params().Len() == 1 // accepts a single parameter
+	if !ok {
+		return ok
+	}
+	pt, ok := t.Params().At(0).Type().(*types.Slice) // a slice
+	if !ok {
+		return ok
+	}
+	et, ok := pt.Elem().(*types.Basic)
+	if !ok {
+		return ok
+	}
+	ok = et.Kind() == types.Float64 // the element type is float64
+
+	return ok
 }
 
 // writeModel writes the differentiated model as
 // a Go package source.
-func writeModel(admodel string,
-	fset *token.FileSet, pkg *ast.Package) (err error) {
+func writeModel(
+	admodel string,
+	fset *token.FileSet,
+	pkg *ast.Package,
+) (err error) {
 	// Create the directory for the differentiated model.
 	err = os.Mkdir(admodel, os.ModePerm)
 	if err != nil &&
@@ -145,6 +226,7 @@ func writeModel(admodel string,
 		!strings.Contains(err.Error(), "file exists") {
 		return err
 	}
+	err = nil
 
 	// Write files to the ad subpackage under the same names.
 	for fpath, file := range pkg.Files {
@@ -159,5 +241,5 @@ func writeModel(admodel string,
 		printer.Fprint(w, fset, file)
 	}
 
-	return nil
+	return err
 }
