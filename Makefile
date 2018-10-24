@@ -2,13 +2,16 @@ all: deriv
 
 .PHONY: deriv
 
-deriv:
-	go test ./...
+PACKAGES=ad model infer
+
+test:
+	for package in $(PACKAGES); do go test ./$$package; done
+
+deriv: test
 	go build deriv.go
 
 install: all
-	go test ./...
-	go install ./...
+	for package in $(PACKAGES); do install ./$$package; done
 	go install deriv.go
 
 clean:

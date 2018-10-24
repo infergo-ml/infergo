@@ -39,9 +39,11 @@ import (
 	"bufio"
 	"fmt"
 	"go/ast"
+	"go/importer"
 	"go/parser"
 	"go/printer"
 	"go/token"
+	"go/types"
 	"os"
 	"path"
 	"strings"
@@ -50,29 +52,39 @@ import (
 // Deriv differentiates a model. The original model is
 // in the package located at model. The differentiated model
 // is written to model/ad.
-func Deriv(model string) error {
-	// Read the source code.
-	// If there are any errors in the source code, stop.
-	pkg, err := parsePackage(model)
+func Deriv(model string) (err error) {
+	// Read the model.
+	fset, pkg, err := parseModel(model)
 	if err != nil {
 		return err
 	}
 
-	// Typecheck the package.
+	// Typecheck the model to build the info structure.
+	info, err := checkModel(model, fset, pkg)
+	if err != nil {
+		return err
+	}
 
-	// Rewrite the AST to add automatic differentation.
+	// Differentiate the model through rewriting the ASTs
+	// in place.
+	err = derivModel(fset, pkg, info)
+	if err != nil {
+		return err
+	}
 
-	// Write the source code to the updated package.
-	return writePackage(path.Join(model, "ad"), pkg)
+	// Finally write the model to subpackage 'ad'.
+	err = writeModel(path.Join(model, "ad"), fset, pkg)
+
+	return err
 }
 
-// parsePackage parses the model's source code and returns
+// parseModel parses the model's source code and returns
 // the parsed package and an error. If the model was parsed
 // successfully, the error is nil.
-func parsePackage(model string) (pkg *ast.Package, err error) {
+func parseModel(model string) (
+	fset *token.FileSet, pkg *ast.Package, err error) {
 	// Read the source code.
 	// If there are any errors in the source code, stop.
-	fset := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, model, nil, 0)
 	if err != nil { // parse error
 		goto End
@@ -90,14 +102,42 @@ func parsePackage(model string) (pkg *ast.Package, err error) {
 	}
 
 End:
-	return pkg, err
+	return fset, pkg, err
 }
 
-// writePackage writes the differentiated model as
+// checkModel typechecks the model and builds the info
+// structure.
+func checkModel(
+	model string, fset *token.FileSet, pkg *ast.Package) (
+	info *types.Info, err error) {
+	conf := types.Config{Importer: importer.Default()}
+	// Check expects the package as a slice of file ASTs.
+	var files []*ast.File
+	for _, file := range pkg.Files {
+		files = append(files, file)
+	}
+	info = &types.Info{
+		Defs: make(map[*ast.Ident]types.Object),
+		Uses: make(map[*ast.Ident]types.Object),
+	}
+	_, err = conf.Check(model, fset, files, info)
+	return info, err
+}
+
+// derivModel differentiates the model through rewriting
+// the ASTs.
+func derivModel(
+	fset *token.FileSet, pkg *ast.Package, info *types.Info) (
+	err error) {
+	return err
+}
+
+// writeModel writes the differentiated model as
 // a Go package source.
-func writePackage(adModel string, pkg *ast.Package) error {
+func writeModel(admodel string,
+	fset *token.FileSet, pkg *ast.Package) (err error) {
 	// Create the directory for the differentiated model.
-	err := os.Mkdir(adModel, os.ModePerm)
+	err = os.Mkdir(admodel, os.ModePerm)
 	if err != nil &&
 		// The only error we can tolerate is that the directory
 		// already exists (for example from an earlier
@@ -107,19 +147,16 @@ func writePackage(adModel string, pkg *ast.Package) error {
 	}
 
 	// Write files to the ad subpackage under the same names.
-	// A fresh file set is created because it is mainly useful
-	// for comments, and we dropped the comments anyway.
-	fset := token.NewFileSet()
-	for fPath, fAst := range pkg.Files {
-		_, fName := path.Split(fPath)
-		f, err := os.Create(path.Join(adModel, fName))
+	for fpath, file := range pkg.Files {
+		_, fname := path.Split(fpath)
+		f, err := os.Create(path.Join(admodel, fname))
 		defer f.Close()
 		if err != nil {
 			return err
 		}
 		w := bufio.NewWriter(f)
 		defer w.Flush()
-		printer.Fprint(w, fset, fAst)
+		printer.Fprint(w, fset, file)
 	}
 
 	return nil
