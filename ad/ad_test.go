@@ -1,89 +1,47 @@
 package ad
 
 import (
-	"bytes"
+	_ "bytes"
 	"fmt"
 	"go/token"
-	// "go/ast"
+	"go/ast"
 	"go/parser"
-	"go/printer"
 	"testing"
 )
 
+func Test(t *testing.T) {
+}
+
 // Tooling for comparing models
 
-// wrapper around model body
-func srcModel(body string) string {
-	return fmt.Sprintf(`package mymodel
+// The input to ad routines is a parsed package. Let's
+// emulate parsing a package on scripts.
+func parseTestModel(sources ...string) (
+    fset *token.FileSet,
+    pkg *ast.Package,
+) {
+    fset = token.NewFileSet()
 
-func (m *interface{}) Observe (parameters []float64) float64 {
-%s
-}`, body)
-}
-
-// wrapped around differentiated model body
-func diffModel(body string) string {
-	return fmt.Sprintf(`package mymodel
-import (
-	"bitbucket.org/dtolpin/infergo/ad"
-)
-
-func (m *interface{}) Observe (parameters []float64) float64 {
-%s
-}
-
-func (m *interface{}) Jacobian () []float64 {
-}`, body)
-}
-
-func sourcesEqual(got, expected string) bool {
-	// normalize source code by parsing and printing
-	fileSet := token.NewFileSet()
-
-	// parse it
-	gotTree, error := parser.ParseFile(fileSet, "", got, 0)
-	if error != nil {
-		panic(error)
+    // parse it
+    files := make(map[string]*ast.File)
+    for i, source := range sources {
+	fname := fmt.Sprintf("%v", i)
+	file, err := parser.ParseFile(fset, fname, source, 0)
+	if err != nil {
+		panic(err)
 	}
-	expectedTree, error := parser.ParseFile(fileSet, "", expected, 0)
-	if error != nil {
-		panic(error)
-	}
+	files[fname] = file
+    }
+    pkg, err  := ast.NewPackage(
+	fset,
+	files,
+	nil,
+	ast.NewScope(nil))
+    if  err != nil {
+	panic(err)
+    }
 
-	// print it
-	gotBuffer := new(bytes.Buffer)
-	expectedBuffer := new(bytes.Buffer)
-	printer.Fprint(gotBuffer, fileSet, gotTree)
-	printer.Fprint(expectedBuffer, fileSet, expectedTree)
-
-	println(gotTree, expectedTree)
-
-	// compare strings
-	return gotBuffer.String() == expectedBuffer.String()
+    return fset, pkg
 }
 
-// check that templates work and parsing normalizes
-func TestSourcesEqual(t *testing.T) {
-	for _, m := range []func(string) string{srcModel, diffModel} {
-		for _, c := range []struct {
-			got, expected string
-			equal         bool
-		}{
-			{"return 0.", "return 0.", true},
-			{"return 0.;", "return  0.", true},
-			{"return 0.", "return 1.", false},
-			{"return 0.", "return 0", false},
-		} {
-			g := m(c.got)
-			e := m(c.expected)
-			if sourcesEqual(g, e) != c.equal {
-				t.Errorf("'%s' and '%s' should %sbe equal",
-					g, e,
-					map[bool]string{
-						false: "not ",
-						true:  "",
-					}[c.equal])
-			}
-		}
-	}
-}
+
