@@ -138,6 +138,10 @@ func derivModel(
 	info *types.Info,
 ) (err error) {
     modelTypes, err := collectModelTypes(fset, pkg, info)
+    if err != nil {
+        return err
+    }
+
     modelTypes = modelTypes
 	return err
 }
