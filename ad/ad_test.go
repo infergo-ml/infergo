@@ -13,31 +13,26 @@ import (
 
 // The input to ad routines is a parsed package. Let's
 // emulate parsing a package on scripts.
-func parseTestModel(sources []string) (
-	fset *token.FileSet,
-	pkg *ast.Package,
-) {
-	fset = token.NewFileSet()
+func parseTestModel(m *model, sources []string) {
+	m.fset = token.NewFileSet()
 
 	// parse it
 	for i, source := range sources {
 		fname := fmt.Sprintf("file_%v", i)
 		if file, err := parser.ParseFile(
-			fset, fname, source, 0); err == nil {
+			m.fset, fname, source, 0); err == nil {
 			name := file.Name.Name
-			if pkg == nil {
-				pkg = &ast.Package{
+			if m.pkg == nil {
+				m.pkg = &ast.Package{
 					Name:  name,
 					Files: make(map[string]*ast.File),
 				}
 			}
-			pkg.Files[fname] = file
+			m.pkg.Files[fname] = file
 		} else {
 			panic(err)
 		}
 	}
-
-	return fset, pkg
 }
 
 func TestCollectModelTypes(t *testing.T) {
@@ -94,16 +89,14 @@ func (m ModelB) Observe(x []float64) float64 {
 				"double.ModelB": true,
 			}},
 	} {
-		fset, pkg := parseTestModel(c.model)
-		println(fset)
-		println(pkg)
-		println(fset)
-		info, err := checkModel(pkg.Name, fset, pkg)
+		m := &model{}
+		parseTestModel(m, c.model)
+		err := checkModel(m, m.pkg.Name)
 		if err != nil {
 			t.Errorf("failed to check model %v: %s",
-				pkg.Name, err)
+				m.pkg.Name, err)
 		}
-		modelTypes, err := collectModelTypes(fset, pkg, info)
+		modelTypes, err := collectModelTypes(m)
 		if len(modelTypes) > 0 && err != nil {
 			// Ignore the error when there is no model
 			panic(err)
@@ -111,13 +104,13 @@ func (m ModelB) Observe(x []float64) float64 {
 		for _, mt := range modelTypes {
 			if !c.types[mt.String()] {
 				t.Errorf("model %v: type %v is not a model",
-					pkg.Name, mt)
+					m.pkg.Name, mt)
 			}
 			delete(c.types, mt.String())
 		}
 		for k := range c.types {
 			t.Errorf("model %v: type %v was not collected",
-				pkg.Name, k)
+				m.pkg.Name, k)
 		}
 	}
 }
