@@ -35,7 +35,7 @@ func parseTestModel(m *model, sources []string) {
 	}
 }
 
-func TestCollectModelTypes(t *testing.T) {
+func TestCollectTypes(t *testing.T) {
 	for _, c := range []struct {
 		model []string
 		types map[string]bool
@@ -113,4 +113,10 @@ func (m ModelB) Observe(x []float64) float64 {
 				m.pkg.Name, k)
 		}
 	}
+}
+
+func TestCollectFiles(t *testing.T) {
+}
+
+func TestCollectMethods(t *testing.T) {
 }
