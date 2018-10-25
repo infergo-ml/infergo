@@ -91,12 +91,12 @@ func (m ModelB) Observe(x []float64) float64 {
 	} {
 		m := &model{}
 		parseTestModel(m, c.model)
-		err := checkModel(m, m.pkg.Name)
+		err := m.check(m.pkg.Name)
 		if err != nil {
 			t.Errorf("failed to check model %v: %s",
 				m.pkg.Name, err)
 		}
-		modelTypes, err := collectModelTypes(m)
+		modelTypes, err := m.collectTypes()
 		if len(modelTypes) > 0 && err != nil {
 			// Ignore the error when there is no model
 			panic(err)

@@ -50,7 +50,9 @@ import (
 	"strings"
 )
 
-// model contains shared data structures for compiled
+// Structure model contains shared data structures for
+// differentiating the model. Functions operating on 
+// *model are defined as method to use shorter names.
 type model struct {
 	fset *token.FileSet
 	pkg  *ast.Package
@@ -58,45 +60,45 @@ type model struct {
 }
 
 // Deriv differentiates a model. The original model is
-// in the package located at modelPath. The differentiated model
-// is written to modelPath/ad.
-func Deriv(modelPath string) (err error) {
+// in the package located at mpath. The differentiated model
+// is written to mpath/ad.
+func Deriv(mpath string) (err error) {
 	// Read the model.
 	m := &model{}
-	err = parseModel(m, modelPath)
+	err = m.parse(mpath)
 	if err != nil {
 		return err
 	}
 
 	// Typecheck the model to build the info structure.
-	err = checkModel(m, modelPath)
+	err = m.check(mpath)
 	if err != nil {
 		return err
 	}
 
 	// Differentiate the model through rewriting the ASTs
 	// in place.
-	err = derivModel(m)
+	err = m.deriv()
 	if err != nil {
 		return err
 	}
 
 	// Finally write the model to subpackage 'ad'.
-	err = writeModel(m, path.Join(modelPath, "ad"))
+	err = m.write(path.Join(mpath, "ad"))
 
 	return err
 }
 
 // Parsing
 
-// parseModel parses the model's source code and returns
+// parse parses the model's source code and returns
 // the parsed package and an error. If the model was parsed
 // successfully, the error is nil.
-func parseModel(m *model, modelPath string) (err error) {
+func (m *model) parse(mpath string) (err error) {
 	// Read the source code.
 	// If there are any errors in the source code, stop.
 	m.fset = token.NewFileSet()
-	pkgs, err := parser.ParseDir(m.fset, modelPath, nil, 0)
+	pkgs, err := parser.ParseDir(m.fset, mpath, nil, 0)
 	if err != nil { // parse error
 		goto End
 	}
@@ -106,7 +108,7 @@ func parseModel(m *model, modelPath string) (err error) {
 	for k, v := range pkgs {
 		if m.pkg != nil {
 			err = fmt.Errorf("multiple packages in %q: %s and %s",
-				modelPath, m.pkg.Name, k)
+				mpath, m.pkg.Name, k)
 			goto End
 		}
 		m.pkg = v
@@ -116,9 +118,9 @@ End:
 	return err
 }
 
-// checkModel typechecks the model and builds the info
+// check typechecks the model and builds the info
 // structure.
-func checkModel(m *model, modelPath string) (err error) {
+func (m *model) check(mpath string) (err error) {
 	conf := types.Config{Importer: importer.Default()}
 	// Check expects the package as a slice of file ASTs.
 	var files []*ast.File
@@ -129,7 +131,7 @@ func checkModel(m *model, modelPath string) (err error) {
 		Defs: make(map[*ast.Ident]types.Object),
 		Uses: make(map[*ast.Ident]types.Object),
 	}
-	_, err = conf.Check(modelPath, m.fset, files, m.info)
+	_, err = conf.Check(mpath, m.fset, files, m.info)
 	return err
 }
 
@@ -137,29 +139,29 @@ func checkModel(m *model, modelPath string) (err error) {
 
 const infergoImport = "bitbucket.org/dtolpin/infergo/ad"
 
-// derivModel differentiates the model through rewriting
+// deriv differentiates the model through rewriting
 // the ASTs.
-func derivModel(m *model) (err error) {
-	modelTypes, err := collectModelTypes(m)
+func (m *model) deriv() (err error) {
+	mtypes, err := m.collectTypes()
 	if err != nil {
 		return err
 	}
 
 	// Add infergo import to each file with model methods
-	modelFiles, err := collectModelFiles(m, modelTypes)
+	mfiles, err := m.collectFiles(mtypes)
 	if err != nil {
 		return err
 	}
-	for _, file := range modelFiles {
+	for _, file := range mfiles {
 		astutil.AddImport(m.fset, file, infergoImport)
 	}
 
 	// Differentiate each model method
-	modelMethods, err := collectModelMethods(m, modelTypes)
+	methods, err := m.collectMethods(mtypes)
 	if err != nil {
 		return err
 	}
-	for _, method := range modelMethods {
+	for _, method := range methods {
 		if strings.Compare(method.Name.Name, "Observe") == 0 {
 			// Differentiate the main model method.
 		} else {
@@ -171,11 +173,11 @@ func derivModel(m *model) (err error) {
 	return err
 }
 
-// collectModelTypes collects and returns the types of models
+// collectTypes collects and returns the types of models
 // defined in the package.
-func collectModelTypes(m *model) (modelTypes []types.Type, err error) {
+func (m *model) collectTypes() (mtypes []types.Type, err error) {
 	// Identify the model type (or types)
-	modelTypes = make([]types.Type, 0, 1)
+	mtypes = make([]types.Type, 0, 1)
 	for _, file := range m.pkg.Files {
 		for _, d := range file.Decls {
 			if d, ok := d.(*ast.FuncDecl); ok {
@@ -183,23 +185,22 @@ func collectModelTypes(m *model) (modelTypes []types.Type, err error) {
 					// May be the observe method, but check the
 					// signature.
 					t := m.info.TypeOf(d.Name).(*types.Signature)
-					if isObserveSignature(t) {
-						modelTypes = append(modelTypes,
-							t.Recv().Type())
+					if isObserve(t) {
+						mtypes = append(mtypes, t.Recv().Type())
 					}
 				}
 			}
 		}
 	}
-	if len(modelTypes) == 0 {
+	if len(mtypes) == 0 {
 		err = fmt.Errorf("no model in package %s", m.pkg.Name)
 	}
-	return modelTypes, err
+	return mtypes, err
 }
 
-// isObserveSignature returns true iff the signature is that of
+// isObserve returns true iff the signature is that of
 // the Observe method: func ([]float64) float64
-func isObserveSignature(t *types.Signature) (ok bool) {
+func isObserve(t *types.Signature) (ok bool) {
 	// Consider pattern matching for go/types
 	ok = true
 
@@ -235,70 +236,67 @@ func isObserveSignature(t *types.Signature) (ok bool) {
 	return ok
 }
 
-// collectModelFiles collects ASTs of files
+// collectFiles collects ASTs of files
 // where the model methods appear so that
 // imports can be added.
-func collectModelFiles(m *model, modelTypes []types.Type) (
-	modelFiles []*ast.File,
+func (m *model) collectFiles(mtypes []types.Type) (
+	mfiles []*ast.File,
 	err error,
 ) {
 	for _, file := range m.pkg.Files {
 		for _, d := range file.Decls {
 			if d, ok := d.(*ast.FuncDecl); ok &&
-				isModelMethod(m, modelTypes, d) {
-				modelFiles = append(modelFiles, file)
+				m.isMethod(mtypes, d) {
+				mfiles = append(mfiles, file)
 				break
 			}
 		}
 	}
 
-	return modelFiles, err
+	return mfiles, err
 }
 
-// collectModelMethods collects ASTs of methods
+// collectMethods collects ASTs of methods
 // defined on the models.
-func collectModelMethods(m *model, modelTypes []types.Type) (
-	modelMethods []*ast.FuncDecl,
+func (m *model) collectMethods(mtypes []types.Type) (
+	methods []*ast.FuncDecl,
 	err error,
 ) {
 	// We will mostly have a single model type; a linear
-	// lookup is the way to go (see isModelType below).
+	// lookup is the way to go (see isaType below).
 	for _, file := range m.pkg.Files {
 		for _, d := range file.Decls {
 			if d, ok := d.(*ast.FuncDecl); ok &&
-				isModelMethod(m, modelTypes, d) {
-				modelMethods = append(modelMethods, d)
+				m.isMethod(mtypes, d) {
+				methods = append(methods, d)
 			}
 		}
 	}
 
-	return modelMethods, err
+	return methods, err
 }
 
-// isModelMethod returns true iff the function declaration
+// isMethod returns true iff the function declaration
 // is a model method.
-func isModelMethod(
-	m *model,
-	modelTypes []types.Type,
+func (m *model) isMethod(
+	mtypes []types.Type,
 	d *ast.FuncDecl,
 ) bool {
 	if d.Recv == nil {
 		return false
 	}
 	t := m.info.TypeOf(d.Name).(*types.Signature)
-	return isModelType(modelTypes, t.Recv().Type())
+	return isaType(mtypes, t.Recv().Type())
 }
 
-// isModelType returns true iff the type is a model type;
-// a type is a model type if the method on this type is
-// a model method.
-func isModelType(modelTypes []types.Type, t types.Type) bool {
-	for _, mt := range modelTypes {
-		if types.Identical(mt, t) {
+// isaType returns true iff the type is one of the types.
+func isaType(typs []types.Type, typ types.Type) bool {
+	for _, t := range typs {
+		if types.Identical(t, typ) {
 			return true
 		}
-		if mt, ok := mt.(*types.Pointer); ok &&
-			types.Identical(mt.Elem(), t) {
+		if t, ok := t.(*types.Pointer); ok &&
+			types.Identical(t.Elem(), typ) {
 			return true
 		}
 	}
@@ -307,11 +305,11 @@ func isModelType(modelTypes []types.Type, t types.Type) bool {
 
 // Writing
 
-// writeModel writes the differentiated model as
+// write writes the differentiated model as
 // a Go package source.
-func writeModel(m *model, adModelPath string) (err error) {
+func (m *model) write(admpath string) (err error) {
 	// Create the directory for the differentiated model.
-	err = os.Mkdir(adModelPath, os.ModePerm)
+	err = os.Mkdir(admpath, os.ModePerm)
 	if err != nil &&
 		// The only error we can tolerate is that the directory
 		// already exists (for example from an earlier
@@ -324,7 +322,7 @@ func writeModel(m *model, adModelPath string) (err error) {
 	// Write files to the ad subpackage under the same names.
 	for fpath, file := range m.pkg.Files {
 		_, fname := path.Split(fpath)
-		f, err := os.Create(path.Join(adModelPath, fname))
+		f, err := os.Create(path.Join(admpath, fname))
 		defer f.Close()
 		if err != nil {
 			return err
