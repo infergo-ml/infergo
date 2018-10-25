@@ -51,17 +51,17 @@ import (
 )
 
 // Structure model contains shared data structures for
-// differentiating the model. Functions operating on 
-// *model are defined as method to use shorter names.
+// differentiating the model. Functions operating on *model are
+// defined as method to use shorter names.
 type model struct {
 	fset *token.FileSet
 	pkg  *ast.Package
 	info *types.Info
 }
 
-// Deriv differentiates a model. The original model is
-// in the package located at mpath. The differentiated model
-// is written to mpath/ad.
+// Deriv differentiates a model. The original model is in the
+// package located at mpath. The differentiated model is written
+// to mpath/ad.
 func Deriv(mpath string) (err error) {
 	// Read the model.
 	m := &model{}
@@ -91,9 +91,9 @@ func Deriv(mpath string) (err error) {
 
 // Parsing
 
-// parse parses the model's source code and returns
-// the parsed package and an error. If the model was parsed
-// successfully, the error is nil.
+// parse parses the model's source code and returns the parsed
+// package and an error. If the model was parsed successfully,
+// the error is nil.
 func (m *model) parse(mpath string) (err error) {
 	// Read the source code.
 	// If there are any errors in the source code, stop.
@@ -118,8 +118,7 @@ End:
 	return err
 }
 
-// check typechecks the model and builds the info
-// structure.
+// check typechecks the model and builds the info structure.
 func (m *model) check(mpath string) (err error) {
 	conf := types.Config{Importer: importer.Default()}
 	// Check expects the package as a slice of file ASTs.
@@ -139,8 +138,7 @@ func (m *model) check(mpath string) (err error) {
 
 const infergoImport = "bitbucket.org/dtolpin/infergo/ad"
 
-// deriv differentiates the model through rewriting
-// the ASTs.
+// deriv differentiates the model through rewriting the ASTs.
 func (m *model) deriv() (err error) {
 	mtypes, err := m.collectTypes()
 	if err != nil {
@@ -173,8 +171,8 @@ func (m *model) deriv() (err error) {
 	return err
 }
 
-// collectTypes collects and returns the types of models
-// defined in the package.
+// collectTypes collects and returns the types of models defined
+// in the package.
 func (m *model) collectTypes() (mtypes []types.Type, err error) {
 	// Identify the model type (or types)
 	mtypes = make([]types.Type, 0, 1)
@@ -198,8 +196,8 @@ func (m *model) collectTypes() (mtypes []types.Type, err error) {
 	return mtypes, err
 }
 
-// isObserve returns true iff the signature is that of
-// the Observe method: func ([]float64) float64
+// isObserve returns true iff the signature is that of the
+// Observe method: func ([]float64) float64
 func isObserve(t *types.Signature) (ok bool) {
 	// Consider pattern matching for go/types
 	ok = true
@@ -236,9 +234,8 @@ func isObserve(t *types.Signature) (ok bool) {
 	return ok
 }
 
-// collectFiles collects ASTs of files
-// where the model methods appear so that
-// imports can be added.
+// collectFiles collects ASTs of files where the model methods
+// appear so that imports can be added.
 func (m *model) collectFiles(mtypes []types.Type) (
 	mfiles []*ast.File,
 	err error,
@@ -256,8 +253,8 @@ func (m *model) collectFiles(mtypes []types.Type) (
 	return mfiles, err
 }
 
-// collectMethods collects ASTs of methods
-// defined on the models.
+// collectMethods collects ASTs of methods defined on the
+// models.
 func (m *model) collectMethods(mtypes []types.Type) (
 	methods []*ast.FuncDecl,
 	err error,
@@ -276,8 +273,8 @@ func (m *model) collectMethods(mtypes []types.Type) (
 	return methods, err
 }
 
-// isMethod returns true iff the function declaration
-// is a model method.
+// isMethod returns true iff the function declaration is a model
+// method.
 func (m *model) isMethod(
 	mtypes []types.Type,
 	d *ast.FuncDecl,
@@ -305,8 +302,7 @@ func isaType(typs []types.Type, typ types.Type) bool {
 
 // Writing
 
-// write writes the differentiated model as
-// a Go package source.
+// write writes the differentiated model as a Go package source.
 func (m *model) write(admpath string) (err error) {
 	// Create the directory for the differentiated model.
 	err = os.Mkdir(admpath, os.ModePerm)
