@@ -137,12 +137,12 @@ func derivModel(
 	pkg *ast.Package,
 	info *types.Info,
 ) (err error) {
-    modelTypes, err := collectModelTypes(fset, pkg, info)
-    if err != nil {
-        return err
-    }
+	modelTypes, err := collectModelTypes(fset, pkg, info)
+	if err != nil {
+		return err
+	}
 
-    modelTypes = modelTypes
+	modelTypes = modelTypes
 	return err
 }
 
@@ -154,7 +154,7 @@ func collectModelTypes(
 	info *types.Info,
 ) (modelTypes []types.Type, err error) {
 	// Identify the model type (or types)
-    modelTypes = make([]types.Type, 0, 1)
+	modelTypes = make([]types.Type, 0, 1)
 	for _, file := range pkg.Files {
 		for _, d := range file.Decls {
 			if d, ok := d.(*ast.FuncDecl); ok {
@@ -163,16 +163,16 @@ func collectModelTypes(
 					// signature.
 					t := info.TypeOf(d.Name).(*types.Signature)
 					if isObserveSignature(t) {
-                        modelTypes = append(modelTypes,
-                            t.Recv().Type())
+						modelTypes = append(modelTypes,
+							t.Recv().Type())
 					}
 				}
 			}
 		}
 	}
-    if len(modelTypes) == 0 {
-        err = fmt.Errorf("no model in package %s", pkg.Name)
-    }
+	if len(modelTypes) == 0 {
+		err = fmt.Errorf("no model in package %s", pkg.Name)
+	}
 	return modelTypes, err
 }
 
