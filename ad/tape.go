@@ -124,7 +124,7 @@ func Place(p *float64) *float64 {
 
 // Assigment encodes an assignment.
 func Assignment(p *float64, px *float64) {
-	// register
+	// Register
 	r := record{
 		typ: typAssignment,
 		p:   len(tape.places),
@@ -134,7 +134,7 @@ func Assignment(p *float64, px *float64) {
 	tape.values = append(tape.values, *p)
 	tape.records = append(tape.records, r)
 
-	// run
+	// Run
 	*p = *px
 }
 
@@ -143,7 +143,7 @@ func Assignment(p *float64, px *float64) {
 func Arithmetic(op int, px ...*float64) *float64 {
 	p := Place(Value(0.))
 
-	// register
+	// Register
 	r := record{
 		typ: typArithmetic,
 		op:  op,
@@ -153,7 +153,7 @@ func Arithmetic(op int, px ...*float64) *float64 {
 	tape.places = append(tape.places, px...)
 	tape.records = append(tape.records, r)
 
-	// run
+	// Run
 	switch op {
 	case OpNeg:
 		*p = -*px[0]
@@ -185,7 +185,7 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 		panic("not an elemental")
 	}
 
-	// register
+	// Register
 	r := record{
 		typ: typElemental,
 		op:  len(tape.elementals),
@@ -204,11 +204,10 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 	tape.elementals = append(tape.elementals, e)
 	tape.records = append(tape.records, r)
 
-	// run
-	// Any elemental function can be called, but one-
-	// and two-argument elementals are called efficiently,
-	// without allocation; other types are called through
-	// reflection.
+	// Run
+	// Any elemental function can be called, but one- and
+	// two-argument elementals are called efficiently, without
+	// allocation; other types are called through reflection.
 	switch f := f.(type) {
 	case func(float64) float64:
 		*p = f(*px[0])
@@ -228,15 +227,17 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 // Calling differentiated functions
 
 // Call wraps a call to a differentiated subfunction.
-func Call(f func(), px ...*float64) *float64 {
-	// Register function parameters. The function
-	// will assign from the actual parameters to
-	// the formal parameters on entry.
+func Call(f func(px ...*float64), px ...*float64) *float64 {
+	// Register function parameters. The function will assign
+	// the actual parameters to the formal parameters on entry.
 	for _, py := range px {
 		Place(py)
 	}
-	f()
-	// The returned value is in the first place.
+	f(px...)
+	// If the function returns a float64 value, the returned
+	// value is in the first place. Otherwise, the function
+	// is called as an expression statement, for side effects,
+	// and the return value is ignored.
 	return tape.places[0]
 }
 
@@ -288,8 +289,9 @@ func Pop() {
 func backward() {
 	r := tape.records[len(tape.records)-1]
 	// Set the adjoint of the result to 1.
-	tape.adjoints[tape.places[r.p]] = 1.        // set result's adjoint to 1
-	bottom := tape.cstack[len(tape.cstack)-1].r // bottom is the first record
+	tape.adjoints[tape.places[r.p]] = 1.
+	// Bottom is the first record in the current frame.
+	bottom := tape.cstack[len(tape.cstack)-1].r
 	for ir := len(tape.records); ir != bottom; {
 		ir--
 		r := &tape.records[ir]
