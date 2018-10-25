@@ -9,9 +9,6 @@ import (
 	"testing"
 )
 
-func Test(t *testing.T) {
-}
-
 // Tooling for comparing models
 
 // The input to ad routines is a parsed package. Let's
@@ -25,7 +22,8 @@ func parseTestModel(sources []string) (
 	// parse it
 	for i, source := range sources {
 		fname := fmt.Sprintf("file_%v", i)
-		if file, err := parser.ParseFile(fset, fname, source, 0); err == nil {
+		if file, err := parser.ParseFile(
+			fset, fname, source, 0); err == nil {
 			name := file.Name.Name
 			if pkg == nil {
 				pkg = &ast.Package{
@@ -47,7 +45,7 @@ func TestCollectModelTypes(t *testing.T) {
 		model []string
 		types map[string]bool
 	}{
-        // Single model
+		// Single model
 		{[]string{
 			`package single
 
@@ -62,7 +60,7 @@ func (m Model) Observe(x []float64) float64 {
 				"single.Model": true,
 			}},
 
-        // No model
+		// No model
 		{[]string{
 			`package nomodel
 
@@ -73,10 +71,9 @@ func (m Model) observe(x []float64) float64 {
 }
 `,
 		},
-			map[string]bool{
-			}},
+			map[string]bool{}},
 
-        // Two models
+		// Two models
 		{[]string{
 			`package double
 
@@ -88,7 +85,7 @@ func (m ModelA) Observe(x []float64) float64 {
 }
 
 func (m ModelB) Observe(x []float64) float64 {
-	return - float64(m) * x[0]
+	return - float64(m) / x[0]
 }
 `,
 		},
@@ -96,7 +93,6 @@ func (m ModelB) Observe(x []float64) float64 {
 				"double.ModelA": true,
 				"double.ModelB": true,
 			}},
-
 	} {
 		fset, pkg := parseTestModel(c.model)
 		println(fset)
@@ -109,11 +105,10 @@ func (m ModelB) Observe(x []float64) float64 {
 		}
 		modelTypes, err := collectModelTypes(fset, pkg, info)
 		if len(modelTypes) > 0 && err != nil {
-			// ignore error when there is no model
+			// Ignore the error when there is no model
 			panic(err)
 		}
 		for _, mt := range modelTypes {
-
 			if !c.types[mt.String()] {
 				t.Errorf("model %v: type %v is not a model",
 					pkg.Name, mt)
