@@ -380,6 +380,7 @@ func (m *model) simplify(method *ast.FuncDecl) {
 				}
 			case *ast.IncDecStmt:
 				// Rewrite as expr = expr OP 1
+				// TODO
 			}
 			return true
 		},

@@ -277,7 +277,7 @@ func Call(f func(px ...*float64), px ...*float64) *float64 {
 // Enter copies the actual parameters to the formal parameters.
 func Enter(px ...*float64) {
 	i0 := len(tape.places) - len(px)
-	ParallelAssignment(px, tape.places[i0: i0 + len(px)])
+	ParallelAssignment(px, tape.places[i0:i0+len(px)])
 }
 
 // Return returns the result of the differentiated function.
@@ -339,7 +339,7 @@ func backward() {
 				// side is zero (because it is overwritten) except
 				// if the right-hand side is the same location.
 				tape.adjoints[tape.places[r.p]] = 0.
-				tape.adjoints[tape.places[r.p + 1]] += a
+				tape.adjoints[tape.places[r.p+1]] += a
 			} else {
 				// Restore the previous values.
 				for i := 0; i != r.op; i++ {

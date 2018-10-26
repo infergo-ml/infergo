@@ -393,7 +393,7 @@ type Model float64
 
 func (m Model) Observe(x []float64) float64 {
     var a float64
-    a += 2.
+    a += 2
     a -= 3.
     a *= 4.
     a /= 5.
@@ -405,10 +405,32 @@ type Model float64
 
 func (m Model) Observe(x []float64) float64 {
     var a float64
-    a = a + 2.
+    a = a + 2
     a = a - 3.
     a = a * 4.
     a = a / 5.
+	return a
+}`,
+		},
+		{`package incdec
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    a := 1.
+    a++
+    a--
+	return a
+}`,
+			`package opassign
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    var a float64
+    a = 1.
+    a = a + 1
+    a = a - 1
 	return a
 }`,
 		},
@@ -431,7 +453,8 @@ func (m Model) Observe(x []float64) float64 {
 			b := new(bytes.Buffer)
 			printer.Fprint(b, m.fset, m.pkg.Files["original.go"])
 
-			t.Errorf("model %v:\n---\n%v\n---\n not equivalent to \n---\n%v\n---\n",
+			t.Errorf("model %v:\n---\n%v\n---\n"+
+				" not equivalent to \n---\n%v\n---\n",
 				m.pkg.Name,
 				b.String(),
 				c.simplified)
