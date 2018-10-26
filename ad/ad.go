@@ -160,6 +160,7 @@ func (m *model) deriv() (err error) {
 		return err
 	}
 	for _, method := range methods {
+        m.simplify(method)
 		if strings.Compare(method.Name.Name, "Observe") == 0 {
 			// Differentiate the main model method.
 		} else {
@@ -305,8 +306,31 @@ func isaType(typs []types.Type, typ types.Type) bool {
 // simplify rewrites the syntax tree of a method to
 // differentiate and desugars the syntax, to make the
 // autodiff code simpler to write and debug.
-func (m *model) simplify(file *ast.File) (err error) {
-    return err
+func (m *model) simplify(method *ast.FuncDecl) {
+    astutil.Apply(method, 
+        func (c *astutil.Cursor) bool {
+            n := c.Node()
+            switch n := n.(type) {
+            case *ast.AssignStmt:
+                switch n.Tok {
+                case token.ASSIGN:
+                    // Do nothing, all is well.
+                case token.DEFINE:
+                    // Split into declaration and assignment.
+                    n.Tok = token.ASSIGN
+                    // c.Replace(n)
+                case token.ADD_ASSIGN, token.SUB_ASSIGN,
+                token.MUL_ASSIGN, token.QUO_ASSIGN:
+                    // Rewrite as lhs = lhs OP rhs (if lhs is
+                    // computed with side effects you shoot
+                    // yourself in the foot).
+                }
+            case *ast.IncDecStmt:
+                // Rewrite as expr = expr OP 1
+            }
+            return true
+        },
+        nil)
 }
 
 // Writing

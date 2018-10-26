@@ -34,17 +34,12 @@ func parseTestModel(m *model, sources map[string]string) {
 	}
 }
 
-// Checks that two sources are the same code, by parsing
-// and then printing them.
-func sourcesEqual(got, expected string) bool {
+// Tests that the expected source is equivalent to the tree.
+func equiv(gotTree *ast.File, expected string) bool {
 	// Normalize source code by parsing and printing.
 
     // Parse it
 	fileSet := token.NewFileSet()
-	gotTree, error := parser.ParseFile(fileSet, "", got, 0)
-	if error != nil {
-		panic(error)
-	}
 	expectedTree, error := parser.ParseFile(fileSet, "", expected, 0)
 	if error != nil {
 		panic(error)
@@ -62,7 +57,7 @@ func sourcesEqual(got, expected string) bool {
 	return gotBuffer.String() == expectedBuffer.String()
 }
 
-func TestSourceEqual(t *testing.T) {
+func TestEquiv(t *testing.T) {
     // kick the tyres
     for _, c := range []struct {
         got string
@@ -80,7 +75,12 @@ func TestSourceEqual(t *testing.T) {
             false,
         },
     } {
-        if sourcesEqual(c.got, c.expected) != c.equal {
+        fileSet := token.NewFileSet()
+        gotTree, error := parser.ParseFile(fileSet, "", c.got, 0)
+        if error != nil {
+            panic(error)
+        }
+        if equiv(gotTree, c.expected) != c.equal {
             t.Errorf("Sources\n---\n%v\n---\n" +
                 "and\n---\n%v\n---\nshould %v.",
                 c.got, c.expected,
@@ -356,3 +356,52 @@ func (m Model) Sample() float64 {
 		}
 	}
 }
+
+func TestSimplify(t *testing.T) {
+    for _, c := range []struct {
+        original, simplified string
+    } {
+		{`package define
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	a := 1.
+	return a
+}`,
+		`package define
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    var a float64
+	a = 1.
+	return a
+}`,
+         },
+       } {
+		m := &model{}
+        parseTestModel(m, map[string]string {
+            "original.go": c.original,
+        })
+		err := m.check(m.pkg.Name)
+		if err != nil {
+			t.Errorf("failed to check model %v: %s",
+				m.pkg.Name, err)
+		}
+        mtypes, err := m.collectTypes()
+		methods, err := m.collectMethods(mtypes)
+        for _, method := range methods {
+            m.simplify(method)
+        }
+        if !equiv(m.pkg.Files["original.go"], c.simplified) {
+            b := new(bytes.Buffer)
+            printer.Fprint(b, m.fset, m.pkg.Files["original.go"])
+
+            t.Errorf("model %v: \n%v\n not equivalent to \n%v\n.",
+                 m.pkg.Name,
+                 b.String(),
+                 c.simplified)
+         }
+     }
+ }
