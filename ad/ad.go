@@ -286,7 +286,9 @@ func (m *model) isMethod(
 	return isaType(mtypes, t.Recv().Type())
 }
 
-// isaType returns true iff the type is one of the types.
+// isaType returns true iff typ is one of typs, or
+// pointed to by one of typs. Used to test whether the
+// method receiver type is a model type.
 func isaType(typs []types.Type, typ types.Type) bool {
 	for _, t := range typs {
 		if types.Identical(t, typ) {
@@ -298,6 +300,13 @@ func isaType(typs []types.Type, typ types.Type) bool {
 		}
 	}
 	return false
+}
+
+// simplify rewrites the syntax tree of a method to
+// differentiate and desugars the syntax, to make the
+// autodiff code simpler to write and debug.
+func (m *model) simplify(file *ast.File) (err error) {
+    return err
 }
 
 // Writing

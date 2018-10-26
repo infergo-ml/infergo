@@ -62,6 +62,36 @@ func sourcesEqual(got, expected string) bool {
 	return gotBuffer.String() == expectedBuffer.String()
 }
 
+func TestSourceEqual(t *testing.T) {
+    // kick the tyres
+    for _, c := range []struct {
+        got string
+        expected string
+        equal bool
+    } { 
+        {
+            "package a; func foo() {}",
+            "package a\n\nfunc foo() {\n}",
+            true,
+        },
+        {
+            "package a\n\nvar x int = 1",
+            "package a\n\nvar x int",
+            false,
+        },
+    } {
+        if sourcesEqual(c.got, c.expected) != c.equal {
+            t.Errorf("Sources\n---\n%v\n---\n" +
+                "and\n---\n%v\n---\nshould %v.",
+                c.got, c.expected,
+                map[bool]string{
+                    false: "not be equal",
+                    true: "be equal",
+                }[c.equal])
+        }
+    }
+}
+
 // Tests of ad transformations, stage by stage
 
 func TestCollectTypes(t *testing.T) {
