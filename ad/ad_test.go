@@ -1,7 +1,8 @@
 package ad
 
 import (
-	_ "bytes"
+	"bytes"
+    "go/printer"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -32,6 +33,36 @@ func parseTestModel(m *model, sources map[string]string) {
 		}
 	}
 }
+
+// Checks that two sources are the same code, by parsing
+// and then printing them.
+func sourcesEqual(got, expected string) bool {
+	// Normalize source code by parsing and printing.
+
+    // Parse it
+	fileSet := token.NewFileSet()
+	gotTree, error := parser.ParseFile(fileSet, "", got, 0)
+	if error != nil {
+		panic(error)
+	}
+	expectedTree, error := parser.ParseFile(fileSet, "", expected, 0)
+	if error != nil {
+		panic(error)
+	}
+
+	// Print it
+	gotBuffer := new(bytes.Buffer)
+	expectedBuffer := new(bytes.Buffer)
+    // We allocate a new file set to normalize whitespace
+	fileSet = token.NewFileSet()
+	printer.Fprint(gotBuffer, fileSet, gotTree)
+	printer.Fprint(expectedBuffer, fileSet, expectedTree)
+
+	// compare strings
+	return gotBuffer.String() == expectedBuffer.String()
+}
+
+// Tests of ad transformations, stage by stage
 
 func TestCollectTypes(t *testing.T) {
 	for _, c := range []struct {
