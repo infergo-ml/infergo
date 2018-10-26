@@ -54,6 +54,7 @@ import (
 // differentiating the model. Functions operating on *model are
 // defined as method to use shorter names.
 type model struct {
+    path string
 	fset *token.FileSet
 	pkg  *ast.Package
 	info *types.Info
@@ -71,7 +72,7 @@ func Deriv(mpath string) (err error) {
 	}
 
 	// Typecheck the model to build the info structure.
-	err = m.check(mpath)
+	err = m.check()
 	if err != nil {
 		return err
 	}
@@ -83,8 +84,8 @@ func Deriv(mpath string) (err error) {
 		return err
 	}
 
-	// Finally write the model to subpackage 'ad'.
-	err = m.write(path.Join(mpath, "ad"))
+	// Finally write the model.
+	err = m.write()
 
 	return err
 }
@@ -97,8 +98,9 @@ func Deriv(mpath string) (err error) {
 func (m *model) parse(mpath string) (err error) {
 	// Read the source code.
 	// If there are any errors in the source code, stop.
+    m.path = mpath
 	m.fset = token.NewFileSet()
-	pkgs, err := parser.ParseDir(m.fset, mpath, nil, 0)
+	pkgs, err := parser.ParseDir(m.fset, m.path, nil, 0)
 	if err != nil { // parse error
 		goto End
 	}
@@ -108,7 +110,7 @@ func (m *model) parse(mpath string) (err error) {
 	for k, v := range pkgs {
 		if m.pkg != nil {
 			err = fmt.Errorf("multiple packages in %q: %s and %s",
-				mpath, m.pkg.Name, k)
+				m.path, m.pkg.Name, k)
 			goto End
 		}
 		m.pkg = v
@@ -119,7 +121,7 @@ End:
 }
 
 // check typechecks the model and builds the info structure.
-func (m *model) check(mpath string) (err error) {
+func (m *model) check() (err error) {
 	conf := types.Config{Importer: importer.Default()}
 	// Check expects the package as a slice of file ASTs.
 	var files []*ast.File
@@ -130,7 +132,7 @@ func (m *model) check(mpath string) (err error) {
 		Defs: make(map[*ast.Ident]types.Object),
 		Uses: make(map[*ast.Ident]types.Object),
 	}
-	_, err = conf.Check(mpath, m.fset, files, m.info)
+	_, err = conf.Check(m.path, m.fset, files, m.info)
 	return err
 }
 
@@ -160,7 +162,17 @@ func (m *model) deriv() (err error) {
 		return err
 	}
 	for _, method := range methods {
-        m.simplify(method)
+		m.simplify(method)
+    }
+
+    // We probably introduced new expression nodes and need
+    // to re-compute the types.
+    err = m.check()
+    if err != nil {
+        return err
+    }
+
+    for _, method := range methods {
 		if strings.Compare(method.Name.Name, "Observe") == 0 {
 			// Differentiate the main model method.
 		} else {
@@ -168,6 +180,8 @@ func (m *model) deriv() (err error) {
 			// may be called from Observe.
 		}
 	}
+
+    // We need to re-run 
 
 	return err
 }
@@ -307,36 +321,74 @@ func isaType(typs []types.Type, typ types.Type) bool {
 // differentiate and desugars the syntax, to make the
 // autodiff code simpler to write and debug.
 func (m *model) simplify(method *ast.FuncDecl) {
-    astutil.Apply(method, 
-        func (c *astutil.Cursor) bool {
-            n := c.Node()
-            switch n := n.(type) {
-            case *ast.AssignStmt:
-                switch n.Tok {
-                case token.ASSIGN:
-                    // Do nothing, all is well.
-                case token.DEFINE:
-                    // Split into declaration and assignment.
+	astutil.Apply(method,
+		func(c *astutil.Cursor) bool {
+			n := c.Node()
+			switch n := n.(type) {
+			case *ast.AssignStmt:
+				switch n.Tok {
+				case token.ASSIGN:
+					// Do nothing, all is well.
+				case token.DEFINE:
+					// Split into declaration and assignment.
+
+					// Declaration.
+					for i := 0; i != len(n.Lhs); i++ {
+						ident := n.Lhs[i].(*ast.Ident)
+						// The shortest way from go/types to go/ast
+						// is to stringify and reparse.
+						typ := m.info.TypeOf(n.Lhs[i])
+						typast, err := parser.ParseExpr(typ.String())
+						if err != nil {
+							panic(fmt.Sprintf(
+                                "cannot parse type %v: %v", typ, err))
+						}
+						spec := &ast.ValueSpec{
+							Names: []*ast.Ident{ident},
+							Type:  typast}
+						c.InsertBefore(&ast.DeclStmt{
+							Decl: &ast.GenDecl{
+								Tok:   token.VAR,
+								Specs: []ast.Spec{spec}}})
+					}
+
+					// Just patch the node to get the
+					// assignment.
+					n.Tok = token.ASSIGN
+
+				case token.ADD_ASSIGN, token.SUB_ASSIGN,
+					token.MUL_ASSIGN, token.QUO_ASSIGN:
+					// Rewrite as lhs = lhs OP rhs (if lhs is
+					// computed with side effects you shoot
+					// yourself in the foot).
+                    tok := map[token.Token]token.Token {
+                        token.ADD_ASSIGN: token.ADD,
+                        token.SUB_ASSIGN: token.SUB,
+                        token.MUL_ASSIGN: token.MUL,
+                        token.QUO_ASSIGN: token.QUO,
+                    }[n.Tok]
                     n.Tok = token.ASSIGN
-                    // c.Replace(n)
-                case token.ADD_ASSIGN, token.SUB_ASSIGN,
-                token.MUL_ASSIGN, token.QUO_ASSIGN:
-                    // Rewrite as lhs = lhs OP rhs (if lhs is
-                    // computed with side effects you shoot
-                    // yourself in the foot).
-                }
-            case *ast.IncDecStmt:
-                // Rewrite as expr = expr OP 1
-            }
-            return true
-        },
-        nil)
+                    expr := &ast.BinaryExpr {
+                        X: n.Lhs[0],
+                        OpPos: n.Pos(),
+                        Op: tok,
+                        Y: n.Rhs[0],
+                    }
+                    n.Rhs[0] = expr
+				}
+			case *ast.IncDecStmt:
+				// Rewrite as expr = expr OP 1
+			}
+			return true
+		},
+		nil)
 }
 
 // Writing
 
 // write writes the differentiated model as a Go package source.
-func (m *model) write(admpath string) (err error) {
+func (m *model) write() (err error) {
+    admpath := path.Join(m.path, "ad")
 	// Create the directory for the differentiated model.
 	err = os.Mkdir(admpath, os.ModePerm)
 	if err != nil &&

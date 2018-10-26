@@ -2,9 +2,9 @@ package ad
 
 import (
 	"bytes"
-    "go/printer"
 	"go/ast"
 	"go/parser"
+	"go/printer"
 	"go/token"
 	"testing"
 )
@@ -22,6 +22,7 @@ func parseTestModel(m *model, sources map[string]string) {
 			m.fset, fname, source, 0); err == nil {
 			name := file.Name.Name
 			if m.pkg == nil {
+                m.path = name
 				m.pkg = &ast.Package{
 					Name:  name,
 					Files: make(map[string]*ast.File),
@@ -38,7 +39,7 @@ func parseTestModel(m *model, sources map[string]string) {
 func equiv(gotTree *ast.File, expected string) bool {
 	// Normalize source code by parsing and printing.
 
-    // Parse it
+	// Parse it
 	fileSet := token.NewFileSet()
 	expectedTree, error := parser.ParseFile(fileSet, "", expected, 0)
 	if error != nil {
@@ -48,7 +49,7 @@ func equiv(gotTree *ast.File, expected string) bool {
 	// Print it
 	gotBuffer := new(bytes.Buffer)
 	expectedBuffer := new(bytes.Buffer)
-    // We allocate a new file set to normalize whitespace
+	// We allocate a new file set to normalize whitespace
 	fileSet = token.NewFileSet()
 	printer.Fprint(gotBuffer, fileSet, gotTree)
 	printer.Fprint(expectedBuffer, fileSet, expectedTree)
@@ -58,38 +59,38 @@ func equiv(gotTree *ast.File, expected string) bool {
 }
 
 func TestEquiv(t *testing.T) {
-    // kick the tyres
-    for _, c := range []struct {
-        got string
-        expected string
-        equal bool
-    } { 
-        {
-            "package a; func foo() {}",
-            "package a\n\nfunc foo() {\n}",
-            true,
-        },
-        {
-            "package a\n\nvar x int = 1",
-            "package a\n\nvar x int",
-            false,
-        },
-    } {
-        fileSet := token.NewFileSet()
-        gotTree, error := parser.ParseFile(fileSet, "", c.got, 0)
-        if error != nil {
-            panic(error)
-        }
-        if equiv(gotTree, c.expected) != c.equal {
-            t.Errorf("Sources\n---\n%v\n---\n" +
-                "and\n---\n%v\n---\nshould %v.",
-                c.got, c.expected,
-                map[bool]string{
-                    false: "not be equal",
-                    true: "be equal",
-                }[c.equal])
-        }
-    }
+	// kick the tyres
+	for _, c := range []struct {
+		got      string
+		expected string
+		equal    bool
+	}{
+		{
+			"package a; func foo() {}",
+			"package a\n\nfunc foo() {\n}",
+			true,
+		},
+		{
+			"package a\n\nvar x int = 1",
+			"package a\n\nvar x int",
+			false,
+		},
+	} {
+		fileSet := token.NewFileSet()
+		gotTree, error := parser.ParseFile(fileSet, "", c.got, 0)
+		if error != nil {
+			panic(error)
+		}
+		if equiv(gotTree, c.expected) != c.equal {
+			t.Errorf("Sources\n---\n%v\n---\n"+
+				"and\n---\n%v\n---\nshould %v.",
+				c.got, c.expected,
+				map[bool]string{
+					false: "not be equal",
+					true:  "be equal",
+				}[c.equal])
+		}
+	}
 }
 
 // Tests of ad transformations, stage by stage
@@ -101,7 +102,7 @@ func TestCollectTypes(t *testing.T) {
 	}{
 		// Single model
 		{map[string]string{
-            "single.go": `package single
+			"single.go": `package single
 
 type Model float64
 
@@ -116,7 +117,7 @@ func (m Model) Observe(x []float64) float64 {
 
 		// No model
 		{map[string]string{
-            "nomodel.go": `package nomodel
+			"nomodel.go": `package nomodel
 
 type Model float64
 
@@ -129,7 +130,7 @@ func (m Model) observe(x []float64) float64 {
 
 		// Two models
 		{map[string]string{
-            "double.go": `package double
+			"double.go": `package double
 
 type ModelA float64
 type ModelB float64
@@ -150,7 +151,7 @@ func (m ModelB) Observe(x []float64) float64 {
 	} {
 		m := &model{}
 		parseTestModel(m, c.model)
-		err := m.check(m.pkg.Name)
+		err := m.check()
 		if err != nil {
 			t.Errorf("failed to check model %v: %s",
 				m.pkg.Name, err)
@@ -176,12 +177,12 @@ func (m ModelB) Observe(x []float64) float64 {
 
 func TestCollectFiles(t *testing.T) {
 	for _, c := range []struct {
-		model map[string]string
+		model  map[string]string
 		fnames map[string]bool
 	}{
 		// Single file, two methods
 		{map[string]string{
-            "single.go": `package single
+			"single.go": `package single
 
 type Model float64
 
@@ -200,7 +201,7 @@ func (m Model) Sample() float64 {
 
 		// Two files, first file contains the methods
 		{map[string]string{
-            "first.go": `package first
+			"first.go": `package first
 
 type Model float64
 
@@ -208,19 +209,19 @@ func (m Model) Observe(x []float64) float64 {
 	return - float64(m) * x[0]
 }
 `,
-            "second.go": `package first
+			"second.go": `package first
 
 func foo() {
 }
 `,
 		},
 			map[string]bool{
-                "first.go": true,
-            }},
+				"first.go": true,
+			}},
 
 		// Two files, first file contains the methods
 		{map[string]string{
-            "first.go": `package both
+			"first.go": `package both
 
 type Model float64
 
@@ -228,7 +229,7 @@ func (m *Model) Observe(x []float64) float64 {
 	return - float64(*m) * x[0]
 }
 `,
-            "second.go": `package both
+			"second.go": `package both
 
 func (m Model) Sample() float64 {
 	return 0.0
@@ -236,25 +237,25 @@ func (m Model) Sample() float64 {
 `,
 		},
 			map[string]bool{
-                "first.go": true,
-                "second.go": true,
-            }},
+				"first.go":  true,
+				"second.go": true,
+			}},
 	} {
 		m := &model{}
 		parseTestModel(m, c.model)
-		err := m.check(m.pkg.Name)
+		err := m.check()
 		if err != nil {
 			t.Errorf("failed to check model %v: %s",
 				m.pkg.Name, err)
 		}
-        mtypes, err := m.collectTypes()
+		mtypes, err := m.collectTypes()
 		mfiles, err := m.collectFiles(mtypes)
 		if len(mfiles) > 0 && err != nil {
 			// Ignore the error when there is no model
 			panic(err)
 		}
 		for _, mf := range mfiles {
-            fname := m.fset.Position(mf.Package).Filename
+			fname := m.fset.Position(mf.Package).Filename
 			if !c.fnames[fname] {
 				t.Errorf("model %v: file %q contains no methods",
 					m.pkg.Name, fname)
@@ -270,12 +271,12 @@ func (m Model) Sample() float64 {
 
 func TestCollectMethods(t *testing.T) {
 	for _, c := range []struct {
-		model map[string]string
+		model  map[string]string
 		mnames map[string]bool
 	}{
 		// Single file, single method
 		{map[string]string{
-            "one.go": `package single
+			"one.go": `package single
 
 type Model float64
 
@@ -289,7 +290,7 @@ func (m Model) Observe(x []float64) float64 {
 			}},
 		// Single file, two methods
 		{map[string]string{
-            "one.go": `package double
+			"one.go": `package double
 
 type Model float64
 
@@ -304,12 +305,12 @@ func (m Model) Sample() float64 {
 		},
 			map[string]bool{
 				"Observe": true,
-                "Sample": true,
+				"Sample":  true,
 			}},
 
 		// Two files, two methods
 		{map[string]string{
-            "first.go": `package two
+			"first.go": `package two
 
 type Model float64
 
@@ -317,7 +318,7 @@ func (m Model) Observe(x []float64) float64 {
 	return - float64(m) * x[0]
 }
 `,
-            "second.go": `package two
+			"second.go": `package two
 
 func (m Model) Sample() float64 {
 	return 0.0
@@ -325,25 +326,25 @@ func (m Model) Sample() float64 {
 `,
 		},
 			map[string]bool{
-                "Observe": true,
-                "Sample": true,
-            }},
+				"Observe": true,
+				"Sample":  true,
+			}},
 	} {
 		m := &model{}
 		parseTestModel(m, c.model)
-		err := m.check(m.pkg.Name)
+		err := m.check()
 		if err != nil {
 			t.Errorf("failed to check model %v: %s",
 				m.pkg.Name, err)
 		}
-        mtypes, err := m.collectTypes()
+		mtypes, err := m.collectTypes()
 		methods, err := m.collectMethods(mtypes)
 		if len(methods) > 0 && err != nil {
 			// Ignore the error when there is no model
 			panic(err)
 		}
 		for _, method := range methods {
-            mname := method.Name.Name
+			mname := method.Name.Name
 			if !c.mnames[mname] {
 				t.Errorf("model %v: file %q contains no methods",
 					m.pkg.Name, mname)
@@ -358,50 +359,82 @@ func (m Model) Sample() float64 {
 }
 
 func TestSimplify(t *testing.T) {
-    for _, c := range []struct {
-        original, simplified string
-    } {
+	for _, c := range []struct {
+		original, simplified string
+	}{
 		{`package define
 
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-	a := 1.
-	return a
+    a := 0.
+	b := []float64{1.}
+    d, e := 3., 4.
+	return a + b[0]  - d - e
 }`,
-		`package define
+			`package define
 
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
     var a float64
-	a = 1.
+    a = 0.
+    var b []float64
+	b = []float64{1.}
+    var d float64
+    var e float64
+    d, e = 3., 4.
+	return a + b[0] - d - e
+}`,
+		},
+		{`package opassign
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    var a float64
+    a += 2.
+    a -= 3.
+    a *= 4.
+    a /= 5.
 	return a
 }`,
-         },
-       } {
+			`package opassign
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    var a float64
+    a = a + 2.
+    a = a - 3.
+    a = a * 4.
+    a = a / 5.
+	return a
+}`,
+		},
+	} {
 		m := &model{}
-        parseTestModel(m, map[string]string {
-            "original.go": c.original,
-        })
-		err := m.check(m.pkg.Name)
+		parseTestModel(m, map[string]string{
+			"original.go": c.original,
+		})
+		err := m.check()
 		if err != nil {
 			t.Errorf("failed to check model %v: %s",
 				m.pkg.Name, err)
 		}
-        mtypes, err := m.collectTypes()
+		mtypes, err := m.collectTypes()
 		methods, err := m.collectMethods(mtypes)
-        for _, method := range methods {
-            m.simplify(method)
-        }
-        if !equiv(m.pkg.Files["original.go"], c.simplified) {
-            b := new(bytes.Buffer)
-            printer.Fprint(b, m.fset, m.pkg.Files["original.go"])
+		for _, method := range methods {
+			m.simplify(method)
+		}
+		if !equiv(m.pkg.Files["original.go"], c.simplified) {
+			b := new(bytes.Buffer)
+			printer.Fprint(b, m.fset, m.pkg.Files["original.go"])
 
-            t.Errorf("model %v: \n%v\n not equivalent to \n%v\n.",
-                 m.pkg.Name,
-                 b.String(),
-                 c.simplified)
-         }
-     }
- }
+			t.Errorf("model %v:\n---\n%v\n---\n not equivalent to \n---\n%v\n---\n",
+				m.pkg.Name,
+				b.String(),
+				c.simplified)
+		}
+	}
+}
