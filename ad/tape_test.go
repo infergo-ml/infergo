@@ -261,6 +261,35 @@ func TestAssignment(t *testing.T) {
 	})
 }
 
+func TestParallelAssignment(t *testing.T) {
+	runsuite(t, []testcase{
+		{"x, y = y, x; x + y",
+			func(x []float64) {
+				ParallelAssignment(
+					[]*float64{&x[0], &x[1]},
+					[]*float64{&x[1], &x[0]})
+				Arithmetic(OpAdd, &x[0], &x[1])
+			},
+			[][][]float64{
+				{{0., 0.}, {1., 1.}},
+			},
+		},
+		{"x, y = y, x; 2*x + y",
+			func(x []float64) {
+				ParallelAssignment(
+					[]*float64{&x[0], &x[1]},
+					[]*float64{&x[1], &x[0]})
+				Arithmetic(OpAdd,
+					Arithmetic(OpMul, Place(Value(2.)), &x[0]),
+					&x[1])
+			},
+			[][][]float64{
+				{{0., 0.}, {1., 2.}},
+			},
+		},
+	})
+}
+
 // elementals to check calling with different signatures
 func twoArgElemental(a, b float64) float64 {
 	return a * b

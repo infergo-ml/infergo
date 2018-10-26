@@ -22,7 +22,7 @@ func parseTestModel(m *model, sources map[string]string) {
 			m.fset, fname, source, 0); err == nil {
 			name := file.Name.Name
 			if m.pkg == nil {
-                m.path = name
+				m.path = name
 				m.pkg = &ast.Package{
 					Name:  name,
 					Files: make(map[string]*ast.File),
@@ -175,6 +175,95 @@ func (m ModelB) Observe(x []float64) float64 {
 	}
 }
 
+func TestCollectMethods(t *testing.T) {
+	for _, c := range []struct {
+		model  map[string]string
+		mnames map[string]bool
+	}{
+		// Single file, single method
+		{map[string]string{
+			"one.go": `package single
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	return - float64(m) * x[0]
+}
+`,
+		},
+			map[string]bool{
+				"Observe": true,
+			}},
+		// Single file, two methods
+		{map[string]string{
+			"one.go": `package double
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	return - float64(m) * x[0]
+}
+
+func (m Model) Sample() float64 {
+	return 0.0
+}
+`,
+		},
+			map[string]bool{
+				"Observe": true,
+				"Sample":  true,
+			}},
+
+		// Two files, two methods
+		{map[string]string{
+			"first.go": `package two
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	return - float64(m) * x[0]
+}
+`,
+			"second.go": `package two
+
+func (m Model) Sample() float64 {
+	return 0.0
+}
+`,
+		},
+			map[string]bool{
+				"Observe": true,
+				"Sample":  true,
+			}},
+	} {
+		m := &model{}
+		parseTestModel(m, c.model)
+		err := m.check()
+		if err != nil {
+			t.Errorf("failed to check model %v: %s",
+				m.pkg.Name, err)
+		}
+		mtypes, err := m.collectTypes()
+		methods, err := m.collectMethods(mtypes)
+		if len(methods) > 0 && err != nil {
+			// Ignore the error when there is no model
+			panic(err)
+		}
+		for _, method := range methods {
+			mname := method.Name.Name
+			if !c.mnames[mname] {
+				t.Errorf("model %v: file %q contains no methods",
+					m.pkg.Name, mname)
+			}
+			delete(c.mnames, mname)
+		}
+		for k := range c.mnames {
+			t.Errorf("model %v: file %q was not collected",
+				m.pkg.Name, k)
+		}
+	}
+}
+
 func TestCollectFiles(t *testing.T) {
 	for _, c := range []struct {
 		model  map[string]string
@@ -263,95 +352,6 @@ func (m Model) Sample() float64 {
 			delete(c.fnames, fname)
 		}
 		for k := range c.fnames {
-			t.Errorf("model %v: file %q was not collected",
-				m.pkg.Name, k)
-		}
-	}
-}
-
-func TestCollectMethods(t *testing.T) {
-	for _, c := range []struct {
-		model  map[string]string
-		mnames map[string]bool
-	}{
-		// Single file, single method
-		{map[string]string{
-			"one.go": `package single
-
-type Model float64
-
-func (m Model) Observe(x []float64) float64 {
-	return - float64(m) * x[0]
-}
-`,
-		},
-			map[string]bool{
-				"Observe": true,
-			}},
-		// Single file, two methods
-		{map[string]string{
-			"one.go": `package double
-
-type Model float64
-
-func (m Model) Observe(x []float64) float64 {
-	return - float64(m) * x[0]
-}
-
-func (m Model) Sample() float64 {
-	return 0.0
-}
-`,
-		},
-			map[string]bool{
-				"Observe": true,
-				"Sample":  true,
-			}},
-
-		// Two files, two methods
-		{map[string]string{
-			"first.go": `package two
-
-type Model float64
-
-func (m Model) Observe(x []float64) float64 {
-	return - float64(m) * x[0]
-}
-`,
-			"second.go": `package two
-
-func (m Model) Sample() float64 {
-	return 0.0
-}
-`,
-		},
-			map[string]bool{
-				"Observe": true,
-				"Sample":  true,
-			}},
-	} {
-		m := &model{}
-		parseTestModel(m, c.model)
-		err := m.check()
-		if err != nil {
-			t.Errorf("failed to check model %v: %s",
-				m.pkg.Name, err)
-		}
-		mtypes, err := m.collectTypes()
-		methods, err := m.collectMethods(mtypes)
-		if len(methods) > 0 && err != nil {
-			// Ignore the error when there is no model
-			panic(err)
-		}
-		for _, method := range methods {
-			mname := method.Name.Name
-			if !c.mnames[mname] {
-				t.Errorf("model %v: file %q contains no methods",
-					m.pkg.Name, mname)
-			}
-			delete(c.mnames, mname)
-		}
-		for k := range c.mnames {
 			t.Errorf("model %v: file %q was not collected",
 				m.pkg.Name, k)
 		}

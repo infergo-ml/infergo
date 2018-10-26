@@ -8,7 +8,8 @@ package ad
 //   2. All methods on the type implementing model.Model
 //      are differentiated.
 //   3. Within the methods, the following is differentiated:
-//      a) assignments to float64;
+//      a) assignments to float64 (including parallel
+//         assignments if all values are of type float64);
 //      b) returns of float64;
 //      c) standalone calls to methods on the type implementing
 //         model.Model (apparently called for side  effects on
@@ -54,7 +55,7 @@ import (
 // differentiating the model. Functions operating on *model are
 // defined as method to use shorter names.
 type model struct {
-    path string
+	path string
 	fset *token.FileSet
 	pkg  *ast.Package
 	info *types.Info
@@ -98,7 +99,7 @@ func Deriv(mpath string) (err error) {
 func (m *model) parse(mpath string) (err error) {
 	// Read the source code.
 	// If there are any errors in the source code, stop.
-    m.path = mpath
+	m.path = mpath
 	m.fset = token.NewFileSet()
 	pkgs, err := parser.ParseDir(m.fset, m.path, nil, 0)
 	if err != nil { // parse error
@@ -129,8 +130,9 @@ func (m *model) check() (err error) {
 		files = append(files, file)
 	}
 	m.info = &types.Info{
-		Defs: make(map[*ast.Ident]types.Object),
-		Uses: make(map[*ast.Ident]types.Object),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+		Types: make(map[ast.Expr]types.TypeAndValue),
 	}
 	_, err = conf.Check(m.path, m.fset, files, m.info)
 	return err
@@ -147,32 +149,20 @@ func (m *model) deriv() (err error) {
 		return err
 	}
 
-	// Add infergo import to each file with model methods
-	mfiles, err := m.collectFiles(mtypes)
-	if err != nil {
-		return err
-	}
-	for _, file := range mfiles {
-		astutil.AddImport(m.fset, file, infergoImport)
-	}
-
 	// Differentiate each model method
+
 	methods, err := m.collectMethods(mtypes)
 	if err != nil {
 		return err
 	}
+
+	// Simplify the code first so that differentiation
+	// is less cumbersome.
 	for _, method := range methods {
 		m.simplify(method)
-    }
+	}
 
-    // We probably introduced new expression nodes and need
-    // to re-compute the types.
-    err = m.check()
-    if err != nil {
-        return err
-    }
-
-    for _, method := range methods {
+	for _, method := range methods {
 		if strings.Compare(method.Name.Name, "Observe") == 0 {
 			// Differentiate the main model method.
 		} else {
@@ -181,7 +171,15 @@ func (m *model) deriv() (err error) {
 		}
 	}
 
-    // We need to re-run 
+	// Finally, add infergo import to each file with model
+	// methods.
+	mfiles, err := m.collectFiles(mtypes)
+	if err != nil {
+		return err
+	}
+	for _, file := range mfiles {
+		astutil.AddImport(m.fset, file, infergoImport)
+	}
 
 	return err
 }
@@ -249,25 +247,6 @@ func isObserve(t *types.Signature) (ok bool) {
 	return ok
 }
 
-// collectFiles collects ASTs of files where the model methods
-// appear so that imports can be added.
-func (m *model) collectFiles(mtypes []types.Type) (
-	mfiles []*ast.File,
-	err error,
-) {
-	for _, file := range m.pkg.Files {
-		for _, d := range file.Decls {
-			if d, ok := d.(*ast.FuncDecl); ok &&
-				m.isMethod(mtypes, d) {
-				mfiles = append(mfiles, file)
-				break
-			}
-		}
-	}
-
-	return mfiles, err
-}
-
 // collectMethods collects ASTs of methods defined on the
 // models.
 func (m *model) collectMethods(mtypes []types.Type) (
@@ -286,6 +265,25 @@ func (m *model) collectMethods(mtypes []types.Type) (
 	}
 
 	return methods, err
+}
+
+// collectFiles collects ASTs of files where the model methods
+// appear so that imports can be added.
+func (m *model) collectFiles(mtypes []types.Type) (
+	mfiles []*ast.File,
+	err error,
+) {
+	for _, file := range m.pkg.Files {
+		for _, d := range file.Decls {
+			if d, ok := d.(*ast.FuncDecl); ok &&
+				m.isMethod(mtypes, d) {
+				mfiles = append(mfiles, file)
+				break
+			}
+		}
+	}
+
+	return mfiles, err
 }
 
 // isMethod returns true iff the function declaration is a model
@@ -341,7 +339,7 @@ func (m *model) simplify(method *ast.FuncDecl) {
 						typast, err := parser.ParseExpr(typ.String())
 						if err != nil {
 							panic(fmt.Sprintf(
-                                "cannot parse type %v: %v", typ, err))
+								"cannot parse type %v: %v", typ, err))
 						}
 						spec := &ast.ValueSpec{
 							Names: []*ast.Ident{ident},
@@ -361,20 +359,24 @@ func (m *model) simplify(method *ast.FuncDecl) {
 					// Rewrite as lhs = lhs OP rhs (if lhs is
 					// computed with side effects you shoot
 					// yourself in the foot).
-                    tok := map[token.Token]token.Token {
-                        token.ADD_ASSIGN: token.ADD,
-                        token.SUB_ASSIGN: token.SUB,
-                        token.MUL_ASSIGN: token.MUL,
-                        token.QUO_ASSIGN: token.QUO,
-                    }[n.Tok]
-                    n.Tok = token.ASSIGN
-                    expr := &ast.BinaryExpr {
-                        X: n.Lhs[0],
-                        OpPos: n.Pos(),
-                        Op: tok,
-                        Y: n.Rhs[0],
-                    }
-                    n.Rhs[0] = expr
+					tok := map[token.Token]token.Token{
+						token.ADD_ASSIGN: token.ADD,
+						token.SUB_ASSIGN: token.SUB,
+						token.MUL_ASSIGN: token.MUL,
+						token.QUO_ASSIGN: token.QUO,
+					}[n.Tok]
+					n.Tok = token.ASSIGN
+					expr := &ast.BinaryExpr{
+						X:     n.Lhs[0],
+						OpPos: n.Pos(),
+						Op:    tok,
+						Y:     n.Rhs[0],
+					}
+					n.Rhs[0] = expr
+					// We introduced a new expression after
+					// typechecking. Let's add it to the type
+					// map.
+					m.info.Types[expr] = m.info.Types[n.Lhs[0]]
 				}
 			case *ast.IncDecStmt:
 				// Rewrite as expr = expr OP 1
@@ -388,7 +390,7 @@ func (m *model) simplify(method *ast.FuncDecl) {
 
 // write writes the differentiated model as a Go package source.
 func (m *model) write() (err error) {
-    admpath := path.Join(m.path, "ad")
+	admpath := path.Join(m.path, "ad")
 	// Create the directory for the differentiated model.
 	err = os.Mkdir(admpath, os.ModePerm)
 	if err != nil &&

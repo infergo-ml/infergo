@@ -39,8 +39,10 @@ func init() {
 // redirection, the number of memory allocations is logarithmic
 // in the number of instructions, and a record has a fixed size.
 type record struct {
-	typ, op int //  record type and opcode or index of gradient
+	typ, op int //  record type and opcode*
 	p, v    int // indices of the first place and value
+	// * for elementals, op is the index of gradient
+	//   for assignments, op is the number of values
 }
 
 // The structure elemental stores information required
@@ -122,11 +124,42 @@ func Place(p *float64) *float64 {
 	return p
 }
 
-// Assigment encodes an assignment.
-func Assignment(p *float64, px *float64) {
+// ParallelAssigment encodes a parallel assignment.
+func ParallelAssignment(p []*float64, px []*float64) {
 	// Register
 	r := record{
 		typ: typAssignment,
+		op:  len(p),
+		p:   len(tape.places),
+		v:   len(tape.values),
+	}
+	for i := range p {
+		tape.places = append(tape.places, p[i])
+		tape.values = append(tape.values, *p[i])
+	}
+	for i := range px {
+		tape.places = append(tape.places, px[i])
+		tape.values = append(tape.values, *px[i])
+	}
+	tape.records = append(tape.records, r)
+
+	// Run
+	for i := range p {
+		*p[i] = tape.values[len(tape.values)-len(p)+i]
+	}
+}
+
+// Assignment encodes a single-value assingment.
+func Assignment(p *float64, px *float64) {
+	// Can be just a wrapper around ParallelAssignment:
+	//     ParallelAssignment([]*float64{p}, []*float64{px})
+	// However most assignments are single-valued and
+	// we can avoid loops and extra allocation.
+
+	// Register
+	r := record{
+		typ: typAssignment,
+		op:  1,
 		p:   len(tape.places),
 		v:   len(tape.values),
 	}
@@ -244,9 +277,7 @@ func Call(f func(px ...*float64), px ...*float64) *float64 {
 // Enter copies the actual parameters to the formal parameters.
 func Enter(px ...*float64) {
 	i0 := len(tape.places) - len(px)
-	for i, py := range px {
-		Assignment(py, tape.places[i0+i])
-	}
+	ParallelAssignment(px, tape.places[i0: i0 + len(px)])
 }
 
 // Return returns the result of the differentiated function.
@@ -295,19 +326,43 @@ func backward() {
 	for ir := len(tape.records); ir != bottom; {
 		ir--
 		r := &tape.records[ir]
-		a := tape.adjoints[tape.places[r.p]]
 		// Only assignment may have the same location
 		// on both the right-hand and the left-hand.
 		switch r.typ {
 		case typAssignment: // x; d/dx = 1
-			// Restore previous value
-			*tape.places[r.p] = tape.values[r.v]
-			// Update the adjoints: the adjoint of the left-hand side
-			// is zero (because it is overwritten) except if
-			// the right-hand side is the same location.
-			tape.adjoints[tape.places[r.p]] = 0.
-			tape.adjoints[tape.places[r.p+1]] += a
+			if r.op == 1 { // Most assignments are single-valued
+				// Restore the previous value.
+				*tape.places[r.p] = tape.values[r.v]
+				// Save the adjoint.
+				a := tape.adjoints[tape.places[r.p]]
+				// Update the adjoint: the adjoint of the left-hand
+				// side is zero (because it is overwritten) except
+				// if the right-hand side is the same location.
+				tape.adjoints[tape.places[r.p]] = 0.
+				tape.adjoints[tape.places[r.p + 1]] += a
+			} else {
+				// Restore the previous values.
+				for i := 0; i != r.op; i++ {
+					*tape.places[r.p+i] = tape.values[r.v+i]
+				}
+				// Save the adjoints.
+				// a is a vector, re-use values.
+				a := tape.values[r.v : r.v+r.op]
+				for i := 0; i != r.op; i++ {
+					a[i] = tape.adjoints[tape.places[r.p+i]]
+				}
+				// Update the adjoints: the adjoint of the left-hand
+				// side is zero (because it is overwritten) except
+				// if the right-hand side is the same location.
+				for i := 0; i != r.op; i++ {
+					tape.adjoints[tape.places[r.p+i]] = 0.
+				}
+				for i := 0; i != r.op; i++ {
+					tape.adjoints[tape.places[r.p+r.op+i]] += a[i]
+				}
+			}
 		case typArithmetic:
+			a := tape.adjoints[tape.places[r.p]]
 			switch r.op {
 			case OpNeg: // -x; d/dx = -1
 				tape.adjoints[tape.places[r.p+1]] -= a
@@ -331,6 +386,7 @@ func backward() {
 				panic(fmt.Sprintf("bad opcode %v", r.op))
 			}
 		case typElemental: // f(x, y, ...)
+			a := tape.adjoints[tape.places[r.p]]
 			e := &tape.elementals[r.op]
 			d := e.g(*tape.places[r.p],
 				// Parameters must be copied to tape.values during
