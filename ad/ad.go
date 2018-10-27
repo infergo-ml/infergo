@@ -165,13 +165,13 @@ func (m *model) deriv() (err error) {
 		}
 	}
 
-	// Finally, ifferentiate.
+	// Finally, rewrite the code using tape-writing calls.
 	for _, method := range methods {
 		// Add the import (safe to add more than once)
 		fname := m.fset.Position(method.Pos()).Filename
 		astutil.AddImport(m.fset, m.pkg.Files[fname], infergoImport)
 
-		err = m.differentiate(method)
+		err = m.rewrite(method)
 		if err != nil {
 			return err
 		}
@@ -404,28 +404,27 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 	return err
 }
 
-// differentiate differentiates the method.
-func (m *model) differentiate(method *ast.FuncDecl) (err error) {
+// rewrite rewrites the method using tape-writing calls.
+func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 	// Apply panics on errors. When Apply panics, we return the
 	// error as do other functions.
     if false {
-	defer func() {
-		if r := recover(); r != nil {
-			p := m.fset.Position(method.Pos())
-			err = fmt.Errorf("differentiate: %v:%d:%d: %v",
-				p.Filename, p.Line, p.Column, r)
-		}
-	}()
-}
+        defer func() {
+            if r := recover(); r != nil {
+                p := m.fset.Position(method.Pos())
+                err = fmt.Errorf("differentiate: %v:%d:%d: %v",
+                p.Filename, p.Line, p.Column, r)
+            }
+        }()
+    }
 
-	// differentiate is used to switch differentiation on
-	// and off. If pre returns true but differentiate is false,
-	// Apply traverses the children but they are not
-	// differentiated (until differentiate is on).
-	differentiate := false
+    // ontape switches rewriting on and off. If pre returns true
+    // but ontape is false, Apply traverses the children but
+    // they are not rewritten (until ontape is true).
+	ontape := false
 	astutil.Apply(method,
 		// pre focuses on the parts of the tree that
-		// are to be differentiated.
+		// are to be rewritten.
 		func(c *astutil.Cursor) bool {
 			n := c.Node()
 			switch n := n.(type) {
@@ -448,6 +447,18 @@ func (m *model) differentiate(method *ast.FuncDecl) (err error) {
                         return false
                     }
                 }
+            case *ast.CallExpr:
+                switch {
+                case m.isDifferentiated(n):
+                case m.isElemental(n):
+                default:
+                    // A function which is neither
+                    // differentiated nor elemental is called
+                    // with all their arguments unmodified.
+                    value := callExpr("ad.Value", n)
+                    c.Replace(value)
+                    return false
+                }
 			case *ast.ReturnStmt: // if float64
 				if len(n.Results) != 1 {
 					return false
@@ -458,7 +469,7 @@ func (m *model) differentiate(method *ast.FuncDecl) (err error) {
 						return false
 					}
 				}
-				differentiate = true
+				ontape = true
 			case *ast.AssignStmt: // if all are float64
 				for _, r := range n.Lhs {
 					t, basic := m.info.TypeOf(r).(*types.Basic)
@@ -466,24 +477,23 @@ func (m *model) differentiate(method *ast.FuncDecl) (err error) {
 						return false
 					}
 				}
-				differentiate = true
+				ontape = true
 			case *ast.ExprStmt: // if a model method call
 				call, ok := n.X.(*ast.CallExpr)
 				if !ok {
 					return false
 				}
-				t := m.info.TypeOf(call.Fun).(*types.Signature)
-				if t.Recv() == nil || !m.isType(t.Recv().Type()) {
+                if !m.isDifferentiated(call) {
 					return false
 				}
-				differentiate = true
+				ontape = true
 			}
 			return true
 		},
 
 		// post differentiates expressions in bottom-up order.
 		func(c *astutil.Cursor) bool {
-			if !differentiate {
+			if !ontape {
 				return true
 			}
 			n := c.Node()
@@ -506,7 +516,7 @@ func (m *model) differentiate(method *ast.FuncDecl) (err error) {
 			case *ast.ReturnStmt:
 				ret := callExpr("ad.Return", n.Results...)
 				n.Results = []ast.Expr{ret}
-				differentiate = false
+				ontape = false
 			case *ast.StarExpr:
 				c.Replace(n.X)
 			case *ast.UnaryExpr:
@@ -521,7 +531,7 @@ func (m *model) differentiate(method *ast.FuncDecl) (err error) {
 					c.Replace(neg)
 				default:
 					panic(fmt.Sprintf(
-						"cannot differentiate unary %v", n.Op))
+						"cannot rewrite unary %v", n.Op))
 				}
 			case *ast.BinaryExpr:
 				bin := callExpr("ad.Arithmetic",
@@ -547,11 +557,17 @@ func (m *model) differentiate(method *ast.FuncDecl) (err error) {
 				}
 				stmt := &ast.ExprStmt{asgn}
 				c.Replace(stmt)
-				differentiate = false
+				ontape = false
 			case *ast.CallExpr:
-				// differentiated or elemental
+                switch {
+                case m.isDifferentiated(n):
+                case m.isElemental(n):
+                    elemental := callExpr("ad.Elemental",
+                        append([]ast.Expr{n.Fun}, n.Args...)...)
+                    c.Replace(elemental)
+                }
 			case *ast.ExprStmt:
-				differentiate = false
+				ontape = false
 			}
 			return true
 		})
@@ -595,6 +611,49 @@ func callExpr(name string, args ...ast.Expr) ast.Expr {
 		},
 		Args: args,
 	}
+}
+
+// isDifferentiated returns true iff the call
+// is of a differentiated method
+func (m *model) isDifferentiated(call *ast.CallExpr) bool {
+    t := m.info.TypeOf(call.Fun).(*types.Signature)
+    return t.Recv() != nil && m.isType(t.Recv().Type())
+}
+
+// isElemental returns true iff the call is of
+// an elemental function
+func (m *model) isElemental(call *ast.CallExpr) bool {
+    t := m.info.TypeOf(call.Fun).(*types.Signature)
+    if t.Recv() != nil {
+        return false
+    }
+    if t.Results().Len() != 1 {
+        return false
+    }
+	rt, ok := t.Results().At(0).Type().(*types.Basic)
+	if !ok {
+		return ok
+	}
+	ok = rt.Kind() == types.Float64 // the result is float64
+    if !ok {
+        return ok
+    }
+
+    if t.Params().Len()==0 {
+        return false
+    }
+    for i := 0; i != t.Params().Len(); i++ {
+        pt, ok := t.Params().At(i).Type().(*types.Basic)
+        if !ok {
+            return ok
+        }
+        ok = pt.Kind() == types.Float64
+        if !ok {
+            return ok
+        }
+    }
+
+    return true
 }
 
 // Writing

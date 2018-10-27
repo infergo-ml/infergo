@@ -417,6 +417,8 @@ func (m Model) Count() int {
 //----------------------------------------------------
 			`package lit
 
+import "bitbucket.org/dtolpin/infergo/ad"
+
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
@@ -445,6 +447,8 @@ func (m Model) Count() int {
 //----------------------------------------------------
 			`package ident
 
+import "bitbucket.org/dtolpin/infergo/ad"
+
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
@@ -471,6 +475,8 @@ func (m Model) Observe(x []float64) float64 {
 //----------------------------------------------------
 			`package index
 
+import "bitbucket.org/dtolpin/infergo/ad"
+
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
@@ -490,6 +496,8 @@ func (m Model) Observe(x []float64) float64 {
 }`,
 //----------------------------------------------------
 			`package selector
+
+import "bitbucket.org/dtolpin/infergo/ad"
 
 type Model struct {
     y float64
@@ -511,6 +519,8 @@ func (m Model) Observe(x []float64) float64 {
 }`,
 //----------------------------------------------------
 			`package star
+
+import "bitbucket.org/dtolpin/infergo/ad"
 
 type Model float64
 
@@ -534,6 +544,8 @@ func (m Model) Observe(x []float64) float64 {
 //----------------------------------------------------
 			`package unary
 
+import "bitbucket.org/dtolpin/infergo/ad"
+
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
@@ -542,6 +554,92 @@ func (m Model) Observe(x []float64) float64 {
     ad.Assignment(&y, &x[0])
     ad.Assignment(&y, ad.Arithmetic(ad.OpNeg, &x[1]))
     return ad.Return(&y)
+}`,
+		},
+//====================================================
+		{`package elemental
+
+import "math"
+
+type Model float64
+
+func pi() float64 {
+    return 3.14159
+}
+
+func (m Model) Observe(x []float64) float64 {
+    y := math.Sin(x[0])
+    return y
+}`,
+//----------------------------------------------------
+			`package elemental
+
+import (
+    "math"
+    "bitbucket.org/dtolpin/infergo/ad"
+)
+
+type Model float64
+
+func pi() float64 {
+    return 3.14159
+}
+
+func (m Model) Observe(x []float64) float64 {
+    ad.Setup(x)
+    var y float64
+    ad.Assignment(&y, ad.Elemental(math.Sin, &x[0]))
+    return ad.Return(&y)
+}`,
+		},
+//====================================================
+		{`package opaque
+
+type Model float64
+
+func pi() float64 {
+    return 3.14159
+}
+
+func intpow(a float64, n int) float64 {
+    pow := 1.
+    for i := 0; i != n; i++ {
+        pow *= a
+    }
+    return pow
+}
+
+func (m Model) Observe(x []float64) float64 {
+    y := pi()
+    z := intpow(y, 3)
+    return y * z
+}`,
+//----------------------------------------------------
+			`package opaque
+
+import "bitbucket.org/dtolpin/infergo/ad"
+
+type Model float64
+
+func pi() float64 {
+    return 3.14159
+}
+
+func intpow(a float64, n int) float64 {
+    pow := 1.
+    for i := 0; i != n; i++ {
+        pow *= a
+    }
+    return pow
+}
+
+func (m Model) Observe(x []float64) float64 {
+    ad.Setup(x)
+    var y float64
+    ad.Assignment(&y, ad.Value(pi()))
+    var z float64
+    ad.Assignment(&z, ad.Value(intpow(y, 3)))
+    return ad.Return(ad.Arithmetic(ad.OpMul, &y, &z))
 }`,
 		},
 //====================================================
@@ -555,12 +653,7 @@ func (m Model) Observe(x []float64) float64 {
 			t.Errorf("failed to check model %v: %s",
 				m.pkg.Name, err)
 		}
-		err = m.collectTypes()
-		methods, err := m.collectMethods()
-		for _, method := range methods {
-			m.simplify(method)
-			m.differentiate(method)
-		}
+        m.deriv()
 		if !equiv(m.pkg.Files["original.go"], c.differentiated) {
 			b := new(bytes.Buffer)
 			printer.Fprint(b, m.fset, m.pkg.Files["original.go"])
