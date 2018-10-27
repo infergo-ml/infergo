@@ -257,6 +257,13 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 	return p
 }
 
+// Return returns the result of the differentiated function.
+func Return(px *float64) float64 {
+	// The returned value goes into the first place.
+    tape.places[0] = px
+	return *px
+}
+
 // Calling differentiated functions
 
 // Call wraps a call to a differentiated subfunction.
@@ -278,13 +285,6 @@ func Call(f func(px ...*float64), px ...*float64) *float64 {
 func Enter(px ...*float64) {
 	i0 := len(tape.places) - len(px)
 	ParallelAssignment(px, tape.places[i0:i0+len(px)])
-}
-
-// Return returns the result of the differentiated function.
-func Return(px *float64) float64 {
-	// The returned value goes into the first place.
-	Assignment(tape.places[0], px)
-	return *px
 }
 
 // Backward pass
@@ -318,9 +318,8 @@ func Pop() {
 
 // backward runs the backward pass on the tape.
 func backward() {
-	r := tape.records[len(tape.records)-1]
 	// Set the adjoint of the result to 1.
-	tape.adjoints[tape.places[r.p]] = 1.
+	tape.adjoints[tape.places[0]] = 1.
 	// Bottom is the first record in the current frame.
 	bottom := tape.cstack[len(tape.cstack)-1].r
 	for ir := len(tape.records); ir != bottom; {

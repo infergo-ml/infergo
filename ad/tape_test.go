@@ -87,79 +87,82 @@ func runsuite(t *testing.T, suite []testcase) {
 
 func TestPrimitive(t *testing.T) {
 	runsuite(t, []testcase{
-		{"x = y",
+		{"y = x; y",
 			func(x []float64) {
-				Assignment(Place(Value(0.)), &x[0])
+                var y float64
+				Assignment(&y, &x[0])
+                Return(&y)
 			},
 			[][][]float64{
 				{{0.}, {1.}},
 				{{1.}, {1.}}}},
-		{"x = x",
+		{"x = x; x",
 			func(x []float64) {
 				Assignment(&x[0], &x[0])
+                Return(&x[0])
 			},
 			[][][]float64{
 				{{0.}, {1.}},
 				{{1.}, {1.}}}},
 		{"x + y",
 			func(x []float64) {
-				Arithmetic(OpAdd, &x[0], &x[1])
+				Return(Arithmetic(OpAdd, &x[0], &x[1]))
 			},
 			[][][]float64{
 				{{0., 0.}, {1., 1.}},
 				{{3., 5.}, {1., 1.}}}},
 		{"x + x",
 			func(x []float64) {
-				Arithmetic(OpAdd, &x[0], &x[0])
+				Return(Arithmetic(OpAdd, &x[0], &x[0]))
 			},
 			[][][]float64{
 				{{0.}, {2.}},
 				{{1.}, {2.}}}},
 		{"x - z",
 			func(x []float64) {
-				Arithmetic(OpSub, &x[0], &x[1])
+				Return(Arithmetic(OpSub, &x[0], &x[1]))
 			},
 			[][][]float64{
 				{{0., 0.}, {1., -1.}},
 				{{1., 1.}, {1., -1.}}}},
 		{"x - x",
 			func(x []float64) {
-				Arithmetic(OpSub, &x[0], &x[0])
+				Return(Arithmetic(OpSub, &x[0], &x[0]))
 			},
 			[][][]float64{
 				{{0.}, {0.}},
 				{{1.}, {0.}}}},
 		{"x * y",
 			func(x []float64) {
-				Arithmetic(OpMul, &x[0], &x[1])
+				Return(Arithmetic(OpMul, &x[0], &x[1]))
 			},
 			[][][]float64{
 				{{0., 0.}, {0., 0.}},
 				{{2., 3.}, {3., 2.}}}},
 		{"x * x",
 			func(x []float64) {
-				Arithmetic(OpMul, &x[0], &x[0])
+				Return(Arithmetic(OpMul, &x[0], &x[0]))
 			},
 			[][][]float64{
 				{{0.}, {0.}},
 				{{1.}, {2.}}}},
 		{"x / y",
 			func(x []float64) {
-				Arithmetic(OpDiv, &x[0], &x[1])
+				Return(Arithmetic(OpDiv, &x[0], &x[1]))
 			},
 			[][][]float64{
 				{{0., 1.}, {1., 0.}},
 				{{2., 4.}, {0.25, -0.125}}}},
 		{"x / x",
 			func(x []float64) {
-				Arithmetic(OpDiv, &x[0], &x[0])
+				Return(Arithmetic(OpDiv, &x[0], &x[0]))
 			},
 			[][][]float64{
 				{{1.}, {0.}},
 				{{2.}, {0.}}}},
 		{"sqrt(x)",
 			func(x []float64) {
-				Elemental(math.Sqrt, &x[0])
+				Return(Elemental(math.Sqrt, &x[0]))
 			},
 			[][][]float64{
 				{{0.25}, {1.}},
@@ -167,28 +170,28 @@ func TestPrimitive(t *testing.T) {
 				{{4.}, {0.25}}}},
 		{"log(x)",
 			func(x []float64) {
-				Elemental(math.Log, &x[0])
+				Return(Elemental(math.Log, &x[0]))
 			},
 			[][][]float64{
 				{{1.}, {1.}},
 				{{2.}, {0.5}}}},
 		{"exp(x)",
 			func(x []float64) {
-				Elemental(math.Exp, &x[0])
+				Return(Elemental(math.Exp, &x[0]))
 			},
 			[][][]float64{
 				{{0.}, {1.}},
 				{{1.}, {math.E}}}},
 		{"cos(x)",
 			func(x []float64) {
-				Elemental(math.Cos, &x[0])
+				Return(Elemental(math.Cos, &x[0]))
 			},
 			[][][]float64{
 				{{0.}, {0.}},
 				{{1.}, {-math.Sin(1.)}}}},
 		{"sin(x)",
 			func(x []float64) {
-				Elemental(math.Sin, &x[0])
+				Return(Elemental(math.Sin, &x[0]))
 			},
 			[][][]float64{
 				{{0.}, {1.}},
@@ -200,9 +203,9 @@ func TestComposite(t *testing.T) {
 	runsuite(t, []testcase{
 		{"x * x + y * y",
 			func(x []float64) {
-				Arithmetic(OpAdd,
+				Return(Arithmetic(OpAdd,
 					Arithmetic(OpMul, &x[0], &x[0]),
-					Arithmetic(OpMul, &x[1], &x[1]))
+					Arithmetic(OpMul, &x[1], &x[1])))
 			},
 			[][][]float64{
 				{{0., 0.}, {0., 0.}},
@@ -210,9 +213,9 @@ func TestComposite(t *testing.T) {
 				{{2., 3.}, {4., 6.}}}},
 		{"(x + y) * (x + y)",
 			func(x []float64) {
-				Arithmetic(OpMul,
+                Return(Arithmetic(OpMul,
 					Arithmetic(OpAdd, &x[0], &x[1]),
-					Arithmetic(OpAdd, &x[0], &x[1]))
+					Arithmetic(OpAdd, &x[0], &x[1])))
 			},
 			[][][]float64{
 				{{0., 0.}, {0., 0.}},
@@ -220,8 +223,8 @@ func TestComposite(t *testing.T) {
 				{{2., 3.}, {10., 10.}}}},
 		{"sin(x * y)",
 			func(x []float64) {
-				Elemental(math.Sin,
-					Arithmetic(OpMul, &x[0], &x[1]))
+				Return(Elemental(math.Sin,
+					Arithmetic(OpMul, &x[0], &x[1])))
 			},
 			[][][]float64{
 				{{0., 0.}, {0., 0.}},
@@ -232,28 +235,30 @@ func TestComposite(t *testing.T) {
 
 func TestAssignment(t *testing.T) {
 	runsuite(t, []testcase{
-		{"z = sin(x * y); v1 = z",
+		{"z = sin(x * y); z",
 			func(x []float64) {
-				Assignment(Place(Value(0.)),
+                var z float64
+				Assignment(&z,
 					Elemental(math.Sin,
 						Arithmetic(OpMul, &x[0], &x[1])))
+                Return(&z)
 			},
 			[][][]float64{
 				{{0., 0.}, {0., 0.}},
 				{{1., math.Pi}, {-math.Pi, -1.}},
 				{{math.Pi, 1.}, {-1., -math.Pi}}}},
-		{"x = 2.; z = x * x",
+		{"x = 2.; x * x",
 			func(x []float64) {
 				Assignment(&x[0], Place(Value(2.)))
-				Arithmetic(OpMul, &x[0], &x[0])
+				Return(Arithmetic(OpMul, &x[0], &x[0]))
 			},
 			[][][]float64{
 				{{0.}, {0.}},
 				{{3.}, {0.}}}},
-		{"x = x; z = x * x",
+		{"x = x; x * x",
 			func(x []float64) {
 				Assignment(&x[0], &x[0])
-				Arithmetic(OpMul, &x[0], &x[0])
+				Return(Arithmetic(OpMul, &x[0], &x[0]))
 			},
 			[][][]float64{
 				{{0.}, {0.}},
@@ -268,7 +273,7 @@ func TestParallelAssignment(t *testing.T) {
 				ParallelAssignment(
 					[]*float64{&x[0], &x[1]},
 					[]*float64{&x[1], &x[0]})
-				Arithmetic(OpAdd, &x[0], &x[1])
+				Return(Arithmetic(OpAdd, &x[0], &x[1]))
 			},
 			[][][]float64{
 				{{0., 0.}, {1., 1.}},
@@ -279,9 +284,9 @@ func TestParallelAssignment(t *testing.T) {
 				ParallelAssignment(
 					[]*float64{&x[0], &x[1]},
 					[]*float64{&x[1], &x[0]})
-				Arithmetic(OpAdd,
+				Return(Arithmetic(OpAdd,
 					Arithmetic(OpMul, Place(Value(2.)), &x[0]),
-					&x[1])
+					&x[1]))
 			},
 			[][][]float64{
 				{{0., 0.}, {1., 2.}},
@@ -322,21 +327,22 @@ func TestElemental(t *testing.T) {
 	runsuite(t, []testcase{
 		{"twoArgElemental(x, y)",
 			func(x []float64) {
-				Elemental(twoArgElemental, &x[0], &x[1])
+				Return(Elemental(twoArgElemental, &x[0], &x[1]))
 			},
 			[][][]float64{
 				{{0., 0.}, {0., 0.}},
 				{{1., 2.}, {2., 1.}}}},
 		{"threeArgElemental(x, y, t)",
 			func(x []float64) {
-				Elemental(threeArgElemental, &x[0], &x[1], &x[2])
+				Return(Elemental(threeArgElemental,
+                    &x[0], &x[1], &x[2]))
 			},
 			[][][]float64{
 				{{0., 0., 0.}, {1., 1., 1.}},
 				{{1., 2., 3.}, {1., 1., 1.}}}},
 		{"variadicElemental(x, y)",
 			func(x []float64) {
-				Elemental(variadicElemental, &x[0], &x[1])
+				Return(Elemental(variadicElemental, &x[0], &x[1]))
 			},
 			[][][]float64{
 				{{0., 0.}, {1., -1.}},
@@ -404,7 +410,7 @@ func TestCall(t *testing.T) {
 						Assignment(a, b)
 					}(&x[0], &x[1])
 				})
-				Arithmetic(OpAdd, &x[0], &x[1])
+				Return(Arithmetic(OpAdd, &x[0], &x[1]))
 			},
 			[][][]float64{
 				{{0., 0.}, {0., 2.}},
@@ -416,7 +422,7 @@ func TestCall(t *testing.T) {
 						Assignment(a, b)
 					}(&x[0], &x[1])
 				})
-				Arithmetic(OpMul, &x[0], &x[1])
+				Return(Arithmetic(OpMul, &x[0], &x[1]))
 			},
 			[][][]float64{
 				{{0., 0.}, {0., 0.}},

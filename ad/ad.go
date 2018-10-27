@@ -416,10 +416,9 @@ func (m *model) autodiff(method *ast.FuncDecl) (err error) {
 
 	// Entry
 
-	// If we differentiating Observe, entry and exit are different
-	// than for other methods.
-	observe := strings.Compare(method.Name.Name, "Observe") == 0
-	if observe {
+	// If we differentiating Observe, the entry is different
+    // than for other methods.
+	if strings.Compare(method.Name.Name, "Observe") == 0 {
 		param := method.Type.Params.List[0]
 		var arg ast.Expr
 		if strings.Compare(param.Names[0].Name, "_") != 0 {
