@@ -163,22 +163,16 @@ func (m *model) deriv() (err error) {
 	}
 
 	for _, method := range methods {
+		// Add the import (safe to add more than once)
+		fname := m.fset.Position(method.Pos()).Filename
+		astutil.AddImport(m.fset, m.pkg.Files[fname], infergoImport)
+
 		if strings.Compare(method.Name.Name, "Observe") == 0 {
 			// Differentiate the main model method.
 		} else {
 			// Differentiate a model method which
 			// may be called from Observe.
 		}
-	}
-
-	// Finally, add infergo import to each file with model
-	// methods.
-	mfiles, err := m.collectFiles(mtypes)
-	if err != nil {
-		return err
-	}
-	for _, file := range mfiles {
-		astutil.AddImport(m.fset, file, infergoImport)
 	}
 
 	return err
@@ -265,25 +259,6 @@ func (m *model) collectMethods(mtypes []types.Type) (
 	}
 
 	return methods, err
-}
-
-// collectFiles collects ASTs of files where the model methods
-// appear so that imports can be added.
-func (m *model) collectFiles(mtypes []types.Type) (
-	mfiles []*ast.File,
-	err error,
-) {
-	for _, file := range m.pkg.Files {
-		for _, d := range file.Decls {
-			if d, ok := d.(*ast.FuncDecl); ok &&
-				m.isMethod(mtypes, d) {
-				mfiles = append(mfiles, file)
-				break
-			}
-		}
-	}
-
-	return mfiles, err
 }
 
 // isMethod returns true iff the function declaration is a model
@@ -374,13 +349,39 @@ func (m *model) simplify(method *ast.FuncDecl) {
 					}
 					n.Rhs[0] = expr
 					// We introduced a new expression after
-					// typechecking. Let's add it to the type
-					// map.
+					// typechecking. Let's add it to the
+					// type map.
 					m.info.Types[expr] = m.info.Types[n.Lhs[0]]
 				}
 			case *ast.IncDecStmt:
 				// Rewrite as expr = expr OP 1
-				// TODO
+				one := &ast.BasicLit{
+					ValuePos: n.Pos(),
+					Kind:     token.INT,
+					Value:    "1",
+				}
+				tok := map[token.Token]token.Token{
+					token.INC: token.ADD,
+					token.DEC: token.SUB,
+				}[n.Tok]
+				expr := &ast.BinaryExpr{
+					X:     n.X,
+					OpPos: n.Pos(),
+					Op:    tok,
+					Y:     one,
+				}
+				asgn := &ast.AssignStmt{
+					Lhs:    []ast.Expr{n.X},
+					TokPos: n.Pos(),
+					Tok:    token.ASSIGN,
+					Rhs:    []ast.Expr{expr},
+				}
+				// We introduced new expressions after
+				// typechecking. Let's add them to the
+				// type map.
+				m.info.Types[one] = m.info.Types[n.X]
+				m.info.Types[expr] = m.info.Types[n.X]
+				c.Replace(asgn)
 			}
 			return true
 		},

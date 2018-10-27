@@ -264,100 +264,6 @@ func (m Model) Sample() float64 {
 	}
 }
 
-func TestCollectFiles(t *testing.T) {
-	for _, c := range []struct {
-		model  map[string]string
-		fnames map[string]bool
-	}{
-		// Single file, two methods
-		{map[string]string{
-			"single.go": `package single
-
-type Model float64
-
-func (m Model) Observe(x []float64) float64 {
-	return - float64(m) * x[0]
-}
-
-func (m Model) Sample() float64 {
-	return 0.0
-}
-`,
-		},
-			map[string]bool{
-				"single.go": true,
-			}},
-
-		// Two files, first file contains the methods
-		{map[string]string{
-			"first.go": `package first
-
-type Model float64
-
-func (m Model) Observe(x []float64) float64 {
-	return - float64(m) * x[0]
-}
-`,
-			"second.go": `package first
-
-func foo() {
-}
-`,
-		},
-			map[string]bool{
-				"first.go": true,
-			}},
-
-		// Two files, first file contains the methods
-		{map[string]string{
-			"first.go": `package both
-
-type Model float64
-
-func (m *Model) Observe(x []float64) float64 {
-	return - float64(*m) * x[0]
-}
-`,
-			"second.go": `package both
-
-func (m Model) Sample() float64 {
-	return 0.0
-}
-`,
-		},
-			map[string]bool{
-				"first.go":  true,
-				"second.go": true,
-			}},
-	} {
-		m := &model{}
-		parseTestModel(m, c.model)
-		err := m.check()
-		if err != nil {
-			t.Errorf("failed to check model %v: %s",
-				m.pkg.Name, err)
-		}
-		mtypes, err := m.collectTypes()
-		mfiles, err := m.collectFiles(mtypes)
-		if len(mfiles) > 0 && err != nil {
-			// Ignore the error when there is no model
-			panic(err)
-		}
-		for _, mf := range mfiles {
-			fname := m.fset.Position(mf.Package).Filename
-			if !c.fnames[fname] {
-				t.Errorf("model %v: file %q contains no methods",
-					m.pkg.Name, fname)
-			}
-			delete(c.fnames, fname)
-		}
-		for k := range c.fnames {
-			t.Errorf("model %v: file %q was not collected",
-				m.pkg.Name, k)
-		}
-	}
-}
-
 func TestSimplify(t *testing.T) {
 	for _, c := range []struct {
 		original, simplified string
@@ -422,7 +328,7 @@ func (m Model) Observe(x []float64) float64 {
     a--
 	return a
 }`,
-			`package opassign
+			`package incdec
 
 type Model float64
 
