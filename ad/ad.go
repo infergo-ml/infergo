@@ -414,25 +414,24 @@ func (m *model) autodiff(method *ast.FuncDecl) (err error) {
 		}
 	}()
 
-    // Entry
+	// Entry
 
 	// If we differentiating Observe, entry and exit are different
 	// than for other methods.
 	observe := strings.Compare(method.Name.Name, "Observe") == 0
 	if observe {
-        param := method.Type.Params.List[0]
-        var arg ast.Expr
-        if strings.Compare(param.Names[0].Name, "_") != 0 {
-            arg = param.Names[0]
-        } else {
-            // The parameter is as _; the argument is an empty
-            // slice.
-            arg = &ast.CompositeLit {
-                Type: param.Type,
-            }
-        }
-		setup := &ast.ExprStmt{
-            callExpr("ad.Setup", []ast.Expr{arg})}
+		param := method.Type.Params.List[0]
+		var arg ast.Expr
+		if strings.Compare(param.Names[0].Name, "_") != 0 {
+			arg = param.Names[0]
+		} else {
+			// The parameter is as _; the argument is an empty
+			// slice.
+			arg = &ast.CompositeLit{
+				Type: param.Type,
+			}
+		}
+		setup := &ast.ExprStmt{callExpr("ad.Setup", []ast.Expr{arg})}
 		method.Body.List = append([]ast.Stmt{setup},
 			method.Body.List...)
 	} else {
@@ -440,11 +439,11 @@ func (m *model) autodiff(method *ast.FuncDecl) (err error) {
 
 	astutil.Apply(method,
 		func(c *astutil.Cursor) bool {
-            return true
-        },
-        func(c *astutil.Cursor) bool {
-            return true
-        })
+			return true
+		},
+		func(c *astutil.Cursor) bool {
+			return true
+		})
 
 	return err
 }
@@ -453,9 +452,9 @@ func (m *model) autodiff(method *ast.FuncDecl) (err error) {
 func callExpr(name string, args []ast.Expr) ast.Expr {
 	return &ast.CallExpr{
 		Fun: &ast.Ident{
-			Name:    name,
+			Name: name,
 		},
-		Args:     args,
+		Args: args,
 	}
 }
 
