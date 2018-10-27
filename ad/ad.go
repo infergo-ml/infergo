@@ -159,19 +159,21 @@ func (m *model) deriv() (err error) {
 	// Simplify the code first so that differentiation
 	// is less cumbersome.
 	for _, method := range methods {
-		m.simplify(method)
+		err = m.simplify(method)
+		if err != nil {
+			return err
+		}
 	}
 
+	// Finally, ifferentiate.
 	for _, method := range methods {
 		// Add the import (safe to add more than once)
 		fname := m.fset.Position(method.Pos()).Filename
 		astutil.AddImport(m.fset, m.pkg.Files[fname], infergoImport)
 
-		if strings.Compare(method.Name.Name, "Observe") == 0 {
-			// Differentiate the main model method.
-		} else {
-			// Differentiate a model method which
-			// may be called from Observe.
+		err = m.autodiff(method)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -293,7 +295,17 @@ func isaType(typs []types.Type, typ types.Type) bool {
 // simplify rewrites the syntax tree of a method to
 // differentiate and desugars the syntax, to make the
 // autodiff code simpler to write and debug.
-func (m *model) simplify(method *ast.FuncDecl) {
+func (m *model) simplify(method *ast.FuncDecl) (err error) {
+	// Apply panics on errors. When Apply panics, we return the
+	// error as do other functions.
+	defer func() {
+		if r := recover(); r != nil {
+			p := m.fset.Position(method.Pos())
+			err = fmt.Errorf("simplify:%v:%d:%d: %v",
+				p.Filename, p.Line, p.Column, r)
+		}
+	}()
+
 	astutil.Apply(method,
 		func(c *astutil.Cursor) bool {
 			n := c.Node()
@@ -386,6 +398,65 @@ func (m *model) simplify(method *ast.FuncDecl) {
 			return true
 		},
 		nil)
+
+	return err
+}
+
+// autodiff differentiates the method.
+func (m *model) autodiff(method *ast.FuncDecl) (err error) {
+	// Apply panics on errors. When Apply panics, we return the
+	// error as do other functions.
+	defer func() {
+		if r := recover(); r != nil {
+			p := m.fset.Position(method.Pos())
+			err = fmt.Errorf("autodiff:%v:%d:%d: %v",
+				p.Filename, p.Line, p.Column, r)
+		}
+	}()
+
+    // Entry
+
+	// If we differentiating Observe, entry and exit are different
+	// than for other methods.
+	observe := strings.Compare(method.Name.Name, "Observe") == 0
+	if observe {
+        param := method.Type.Params.List[0]
+        var arg ast.Expr
+        if strings.Compare(param.Names[0].Name, "_") != 0 {
+            arg = param.Names[0]
+        } else {
+            // The parameter is as _; the argument is an empty
+            // slice.
+            arg = &ast.CompositeLit {
+                Type: param.Type,
+            }
+        }
+		setup := &ast.ExprStmt{
+            callExpr("ad.Setup", []ast.Expr{arg})}
+		method.Body.List = append([]ast.Stmt{setup},
+			method.Body.List...)
+	} else {
+	}
+
+	astutil.Apply(method,
+		func(c *astutil.Cursor) bool {
+            return true
+        },
+        func(c *astutil.Cursor) bool {
+            return true
+        })
+
+	return err
+}
+
+// callExpr returns an Expr for call 'name(args...)'.
+func callExpr(name string, args []ast.Expr) ast.Expr {
+	return &ast.CallExpr{
+		Fun: &ast.Ident{
+			Name:    name,
+		},
+		Args:     args,
+	}
 }
 
 // Writing
