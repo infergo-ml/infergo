@@ -171,7 +171,7 @@ func (m *model) deriv() (err error) {
 		fname := m.fset.Position(method.Pos()).Filename
 		astutil.AddImport(m.fset, m.pkg.Files[fname], infergoImport)
 
-		err = m.autodiff(method)
+		err = m.differentiate(method)
 		if err != nil {
 			return err
 		}
@@ -294,7 +294,7 @@ func isaType(typs []types.Type, typ types.Type) bool {
 
 // simplify rewrites the syntax tree of a method to
 // differentiate and desugars the syntax, to make the
-// autodiff code simpler to write and debug.
+// differentiate code simpler to write and debug.
 func (m *model) simplify(method *ast.FuncDecl) (err error) {
 	// Apply panics on errors. When Apply panics, we return the
 	// error as do other functions.
@@ -402,14 +402,14 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 	return err
 }
 
-// autodiff differentiates the method.
-func (m *model) autodiff(method *ast.FuncDecl) (err error) {
+// differentiate differentiates the method.
+func (m *model) differentiate(method *ast.FuncDecl) (err error) {
 	// Apply panics on errors. When Apply panics, we return the
 	// error as do other functions.
 	defer func() {
 		if r := recover(); r != nil {
 			p := m.fset.Position(method.Pos())
-			err = fmt.Errorf("autodiff:%v:%d:%d: %v",
+			err = fmt.Errorf("differentiate:%v:%d:%d: %v",
 				p.Filename, p.Line, p.Column, r)
 		}
 	}()
@@ -436,11 +436,53 @@ func (m *model) autodiff(method *ast.FuncDecl) (err error) {
 	} else {
 	}
 
+    differentiate := false
 	astutil.Apply(method,
+        // pre focuses on the parts of the tree that to
+        // differentiate.
 		func(c *astutil.Cursor) bool {
-			return true
-		},
+            n := c.Node()
+            switch n := n.(type) {
+            case *ast.BasicLit, *ast.StarExpr, 
+                *ast.UnaryExpr, *ast.BinaryExpr:
+                return true
+            case *ast.ReturnStmt: // if float64
+                n = n
+                differentiate = true
+                return differentiate
+            case *ast.AssignStmt: // if all are float64
+                differentiate = true
+                return differentiate
+            case *ast.ExprStmt: // if a model method call
+                differentiate = true
+                return differentiate
+            }
+            return true
+        },
+        // post differentiates expressions in post order.
 		func(c *astutil.Cursor) bool {
+            if !differentiate {
+                return true
+            }
+            n := c.Node()
+            switch n := n.(type) {
+            case *ast.BasicLit:
+            case *ast.ReturnStmt:
+                ret := callExpr("ad.Return", n.Results)
+                n.Results = []ast.Expr{ret}
+                differentiate = false
+            case *ast.StarExpr:
+            case *ast.UnaryExpr:
+                // -, +, &
+            case *ast.BinaryExpr:
+                // -, +, *, /
+            case *ast.AssignStmt:
+                differentiate = false
+            case *ast.CallExpr:
+                // differentiated or elemental
+            case *ast.ExprStmt:
+                differentiate = false
+            }
 			return true
 		})
 

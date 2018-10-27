@@ -124,6 +124,47 @@ func Place(p *float64) *float64 {
 	return p
 }
 
+// Return returns the result of the differentiated function.
+func Return(px *float64) float64 {
+	// The returned value goes into the first place.
+    tape.places[0] = px
+	return *px
+}
+
+// Arithmetic encodes an arithmetic operation and returns
+// the location of the result.
+func Arithmetic(op int, px ...*float64) *float64 {
+	p := Place(Value(0.))
+
+	// Register
+	r := record{
+		typ: typArithmetic,
+		op:  op,
+		p:   len(tape.places),
+	}
+	tape.places = append(tape.places, p)
+	tape.places = append(tape.places, px...)
+	tape.records = append(tape.records, r)
+
+	// Run
+	switch op {
+	case OpNeg:
+		*p = -*px[0]
+	case OpAdd:
+		*p = *px[0] + *px[1]
+	case OpSub:
+		*p = *px[0] - *px[1]
+	case OpMul:
+		*p = *px[0] * *px[1]
+	case OpDiv:
+		*p = *px[0] / *px[1]
+	default:
+		panic(fmt.Sprintf("bad opcode %v", r.op))
+	}
+
+	return p
+}
+
 // ParallelAssigment encodes a parallel assignment.
 func ParallelAssignment(p []*float64, px []*float64) {
 	// Register
@@ -169,40 +210,6 @@ func Assignment(p *float64, px *float64) {
 
 	// Run
 	*p = *px
-}
-
-// Arithmetic encodes an arithmetic operation and returns
-// the location of the result.
-func Arithmetic(op int, px ...*float64) *float64 {
-	p := Place(Value(0.))
-
-	// Register
-	r := record{
-		typ: typArithmetic,
-		op:  op,
-		p:   len(tape.places),
-	}
-	tape.places = append(tape.places, p)
-	tape.places = append(tape.places, px...)
-	tape.records = append(tape.records, r)
-
-	// Run
-	switch op {
-	case OpNeg:
-		*p = -*px[0]
-	case OpAdd:
-		*p = *px[0] + *px[1]
-	case OpSub:
-		*p = *px[0] - *px[1]
-	case OpMul:
-		*p = *px[0] * *px[1]
-	case OpDiv:
-		*p = *px[0] / *px[1]
-	default:
-		panic(fmt.Sprintf("bad opcode %v", r.op))
-	}
-
-	return p
 }
 
 // Elemental encodes a call to the elemental f.
@@ -255,13 +262,6 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 	}
 
 	return p
-}
-
-// Return returns the result of the differentiated function.
-func Return(px *float64) float64 {
-	// The returned value goes into the first place.
-    tape.places[0] = px
-	return *px
 }
 
 // Calling differentiated functions

@@ -87,6 +87,13 @@ func runsuite(t *testing.T, suite []testcase) {
 
 func TestPrimitive(t *testing.T) {
 	runsuite(t, []testcase{
+		{"x",
+			func(x []float64) {
+                Return(&x[0])
+			},
+			[][][]float64{
+				{{0.}, {1.}},
+				{{1.}, {1.}}}},
 		{"y = x; y",
 			func(x []float64) {
                 var y float64
