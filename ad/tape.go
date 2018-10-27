@@ -121,7 +121,7 @@ func Value(v float64) *float64 {
 // Return returns the result of the differentiated function.
 func Return(px *float64) float64 {
 	// The returned value goes into the first place.
-    tape.places[0] = px
+	tape.places[0] = px
 	return *px
 }
 
@@ -162,7 +162,7 @@ func Arithmetic(op int, px ...*float64) *float64 {
 // ParallelAssigment encodes a parallel assignment.
 func ParallelAssignment(ppx ...*float64) {
 	// Register
-    p, px := ppx[:len(ppx)/2], ppx[len(ppx)/2:]
+	p, px := ppx[:len(ppx)/2], ppx[len(ppx)/2:]
 	r := record{
 		typ: typAssignment,
 		op:  len(p),
@@ -279,7 +279,7 @@ func Call(f func(px ...*float64), px ...*float64) *float64 {
 func Enter(px ...*float64) {
 	i0 := len(tape.places) - len(px)
 	ParallelAssignment(append(px,
-        tape.places[i0:i0+len(px)]...)...)
+		tape.places[i0:i0+len(px)]...)...)
 }
 
 // Backward pass

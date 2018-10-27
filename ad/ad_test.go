@@ -268,6 +268,7 @@ func TestSimplify(t *testing.T) {
 	for _, c := range []struct {
 		original, simplified string
 	}{
+//====================================================
 		{`package define
 
 type Model float64
@@ -278,6 +279,7 @@ func (m Model) Observe(x []float64) float64 {
     d, e := 3., 4.
 	return a + b[0]  - d - e
 }`,
+//----------------------------------------------------
 			`package define
 
 type Model float64
@@ -293,6 +295,7 @@ func (m Model) Observe(x []float64) float64 {
 	return a + b[0] - d - e
 }`,
 		},
+//====================================================
 		{`package opassign
 
 type Model float64
@@ -305,6 +308,7 @@ func (m Model) Observe(x []float64) float64 {
     a /= 5.
 	return a
 }`,
+//----------------------------------------------------
 			`package opassign
 
 type Model float64
@@ -318,6 +322,7 @@ func (m Model) Observe(x []float64) float64 {
 	return a
 }`,
 		},
+//====================================================
 		{`package incdec
 
 type Model float64
@@ -328,6 +333,7 @@ func (m Model) Observe(x []float64) float64 {
     a--
 	return a
 }`,
+//----------------------------------------------------
 			`package incdec
 
 type Model float64
@@ -340,6 +346,30 @@ func (m Model) Observe(x []float64) float64 {
 	return a
 }`,
 		},
+//====================================================
+		{`package plus
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    a := 1.
+    b := +a
+	return b
+}`,
+//----------------------------------------------------
+			`package plus
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    var a float64
+    a = 1.
+    var b float64
+    b = a
+	return b
+}`,
+//====================================================
+		},
 	} {
 		m := &model{}
 		parseTestModel(m, map[string]string{
@@ -351,7 +381,7 @@ func (m Model) Observe(x []float64) float64 {
 				m.pkg.Name, err)
 		}
 		err = m.collectTypes()
-        methods, err := m.collectMethods()
+		methods, err := m.collectMethods()
 		for _, method := range methods {
 			m.simplify(method)
 		}
@@ -372,6 +402,7 @@ func TestDifferentiate(t *testing.T) {
 	for _, c := range []struct {
 		original, differentiated string
 	}{
+//====================================================
 		{`package lit
 
 type Model float64
@@ -383,6 +414,7 @@ func (m Model) Observe(x []float64) float64 {
 func (m Model) Count() int {
     return 0
 }`,
+//----------------------------------------------------
 			`package lit
 
 type Model float64
@@ -396,6 +428,7 @@ func (m Model) Count() int {
     return 0
 }`,
 		},
+//====================================================
 		{`package ident
 
 type Model float64
@@ -409,6 +442,7 @@ func (m Model) Count() int {
     y := 1
     return y
 }`,
+//----------------------------------------------------
 			`package ident
 
 type Model float64
@@ -426,6 +460,7 @@ func (m Model) Count() int {
     return y
 }`,
 		},
+//====================================================
 		{`package index
 
 type Model float64
@@ -433,6 +468,7 @@ type Model float64
 func (m Model) Observe(x []float64) float64 {
     return x[0]
 }`,
+//----------------------------------------------------
 			`package index
 
 type Model float64
@@ -442,6 +478,29 @@ func (m Model) Observe(x []float64) float64 {
     return ad.Return(&x[0])
 }`,
 		},
+//====================================================
+		{`package selector
+
+type Model struct {
+    y float64
+}
+
+func (m Model) Observe(x []float64) float64 {
+    return m.y
+}`,
+//----------------------------------------------------
+			`package selector
+
+type Model struct {
+    y float64
+}
+
+func (m Model) Observe(x []float64) float64 {
+    ad.Setup(x)
+    return ad.Return(&m.y)
+}`,
+		},
+//====================================================
 		{`package star
 
 type Model float64
@@ -450,6 +509,7 @@ func (m Model) Observe(x []float64) float64 {
     y := &x[0]
     return *y
 }`,
+//----------------------------------------------------
 			`package star
 
 type Model float64
@@ -461,6 +521,30 @@ func (m Model) Observe(x []float64) float64 {
     return ad.Return(y)
 }`,
 		},
+//====================================================
+		{`package unary
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    y := +x[0]
+    y = -x[1]
+    return y
+}`,
+//----------------------------------------------------
+			`package unary
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    ad.Setup(x)
+    var y float64
+    ad.Assignment(&y, &x[0])
+    ad.Assignment(&y, ad.Arithmetic(ad.OpNeg, &x[1]))
+    return ad.Return(&y)
+}`,
+		},
+//====================================================
 	} {
 		m := &model{}
 		parseTestModel(m, map[string]string{
@@ -472,10 +556,10 @@ func (m Model) Observe(x []float64) float64 {
 				m.pkg.Name, err)
 		}
 		err = m.collectTypes()
-        methods, err := m.collectMethods()
+		methods, err := m.collectMethods()
 		for _, method := range methods {
 			m.simplify(method)
-            m.differentiate(method)
+			m.differentiate(method)
 		}
 		if !equiv(m.pkg.Files["original.go"], c.differentiated) {
 			b := new(bytes.Buffer)

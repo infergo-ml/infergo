@@ -59,7 +59,7 @@ type model struct {
 	fset *token.FileSet
 	pkg  *ast.Package
 	info *types.Info
-    typs []types.Type
+	typs []types.Type
 }
 
 // Deriv differentiates a model. The original model is in the
@@ -276,8 +276,8 @@ func (m *model) isMethod(
 }
 
 // isType returns true iff typ is one of model types, or
-// pointed to by one of typs. 
-func (m *model)isType(typ types.Type) bool {
+// pointed to by one of typs.
+func (m *model) isType(typ types.Type) bool {
 	for _, t := range m.typs {
 		if types.Identical(t, typ) {
 			return true
@@ -386,12 +386,16 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 					Tok:    token.ASSIGN,
 					Rhs:    []ast.Expr{expr},
 				}
-                // We introduced new expressions after
+				// We introduced new expressions after
 				// typechecking. Let's add them to the
 				// type map.
 				m.info.Types[one] = m.info.Types[n.X]
 				m.info.Types[expr] = m.info.Types[n.X]
 				c.Replace(asgn)
+			case *ast.UnaryExpr:
+				if n.Op == token.ADD {
+					c.Replace(n.X)
+				}
 			}
 			return true
 		},
@@ -404,6 +408,7 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 func (m *model) differentiate(method *ast.FuncDecl) (err error) {
 	// Apply panics on errors. When Apply panics, we return the
 	// error as do other functions.
+    if false {
 	defer func() {
 		if r := recover(); r != nil {
 			p := m.fset.Position(method.Pos())
@@ -411,133 +416,172 @@ func (m *model) differentiate(method *ast.FuncDecl) (err error) {
 				p.Filename, p.Line, p.Column, r)
 		}
 	}()
+}
 
-    // differentiate is used to switch differentiation on
-    // and off. If pre returns true but differentiate is false,
-    // Apply traverses the children but they are not
-    // differentiated (until differentiate is on).
-    differentiate := false
+	// differentiate is used to switch differentiation on
+	// and off. If pre returns true but differentiate is false,
+	// Apply traverses the children but they are not
+	// differentiated (until differentiate is on).
+	differentiate := false
 	astutil.Apply(method,
-        // pre focuses on the parts of the tree that to
-        // differentiate.
+		// pre focuses on the parts of the tree that
+		// are to be differentiated.
 		func(c *astutil.Cursor) bool {
-            n := c.Node()
-            switch n := n.(type) {
-               
-            case *ast.BasicLit, *ast.Ident,
-                *ast.IndexExpr, *ast.StarExpr,
-                *ast.UnaryExpr, *ast.BinaryExpr:
-                t, basic := m.info.TypeOf(n.(ast.Expr)).
-                    (*types.Basic)
-                if !basic || t.Kind() != types.Float64 {
-                    return false
-                }
-            case *ast.ReturnStmt: // if float64
-                if len(n.Results) != 1 {
-                    return false
-                }
-                for _, r := range n.Results {
-                    t, basic := m.info.TypeOf(r).(*types.Basic)
-                    if !basic  || t.Kind() != types.Float64 {
-                        return false
-                    }
-                }
-                differentiate = true
-            case *ast.AssignStmt: // if all are float64
-                for _, r := range n.Lhs {
-                    t, basic := m.info.TypeOf(r).(*types.Basic)
-                    if !basic || t.Kind() != types.Float64 {
-                        return false
-                    }
-                }
-                differentiate = true
-            case *ast.ExprStmt: // if a model method call
-                call, ok := n.X.(*ast.CallExpr)
-                if !ok {
-                    return false
-                }
-                t := m.info.TypeOf(call.Fun).(*types.Signature)
-                if t.Recv() == nil || !m.isType(t.Recv().Type()) {
-                    return false
-                }
-                differentiate = true
-            }
-            return true
-        },
-        // post differentiates expressions in post order.
-		func(c *astutil.Cursor) bool {
-            if !differentiate {
-                return true
-            }
-            n := c.Node()
-            switch n := n.(type) {
-            case *ast.BasicLit:
-                value := callExpr("ad.Value", n)
-                c.Replace(value)
-            case *ast.Ident, *ast.IndexExpr:
-                place := &ast.UnaryExpr{ 
-                    Op: token.AND,
-                    X: n.(ast.Expr),
-                }
-                c.Replace(place)
-            case *ast.ReturnStmt:
-                ret := callExpr("ad.Return", n.Results...)
-                n.Results = []ast.Expr{ret}
-                differentiate = false
-            case *ast.StarExpr:
-                c.Replace(n.X)
-            case *ast.UnaryExpr:
-                // -, +, &
-            case *ast.BinaryExpr:
-                // -, +, *, /
-            case *ast.AssignStmt:
-                var asgn ast.Expr
-                if len(n.Lhs) == 1 {
-                    asgn = callExpr("ad.Assignment",
-                        n.Lhs[0], n.Rhs[0])
-                } else {
-                    asgn = callExpr("ad.ParallelAssignment",
-                        append(n.Lhs, n.Rhs...)...)
-                }
-                stmt := &ast.ExprStmt{asgn}
-                c.Replace(stmt)
-                differentiate = false
-            case *ast.CallExpr:
-                // differentiated or elemental
-            case *ast.ExprStmt:
-                differentiate = false
+			n := c.Node()
+			switch n := n.(type) {
 
-            }
+			case *ast.BasicLit, *ast.Ident,
+				*ast.IndexExpr, *ast.SelectorExpr,
+                *ast.StarExpr, *ast.UnaryExpr, *ast.BinaryExpr:
+				t, basic := m.info.TypeOf(n.(ast.Expr)).(*types.Basic)
+				if !basic || t.Kind() != types.Float64 {
+					return false
+				}
+                // SelectorExpr is peculiar: Sel is a child and
+                // implements Expr, but not an expression. I
+                // believe astutil should not traverse Sel at
+                // all.
+                switch c.Parent().(type) {
+                case *ast.SelectorExpr:
+                    if strings.Compare(c.Name(), "Sel")==0 {
+                        return false
+                    }
+                }
+			case *ast.ReturnStmt: // if float64
+				if len(n.Results) != 1 {
+					return false
+				}
+				for _, r := range n.Results {
+					t, basic := m.info.TypeOf(r).(*types.Basic)
+					if !basic || t.Kind() != types.Float64 {
+						return false
+					}
+				}
+				differentiate = true
+			case *ast.AssignStmt: // if all are float64
+				for _, r := range n.Lhs {
+					t, basic := m.info.TypeOf(r).(*types.Basic)
+					if !basic || t.Kind() != types.Float64 {
+						return false
+					}
+				}
+				differentiate = true
+			case *ast.ExprStmt: // if a model method call
+				call, ok := n.X.(*ast.CallExpr)
+				if !ok {
+					return false
+				}
+				t := m.info.TypeOf(call.Fun).(*types.Signature)
+				if t.Recv() == nil || !m.isType(t.Recv().Type()) {
+					return false
+				}
+				differentiate = true
+			}
+			return true
+		},
+
+		// post differentiates expressions in bottom-up order.
+		func(c *astutil.Cursor) bool {
+			if !differentiate {
+				return true
+			}
+			n := c.Node()
+			switch n := n.(type) {
+			case *ast.BasicLit:
+				value := callExpr("ad.Value", n)
+				c.Replace(value)
+			case *ast.Ident, *ast.IndexExpr:
+				place := &ast.UnaryExpr{
+					Op: token.AND,
+					X:  n.(ast.Expr),
+				}
+				c.Replace(place)
+            case *ast.SelectorExpr:
+				place := &ast.UnaryExpr{
+					Op: token.AND,
+					X:  n,
+				}
+				c.Replace(place)
+			case *ast.ReturnStmt:
+				ret := callExpr("ad.Return", n.Results...)
+				n.Results = []ast.Expr{ret}
+				differentiate = false
+			case *ast.StarExpr:
+				c.Replace(n.X)
+			case *ast.UnaryExpr:
+				switch n.Op {
+				case token.SUB:
+					neg := callExpr("ad.Arithmetic",
+						&ast.BasicLit{
+							Kind:  token.INT,
+							Value: "ad.OpNeg",
+						},
+						n.X)
+					c.Replace(neg)
+				default:
+					panic(fmt.Sprintf(
+						"cannot differentiate unary %v", n.Op))
+				}
+			case *ast.BinaryExpr:
+				bin := callExpr("ad.Arithmetic",
+					&ast.BasicLit{
+						Kind: token.INT,
+						Value: map[token.Token]string{
+							token.ADD: "ad.OpAdd",
+							token.SUB: "ad.OpSub",
+							token.MUL: "ad.OpMul",
+							token.QUO: "ad.OpDiv",
+						}[n.Op],
+					},
+					n.X, n.Y)
+				c.Replace(bin)
+			case *ast.AssignStmt:
+				var asgn ast.Expr
+				if len(n.Lhs) == 1 {
+					asgn = callExpr("ad.Assignment",
+						n.Lhs[0], n.Rhs[0])
+				} else {
+					asgn = callExpr("ad.ParallelAssignment",
+						append(n.Lhs, n.Rhs...)...)
+				}
+				stmt := &ast.ExprStmt{asgn}
+				c.Replace(stmt)
+				differentiate = false
+			case *ast.CallExpr:
+				// differentiated or elemental
+			case *ast.ExprStmt:
+				differentiate = false
+			}
 			return true
 		})
 
-    // Method entry
-    // Processed after the traversal so that Apply
-    // does not see the added function calls.
+	// Method entry
+	// Processed after the traversal so that Apply
+	// does not see the added function calls.
 
-    // If we are differentiating Observe, the entry
-    // is different than for other methods.
-    if strings.Compare(method.Name.Name,
-        "Observe") == 0 {
-        param := method.Type.Params.List[0]
-        var arg ast.Expr
-        if strings.Compare(param.Names[0].Name,
-            "_") != 0 {
-            arg = param.Names[0]
-        } else {
-            // The parameter is as _; the argument
-            // is an empty slice.
-            arg = &ast.CompositeLit{
-                Type: param.Type,
-            }
-        }
-        setup := &ast.ExprStmt{
-            callExpr("ad.Setup", arg),
-        }
-        method.Body.List = append([]ast.Stmt{setup},
-            method.Body.List...)
-    } else {
-    }
+	// If we are differentiating Observe, the entry
+	// is different than for other methods.
+	if strings.Compare(method.Name.Name,
+		"Observe") == 0 {
+		param := method.Type.Params.List[0]
+		var arg ast.Expr
+		if strings.Compare(param.Names[0].Name,
+			"_") != 0 {
+			arg = param.Names[0]
+		} else {
+			// The parameter is as _; the argument
+			// is an empty slice.
+			arg = &ast.CompositeLit{
+				Type: param.Type,
+			}
+		}
+		setup := &ast.ExprStmt{
+			callExpr("ad.Setup", arg),
+		}
+		method.Body.List = append([]ast.Stmt{setup},
+			method.Body.List...)
+	} else {
+	}
 
 	return err
 }
