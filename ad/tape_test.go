@@ -25,7 +25,7 @@ func TestPop(t *testing.T) {
 		Assignment(&x[1], Arithmetic(OpAdd, &x[0], &x[1]))
 	})
 	ddx([]float64{1.}, func(x []float64) {
-		Assignment(&x[0], Place(Value(1.)))
+		Assignment(&x[0], Value(1.))
 	})
 	// Nested differentiation
 	shouldPop(t, []float64{0., 1.}, func(x []float64) {
@@ -256,7 +256,7 @@ func TestAssignment(t *testing.T) {
 				{{math.Pi, 1.}, {-1., -math.Pi}}}},
 		{"x = 2.; x * x",
 			func(x []float64) {
-				Assignment(&x[0], Place(Value(2.)))
+				Assignment(&x[0], Value(2.))
 				Return(Arithmetic(OpMul, &x[0], &x[0]))
 			},
 			[][][]float64{
@@ -277,9 +277,7 @@ func TestParallelAssignment(t *testing.T) {
 	runsuite(t, []testcase{
 		{"x, y = y, x; x + y",
 			func(x []float64) {
-				ParallelAssignment(
-					[]*float64{&x[0], &x[1]},
-					[]*float64{&x[1], &x[0]})
+				ParallelAssignment(&x[0], &x[1], &x[1], &x[0])
 				Return(Arithmetic(OpAdd, &x[0], &x[1]))
 			},
 			[][][]float64{
@@ -288,11 +286,9 @@ func TestParallelAssignment(t *testing.T) {
 		},
 		{"x, y = y, x; 2*x + y",
 			func(x []float64) {
-				ParallelAssignment(
-					[]*float64{&x[0], &x[1]},
-					[]*float64{&x[1], &x[0]})
+				ParallelAssignment(&x[0], &x[1], &x[1], &x[0])
 				Return(Arithmetic(OpAdd,
-					Arithmetic(OpMul, Place(Value(2.)), &x[0]),
+					Arithmetic(OpMul, Value(2.), &x[0]),
 					&x[1]))
 			},
 			[][][]float64{
@@ -386,7 +382,7 @@ func TestCall(t *testing.T) {
 				{{2.}, {4.}}}},
 		{"y = (x -> x * x)(x)",
 			func(x []float64) {
-				Assignment(Place(Value(0.)),
+				Assignment(Value(0.),
 					Call(func(px ...*float64) {
 						func(a float64) float64 {
 							Enter(&a)

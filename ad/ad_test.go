@@ -156,12 +156,12 @@ func (m ModelB) Observe(x []float64) float64 {
 			t.Errorf("failed to check model %v: %s",
 				m.pkg.Name, err)
 		}
-		mtypes, err := m.collectTypes()
-		if len(mtypes) > 0 && err != nil {
+		err = m.collectTypes()
+		if len(m.typs) > 0 && err != nil {
 			// Ignore the error when there is no model
 			panic(err)
 		}
-		for _, mt := range mtypes {
+		for _, mt := range m.typs {
 			if !c.types[mt.String()] {
 				t.Errorf("model %v: type %v is not a model",
 					m.pkg.Name, mt)
@@ -243,8 +243,8 @@ func (m Model) Sample() float64 {
 			t.Errorf("failed to check model %v: %s",
 				m.pkg.Name, err)
 		}
-		mtypes, err := m.collectTypes()
-		methods, err := m.collectMethods(mtypes)
+		err = m.collectTypes()
+		methods, err := m.collectMethods()
 		if len(methods) > 0 && err != nil {
 			// Ignore the error when there is no model
 			panic(err)
@@ -350,8 +350,8 @@ func (m Model) Observe(x []float64) float64 {
 			t.Errorf("failed to check model %v: %s",
 				m.pkg.Name, err)
 		}
-		mtypes, err := m.collectTypes()
-		methods, err := m.collectMethods(mtypes)
+		err = m.collectTypes()
+        methods, err := m.collectMethods()
 		for _, method := range methods {
 			m.simplify(method)
 		}
@@ -364,6 +364,128 @@ func (m Model) Observe(x []float64) float64 {
 				m.pkg.Name,
 				b.String(),
 				c.simplified)
+		}
+	}
+}
+
+func TestDifferentiate(t *testing.T) {
+	for _, c := range []struct {
+		original, differentiated string
+	}{
+		{`package lit
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    return 0.0
+}
+
+func (m Model) Count() int {
+    return 0
+}`,
+			`package lit
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    ad.Setup(x)
+    return ad.Return(ad.Value(0.0))
+}
+
+func (m Model) Count() int {
+    return 0
+}`,
+		},
+		{`package ident
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    y := 1.
+    return y
+}
+
+func (m Model) Count() int {
+    y := 1
+    return y
+}`,
+			`package ident
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    ad.Setup(x)
+    var y float64
+    ad.Assignment(&y, ad.Value(1.))
+    return ad.Return(&y)
+}
+
+func (m Model) Count() int {
+    var y int
+    y = 1
+    return y
+}`,
+		},
+		{`package index
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    return x[0]
+}`,
+			`package index
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    ad.Setup(x)
+    return ad.Return(&x[0])
+}`,
+		},
+		{`package star
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    y := &x[0]
+    return *y
+}`,
+			`package star
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    ad.Setup(x)
+    var y *float64
+    y = &x[0]
+    return ad.Return(y)
+}`,
+		},
+	} {
+		m := &model{}
+		parseTestModel(m, map[string]string{
+			"original.go": c.original,
+		})
+		err := m.check()
+		if err != nil {
+			t.Errorf("failed to check model %v: %s",
+				m.pkg.Name, err)
+		}
+		err = m.collectTypes()
+        methods, err := m.collectMethods()
+		for _, method := range methods {
+			m.simplify(method)
+            m.differentiate(method)
+		}
+		if !equiv(m.pkg.Files["original.go"], c.differentiated) {
+			b := new(bytes.Buffer)
+			printer.Fprint(b, m.fset, m.pkg.Files["original.go"])
+
+			t.Errorf("model %v:\n---\n%v\n---\n"+
+				" not equivalent to \n---\n%v\n---\n",
+				m.pkg.Name,
+				b.String(),
+				c.differentiated)
 		}
 	}
 }

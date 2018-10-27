@@ -59,6 +59,7 @@ type model struct {
 	fset *token.FileSet
 	pkg  *ast.Package
 	info *types.Info
+    typs []types.Type
 }
 
 // Deriv differentiates a model. The original model is in the
@@ -144,14 +145,13 @@ const infergoImport = "bitbucket.org/dtolpin/infergo/ad"
 
 // deriv differentiates the model through rewriting the ASTs.
 func (m *model) deriv() (err error) {
-	mtypes, err := m.collectTypes()
-	if err != nil {
+	if err = m.collectTypes(); err != nil {
 		return err
 	}
 
 	// Differentiate each model method
 
-	methods, err := m.collectMethods(mtypes)
+	methods, err := m.collectMethods()
 	if err != nil {
 		return err
 	}
@@ -182,9 +182,9 @@ func (m *model) deriv() (err error) {
 
 // collectTypes collects and returns the types of models defined
 // in the package.
-func (m *model) collectTypes() (mtypes []types.Type, err error) {
+func (m *model) collectTypes() (err error) {
 	// Identify the model type (or types)
-	mtypes = make([]types.Type, 0, 1)
+	m.typs = make([]types.Type, 0, 1)
 	for _, file := range m.pkg.Files {
 		for _, d := range file.Decls {
 			if d, ok := d.(*ast.FuncDecl); ok {
@@ -193,16 +193,16 @@ func (m *model) collectTypes() (mtypes []types.Type, err error) {
 					// signature.
 					t := m.info.TypeOf(d.Name).(*types.Signature)
 					if isObserve(t) {
-						mtypes = append(mtypes, t.Recv().Type())
+						m.typs = append(m.typs, t.Recv().Type())
 					}
 				}
 			}
 		}
 	}
-	if len(mtypes) == 0 {
+	if len(m.typs) == 0 {
 		err = fmt.Errorf("no model in package %s", m.pkg.Name)
 	}
-	return mtypes, err
+	return err
 }
 
 // isObserve returns true iff the signature is that of the
@@ -245,16 +245,16 @@ func isObserve(t *types.Signature) (ok bool) {
 
 // collectMethods collects ASTs of methods defined on the
 // models.
-func (m *model) collectMethods(mtypes []types.Type) (
+func (m *model) collectMethods() (
 	methods []*ast.FuncDecl,
 	err error,
 ) {
 	// We will mostly have a single model type; a linear
-	// lookup is the way to go (see isaType below).
+	// lookup is the way to go (see iaType below).
 	for _, file := range m.pkg.Files {
 		for _, d := range file.Decls {
 			if d, ok := d.(*ast.FuncDecl); ok &&
-				m.isMethod(mtypes, d) {
+				m.isMethod(d) {
 				methods = append(methods, d)
 			}
 		}
@@ -266,21 +266,19 @@ func (m *model) collectMethods(mtypes []types.Type) (
 // isMethod returns true iff the function declaration is a model
 // method.
 func (m *model) isMethod(
-	mtypes []types.Type,
 	d *ast.FuncDecl,
 ) bool {
 	if d.Recv == nil {
 		return false
 	}
 	t := m.info.TypeOf(d.Name).(*types.Signature)
-	return isaType(mtypes, t.Recv().Type())
+	return m.isType(t.Recv().Type())
 }
 
-// isaType returns true iff typ is one of typs, or
-// pointed to by one of typs. Used to test whether the
-// method receiver type is a model type.
-func isaType(typs []types.Type, typ types.Type) bool {
-	for _, t := range typs {
+// isType returns true iff typ is one of model types, or
+// pointed to by one of typs. 
+func (m *model)isType(typ types.Type) bool {
+	for _, t := range m.typs {
 		if types.Identical(t, typ) {
 			return true
 		}
@@ -301,7 +299,7 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			p := m.fset.Position(method.Pos())
-			err = fmt.Errorf("simplify:%v:%d:%d: %v",
+			err = fmt.Errorf("simplify: %v:%d:%d: %v",
 				p.Filename, p.Line, p.Column, r)
 		}
 	}()
@@ -388,7 +386,7 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 					Tok:    token.ASSIGN,
 					Rhs:    []ast.Expr{expr},
 				}
-				// We introduced new expressions after
+                // We introduced new expressions after
 				// typechecking. Let's add them to the
 				// type map.
 				m.info.Types[one] = m.info.Types[n.X]
@@ -409,33 +407,15 @@ func (m *model) differentiate(method *ast.FuncDecl) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			p := m.fset.Position(method.Pos())
-			err = fmt.Errorf("differentiate:%v:%d:%d: %v",
+			err = fmt.Errorf("differentiate: %v:%d:%d: %v",
 				p.Filename, p.Line, p.Column, r)
 		}
 	}()
 
-	// Entry
-
-	// If we differentiating Observe, the entry is different
-    // than for other methods.
-	if strings.Compare(method.Name.Name, "Observe") == 0 {
-		param := method.Type.Params.List[0]
-		var arg ast.Expr
-		if strings.Compare(param.Names[0].Name, "_") != 0 {
-			arg = param.Names[0]
-		} else {
-			// The parameter is as _; the argument is an empty
-			// slice.
-			arg = &ast.CompositeLit{
-				Type: param.Type,
-			}
-		}
-		setup := &ast.ExprStmt{callExpr("ad.Setup", []ast.Expr{arg})}
-		method.Body.List = append([]ast.Stmt{setup},
-			method.Body.List...)
-	} else {
-	}
-
+    // differentiate is used to switch differentiation on
+    // and off. If pre returns true but differentiate is false,
+    // Apply traverses the children but they are not
+    // differentiated (until differentiate is on).
     differentiate := false
 	astutil.Apply(method,
         // pre focuses on the parts of the tree that to
@@ -443,19 +423,44 @@ func (m *model) differentiate(method *ast.FuncDecl) (err error) {
 		func(c *astutil.Cursor) bool {
             n := c.Node()
             switch n := n.(type) {
-            case *ast.BasicLit, *ast.StarExpr, 
+               
+            case *ast.BasicLit, *ast.Ident,
+                *ast.IndexExpr, *ast.StarExpr,
                 *ast.UnaryExpr, *ast.BinaryExpr:
-                return true
+                t, basic := m.info.TypeOf(n.(ast.Expr)).
+                    (*types.Basic)
+                if !basic || t.Kind() != types.Float64 {
+                    return false
+                }
             case *ast.ReturnStmt: // if float64
-                n = n
+                if len(n.Results) != 1 {
+                    return false
+                }
+                for _, r := range n.Results {
+                    t, basic := m.info.TypeOf(r).(*types.Basic)
+                    if !basic  || t.Kind() != types.Float64 {
+                        return false
+                    }
+                }
                 differentiate = true
-                return differentiate
             case *ast.AssignStmt: // if all are float64
+                for _, r := range n.Lhs {
+                    t, basic := m.info.TypeOf(r).(*types.Basic)
+                    if !basic || t.Kind() != types.Float64 {
+                        return false
+                    }
+                }
                 differentiate = true
-                return differentiate
             case *ast.ExprStmt: // if a model method call
+                call, ok := n.X.(*ast.CallExpr)
+                if !ok {
+                    return false
+                }
+                t := m.info.TypeOf(call.Fun).(*types.Signature)
+                if t.Recv() == nil || !m.isType(t.Recv().Type()) {
+                    return false
+                }
                 differentiate = true
-                return differentiate
             }
             return true
         },
@@ -467,30 +472,78 @@ func (m *model) differentiate(method *ast.FuncDecl) (err error) {
             n := c.Node()
             switch n := n.(type) {
             case *ast.BasicLit:
+                value := callExpr("ad.Value", n)
+                c.Replace(value)
+            case *ast.Ident, *ast.IndexExpr:
+                place := &ast.UnaryExpr{ 
+                    Op: token.AND,
+                    X: n.(ast.Expr),
+                }
+                c.Replace(place)
             case *ast.ReturnStmt:
-                ret := callExpr("ad.Return", n.Results)
+                ret := callExpr("ad.Return", n.Results...)
                 n.Results = []ast.Expr{ret}
                 differentiate = false
             case *ast.StarExpr:
+                c.Replace(n.X)
             case *ast.UnaryExpr:
                 // -, +, &
             case *ast.BinaryExpr:
                 // -, +, *, /
             case *ast.AssignStmt:
+                var asgn ast.Expr
+                if len(n.Lhs) == 1 {
+                    asgn = callExpr("ad.Assignment",
+                        n.Lhs[0], n.Rhs[0])
+                } else {
+                    asgn = callExpr("ad.ParallelAssignment",
+                        append(n.Lhs, n.Rhs...)...)
+                }
+                stmt := &ast.ExprStmt{asgn}
+                c.Replace(stmt)
                 differentiate = false
             case *ast.CallExpr:
                 // differentiated or elemental
             case *ast.ExprStmt:
                 differentiate = false
+
             }
 			return true
 		})
+
+    // Method entry
+    // Processed after the traversal so that Apply
+    // does not see the added function calls.
+
+    // If we are differentiating Observe, the entry
+    // is different than for other methods.
+    if strings.Compare(method.Name.Name,
+        "Observe") == 0 {
+        param := method.Type.Params.List[0]
+        var arg ast.Expr
+        if strings.Compare(param.Names[0].Name,
+            "_") != 0 {
+            arg = param.Names[0]
+        } else {
+            // The parameter is as _; the argument
+            // is an empty slice.
+            arg = &ast.CompositeLit{
+                Type: param.Type,
+            }
+        }
+        setup := &ast.ExprStmt{
+            callExpr("ad.Setup", arg),
+        }
+        method.Body.List = append([]ast.Stmt{setup},
+            method.Body.List...)
+    } else {
+    }
 
 	return err
 }
 
 // callExpr returns an Expr for call 'name(args...)'.
-func callExpr(name string, args []ast.Expr) ast.Expr {
+func callExpr(name string, args ...ast.Expr) ast.Expr {
 	return &ast.CallExpr{
 		Fun: &ast.Ident{
 			Name: name,

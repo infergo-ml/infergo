@@ -31,7 +31,7 @@ func init() {
 	}
 	// The returned value is in the first place;
 	// see Call and Return below.
-	Place(Value(0.))
+	tape.places = append(tape.places, Value(0.))
 }
 
 // A record specifies the record type and indexes the tape
@@ -107,7 +107,7 @@ func push(n int) {
 // derivatives of the gradient.
 func register(x []float64) {
 	for i := 0; i != len(x); i++ {
-		Place(&x[i])
+		tape.places = append(tape.places, &x[i])
 	}
 }
 
@@ -116,12 +116,6 @@ func register(x []float64) {
 func Value(v float64) *float64 {
 	tape.values = append(tape.values, v)
 	return &tape.values[len(tape.values)-1]
-}
-
-// Variable adds place p to the memory and returns p.
-func Place(p *float64) *float64 {
-	tape.places = append(tape.places, p)
-	return p
 }
 
 // Return returns the result of the differentiated function.
@@ -134,7 +128,7 @@ func Return(px *float64) float64 {
 // Arithmetic encodes an arithmetic operation and returns
 // the location of the result.
 func Arithmetic(op int, px ...*float64) *float64 {
-	p := Place(Value(0.))
+	p := Value(0.)
 
 	// Register
 	r := record{
@@ -166,8 +160,9 @@ func Arithmetic(op int, px ...*float64) *float64 {
 }
 
 // ParallelAssigment encodes a parallel assignment.
-func ParallelAssignment(p []*float64, px []*float64) {
+func ParallelAssignment(ppx ...*float64) {
 	// Register
+    p, px := ppx[:len(ppx)/2], ppx[len(ppx)/2:]
 	r := record{
 		typ: typAssignment,
 		op:  len(p),
@@ -192,8 +187,7 @@ func ParallelAssignment(p []*float64, px []*float64) {
 
 // Assignment encodes a single-value assingment.
 func Assignment(p *float64, px *float64) {
-	// Can be just a wrapper around ParallelAssignment:
-	//     ParallelAssignment([]*float64{p}, []*float64{px})
+	// Can be just a call to ParallelAssignment.
 	// However most assignments are single-valued and
 	// we can avoid loops and extra allocation.
 
@@ -217,7 +211,7 @@ func Assignment(p *float64, px *float64) {
 // argument values are copied to the tape memory.
 // Elemental returns the location of the result.
 func Elemental(f interface{}, px ...*float64) *float64 {
-	p := Place(Value(0.))
+	p := Value(0.)
 
 	g, ok := ElementalGradient(f)
 	if !ok {
@@ -271,7 +265,7 @@ func Call(f func(px ...*float64), px ...*float64) *float64 {
 	// Register function parameters. The function will assign
 	// the actual parameters to the formal parameters on entry.
 	for _, py := range px {
-		Place(py)
+		tape.places = append(tape.places, py)
 	}
 	f(px...)
 	// If the function returns a float64 value, the returned
@@ -284,7 +278,8 @@ func Call(f func(px ...*float64), px ...*float64) *float64 {
 // Enter copies the actual parameters to the formal parameters.
 func Enter(px ...*float64) {
 	i0 := len(tape.places) - len(px)
-	ParallelAssignment(px, tape.places[i0:i0+len(px)])
+	ParallelAssignment(append(px,
+        tape.places[i0:i0+len(px)]...)...)
 }
 
 // Backward pass
