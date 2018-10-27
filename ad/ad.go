@@ -433,7 +433,8 @@ func (m *model) differentiate(method *ast.FuncDecl) (err error) {
 			case *ast.BasicLit, *ast.Ident,
 				*ast.IndexExpr, *ast.SelectorExpr,
                 *ast.StarExpr, *ast.UnaryExpr, *ast.BinaryExpr:
-				t, basic := m.info.TypeOf(n.(ast.Expr)).(*types.Basic)
+				t, basic := m.info.TypeOf(n.(ast.Expr)).
+                    (*types.Basic)
 				if !basic || t.Kind() != types.Float64 {
 					return false
 				}
