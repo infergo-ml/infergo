@@ -226,7 +226,7 @@ func isObserve(t *types.Signature) (ok bool) {
 	ok = rt.Kind() == types.Float64 // the result is float64
 
 	// Accepts a single []float64
-	ok = ok && t.Params().Len() == 1 // accepts a single parameter
+	ok = ok && t.Params().Len() == 1
 	if !ok {
 		return ok
 	}
@@ -627,8 +627,53 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 		method.Body.List = append([]ast.Stmt{setup},
 			method.Body.List...)
 	} else {
+        // Collect float64 parameters. Their values
+        // are copied from the tape.
         t := m.info.TypeOf(method.Name).(*types.Signature)
-        t = t
+        var params []ast.Expr
+        n := t.Params().Len()
+        if t.Variadic() {
+            // If the function is variadic, 
+            // the last parameter is not a float64.
+            n-- 
+        }
+        // Signature parameters are flat, but ast parameters
+        // are two-dimensional: a parameter is a Field with
+        // possibly multiple names in it.
+        iparam, ifield := 0, 0   // ast indices
+        for i := 0; i != n; i++ {
+            p := t.Params().At(i)
+            pt, ok := p.Type().(*types.Basic)
+            if !ok || pt.Kind() != types.Float64 {
+                continue
+            }
+            var expr ast.Expr
+            if strings.Compare(p.Name(), "_") == 0 {
+                // There is no variable to copy the value
+                // to, create a dummy value.
+                expr = callExpr("ad.Value", &ast.BasicLit{
+                    Kind:     token.FLOAT,
+                    Value:    "0.",
+                })
+            } else {
+                expr = &ast.UnaryExpr {
+                    Op: token.AND,
+                    X:  method.Type.Params.List[iparam].
+                            Names[ifield],
+                }
+            }
+            params = append(params, expr)
+        }
+        enter := &ast.ExprStmt{
+            callExpr("ad.Enter", params...),
+        }
+        method.Body.List = append([]ast.Stmt{enter},
+            method.Body.List...)
+        ifield++
+        if ifield == len(method.Type.Params.List[iparam].Names) {
+            iparam++
+            ifield = 0
+        }
 	}
 
 	return err

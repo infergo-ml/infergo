@@ -260,6 +260,30 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 
 // Calling differentiated functions
 
+func Variadic(px ...*float64) []float64 {
+	// In order to pass variadic float64 arguments to a
+	// differentiated method, we build a slice on the caller
+	// side and assign the arguments to the slice.
+	p0 := len(tape.places)
+	v0 := len(tape.values)
+	// Left-hand side of the assignment.
+	for range px {
+		tape.places = append(tape.places, Value(0.))
+	}
+	// Right-hand side.
+	for _, py := range px {
+		tape.places = append(tape.places, py)
+	}
+	ParallelAssignment(tape.places[p0:]...)
+	// We keep the values but drop the places, which were
+	// only used to pass arguments to ParallelAssignment.
+	tape.places = tape.places[:p0]
+
+	// Now, the result of variadic is a slice, to be passed
+	// to the variadic argument.
+	return tape.values[v0:]
+}
+
 // Call wraps a call to a differentiated subfunction.
 func Call(f func(px ...*float64), px ...*float64) *float64 {
 	// Register function parameters. The function will assign
@@ -277,8 +301,8 @@ func Call(f func(px ...*float64), px ...*float64) *float64 {
 
 // Enter copies the actual parameters to the formal parameters.
 func Enter(px ...*float64) {
-	i0 := len(tape.places) - len(px)
-	ParallelAssignment(append(px, tape.places[i0:i0+len(px)]...)...)
+	p0 := len(tape.places) - len(px)
+	ParallelAssignment(append(px, tape.places[p0:p0+len(px)]...)...)
 }
 
 // Backward pass

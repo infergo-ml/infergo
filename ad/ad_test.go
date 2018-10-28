@@ -427,6 +427,7 @@ func (m Model) Observe(x []float64) float64 {
 }
 
 func (m Model) Count() int {
+    ad.Enter()
     return 0
 }`,
 		},
@@ -459,6 +460,7 @@ func (m Model) Observe(x []float64) float64 {
 }
 
 func (m Model) Count() int {
+    ad.Enter()
     var y int
     y = 1
     return y
