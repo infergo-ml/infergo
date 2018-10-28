@@ -278,8 +278,7 @@ func Call(f func(px ...*float64), px ...*float64) *float64 {
 // Enter copies the actual parameters to the formal parameters.
 func Enter(px ...*float64) {
 	i0 := len(tape.places) - len(px)
-	ParallelAssignment(append(px,
-		tape.places[i0:i0+len(px)]...)...)
+	ParallelAssignment(append(px, tape.places[i0:i0+len(px)]...)...)
 }
 
 // Backward pass

@@ -290,23 +290,43 @@ func (m *model) isType(typ types.Type) bool {
 	return false
 }
 
+// errOnPanic turns panic from astutil.Apply into an error,
+// for consistent diagnostics.
+func errOnPanic(
+    caller string, 
+    err *error, 
+    pos token.Position,
+) func() {
+    return func() {
+        if r := recover(); r != nil {
+            *err = fmt.Errorf("%v:%d:%d: %v: %v",
+            pos.Filename, pos.Line, pos.Column, caller, r)
+        }
+    }
+}
+
 // simplify rewrites the syntax tree of a method to
 // differentiate and desugars the syntax, to make the
 // differentiate code simpler to write and debug.
 func (m *model) simplify(method *ast.FuncDecl) (err error) {
 	// Apply panics on errors. When Apply panics, we return the
 	// error as do other functions.
-	defer func() {
-		if r := recover(); r != nil {
-			p := m.fset.Position(method.Pos())
-			err = fmt.Errorf("simplify: %v:%d:%d: %v",
-				p.Filename, p.Line, p.Column, r)
-		}
-	}()
+	defer errOnPanic(
+        "simplify",
+        &err,
+        m.fset.Position(method.Pos()),
+    )()
 
 	astutil.Apply(method,
 		func(c *astutil.Cursor) bool {
 			n := c.Node()
+            if n != nil && n.Pos() != token.NoPos {
+                defer errOnPanic(
+                    "simplify/pre",
+                    &err,
+                    m.fset.Position(n.Pos()),
+                )()
+            }
 			switch n := n.(type) {
 			case *ast.AssignStmt:
 				switch n.Tok {
@@ -408,15 +428,11 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 	// Apply panics on errors. When Apply panics, we return the
 	// error as do other functions.
-    if false {
-        defer func() {
-            if r := recover(); r != nil {
-                p := m.fset.Position(method.Pos())
-                err = fmt.Errorf("differentiate: %v:%d:%d: %v",
-                p.Filename, p.Line, p.Column, r)
-            }
-        }()
-    }
+	defer errOnPanic(
+        "rewrite",
+        &err,
+        m.fset.Position(method.Pos()),
+    )()
 
     // ontape switches rewriting on and off. If pre returns true
     // but ontape is false, Apply traverses the children but
@@ -427,8 +443,14 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 		// are to be rewritten.
 		func(c *astutil.Cursor) bool {
 			n := c.Node()
+            if n != nil && n.Pos() != token.NoPos {
+                defer errOnPanic(
+                    "rewrite/pre",
+                    &err,
+                    m.fset.Position(n.Pos()),
+                )()
+            }
 			switch n := n.(type) {
-
 			case *ast.BasicLit, *ast.Ident,
 				*ast.IndexExpr, *ast.SelectorExpr,
                 *ast.StarExpr, *ast.UnaryExpr, *ast.BinaryExpr:
@@ -497,6 +519,13 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				return true
 			}
 			n := c.Node()
+            if n != nil && n.Pos() != token.NoPos {
+                defer errOnPanic(
+                    "rewrite/post",
+                    &err,
+                    m.fset.Position(n.Pos()),
+                )()
+            }
 			switch n := n.(type) {
 			case *ast.BasicLit:
 				value := callExpr("ad.Value", n)
@@ -586,8 +615,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 			"_") != 0 {
 			arg = param.Names[0]
 		} else {
-			// The parameter is as _; the argument
-			// is an empty slice.
+            // The parameter is as _; the argument is
+            // an empty slice.
 			arg = &ast.CompositeLit{
 				Type: param.Type,
 			}
@@ -598,6 +627,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 		method.Body.List = append([]ast.Stmt{setup},
 			method.Body.List...)
 	} else {
+        t := m.info.TypeOf(method.Name).(*types.Signature)
+        t = t
 	}
 
 	return err
