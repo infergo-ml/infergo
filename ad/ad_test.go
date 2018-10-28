@@ -645,6 +645,35 @@ func (m Model) Observe(x []float64) float64 {
 }`,
 		},
 //====================================================
+		{`package enter
+
+type Model float64
+
+func (m Model) sum(x, _ float64, y float64) float64 {
+    return x + y
+}
+
+func (m Model) Observe(x []float64) float64 {
+    return m.sum(x[0], x[1], x[2])
+}`,
+//----------------------------------------------------
+			`package enter
+
+import "bitbucket.org/dtolpin/infergo/ad"
+
+type Model float64
+
+func (m Model) sum(x, _ float64, y float64) float64 {
+    ad.Enter(&x, ad.Value(0.), &y)
+    return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y))
+}
+
+func (m Model) Observe(x []float64) float64 {
+    ad.Setup(x)
+    return ad.Return(m.sum(&x[0], &x[1], &x[2]))
+}`,
+		},
+//====================================================
 	} {
 		m := &model{}
 		parseTestModel(m, map[string]string{

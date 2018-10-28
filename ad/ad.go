@@ -134,6 +134,7 @@ func (m *model) check() (err error) {
 		Defs:  make(map[*ast.Ident]types.Object),
 		Uses:  make(map[*ast.Ident]types.Object),
 		Types: make(map[ast.Expr]types.TypeAndValue),
+        Selections: make(map[*ast.SelectorExpr]*types.Selection),
 	}
 	_, err = conf.Check(m.path, m.fset, files, m.info)
 	return err
@@ -663,17 +664,17 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
                 }
             }
             params = append(params, expr)
+            ifield++
+            if ifield == len(method.Type.Params.List[iparam].Names) {
+                iparam++
+                ifield = 0
+            }
         }
         enter := &ast.ExprStmt{
             callExpr("ad.Enter", params...),
         }
         method.Body.List = append([]ast.Stmt{enter},
             method.Body.List...)
-        ifield++
-        if ifield == len(method.Type.Params.List[iparam].Names) {
-            iparam++
-            ifield = 0
-        }
 	}
 
 	return err
@@ -692,17 +693,28 @@ func callExpr(name string, args ...ast.Expr) ast.Expr {
 // isDifferentiated returns true iff the call
 // is of a differentiated method
 func (m *model) isDifferentiated(call *ast.CallExpr) bool {
-    t := m.info.TypeOf(call.Fun).(*types.Signature)
-    return t.Recv() != nil && m.isType(t.Recv().Type())
+    sel, ok := call.Fun.(*ast.SelectorExpr)
+    if !ok {
+        return ok
+    }
+    t, ok := m.info.Selections[sel]
+    if !ok {
+        return ok
+    }
+    ok = t.Kind() == types.MethodVal
+    if !ok {
+        return ok
+    }
+    ok = t.Recv() != nil && m.isType(t.Recv())
+    return ok
 }
 
 // isElemental returns true iff the call is of
-// an elemental function
+// an elemental function. It does not check whether
+// this is a differentiated function instead and should
+// be called after isDifferentiated.
 func (m *model) isElemental(call *ast.CallExpr) bool {
     t := m.info.TypeOf(call.Fun).(*types.Signature)
-    if t.Recv() != nil {
-        return false
-    }
     if t.Results().Len() != 1 {
         return false
     }
