@@ -44,8 +44,8 @@ step := 0.01
 decay := 0.995
 
 mean, logv := 0., 0.
-for i :=0; i != n; i++ {
-	ll = m.Observe([]float64{mean, logv})
+for i := 0; i != n; i++ {
+	m.Observe([]float64{mean, logv})
 	grad := ad.Gradient()
 	mean += step*grad[0]
 	logv += step*grad[1]
