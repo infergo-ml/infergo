@@ -39,6 +39,13 @@ func (m *Model) Observe(x []float64) float64 {
 ### Inference
 
 ```Go
+// Data
+m := &Model{[]float64{
+	-0.854, 1.067, -1.220, 0.818, -0.749,
+	0.805, 1.443, 1.069, 1.426, 0.308}}
+// mean ≈ 0.4113, logv ≈ -0.11698
+	
+// Parameters of gradient descent 
 n := 100
 step := 0.01
 decay := 0.995
