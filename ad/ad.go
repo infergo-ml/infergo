@@ -387,11 +387,7 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 				}
 			case *ast.IncDecStmt:
 				// Rewrite as expr = expr OP 1
-				one := &ast.BasicLit{
-					ValuePos: n.Pos(),
-					Kind:     token.INT,
-					Value:    "1",
-				}
+				one := intExpr(1)
 				tok := map[token.Token]token.Token{
 					token.INC: token.ADD,
 					token.DEC: token.SUB,
@@ -469,7 +465,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
                     // A function which is neither
                     // differentiated nor elemental is called
                     // with all their arguments unmodified.
-                    value := callExpr("ad.Value", n)
+                    value := callExpr("Value", n)
                     c.Replace(value)
                     return false
                 }
@@ -520,7 +516,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
             }
 			switch n := n.(type) {
 			case *ast.BasicLit:
-				value := callExpr("ad.Value", n)
+				value := callExpr("Value", n)
 				c.Replace(value)
             case *ast.Ident:
                 switch c.Parent().(type) {
@@ -555,7 +551,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				}
 				c.Replace(place)
 			case *ast.ReturnStmt:
-				ret := callExpr("ad.Return", n.Results...)
+				ret := callExpr("Return", n.Results...)
 				n.Results = []ast.Expr{ret}
 				ontape = false
 			case *ast.StarExpr:
@@ -563,10 +559,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 			case *ast.UnaryExpr:
 				switch n.Op {
 				case token.SUB:
-					neg := callExpr("ad.Arithmetic",
-						&ast.Ident{
-							Name: "ad.OpNeg",
-						},
+					neg := callExpr("Arithmetic",
+						varExpr("OpNeg"),
 						n.X)
 					c.Replace(neg)
 				default:
@@ -574,24 +568,22 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 						"cannot rewrite unary %v", n.Op))
 				}
 			case *ast.BinaryExpr:
-				bin := callExpr("ad.Arithmetic",
-					&ast.Ident{
-						Name: map[token.Token]string{
-							token.ADD: "ad.OpAdd",
-							token.SUB: "ad.OpSub",
-							token.MUL: "ad.OpMul",
-							token.QUO: "ad.OpDiv",
-						}[n.Op],
-					},
-					n.X, n.Y)
+                bin := callExpr("Arithmetic",
+                    map[token.Token]ast.Expr{
+                        token.ADD: varExpr("OpAdd"),
+                        token.SUB: varExpr("OpSub"),
+                        token.MUL: varExpr("OpMul"),
+                        token.QUO: varExpr("OpDiv"),
+                    }[n.Op],
+                    n.X, n.Y)
 				c.Replace(bin)
 			case *ast.AssignStmt:
 				var asgn ast.Expr
 				if len(n.Lhs) == 1 {
-					asgn = callExpr("ad.Assignment",
+					asgn = callExpr("Assignment",
 						n.Lhs[0], n.Rhs[0])
 				} else {
-					asgn = callExpr("ad.ParallelAssignment",
+					asgn = callExpr("ParallelAssignment",
 						append(n.Lhs, n.Rhs...)...)
 				}
 				stmt := &ast.ExprStmt{asgn}
@@ -601,7 +593,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
                 switch {
                 case m.isDifferentiated(n):
                 case m.isElemental(n):
-                    elemental := callExpr("ad.Elemental",
+                    elemental := callExpr("Elemental",
                         append([]ast.Expr{n.Fun}, n.Args...)...)
                     c.Replace(elemental)
                 }
@@ -612,11 +604,11 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 		})
 
 	// Method entry
-	// Processed after the traversal so that Apply
-	// does not see the added function calls.
+    // Processed after the traversal so that Apply does not see
+    // the added function calls.
 
-	// If we are differentiating Observe, the entry
-	// is different than for other methods.
+    // If we are differentiating Observe, the entry is different
+    // than for other methods.
 	if strings.Compare(method.Name.Name,
 		"Observe") == 0 {
 		param := method.Type.Params.List[0]
@@ -632,7 +624,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 			}
 		}
 		setup := &ast.ExprStmt{
-			callExpr("ad.Setup", arg),
+			callExpr("Setup", arg),
 		}
 		method.Body.List = append([]ast.Stmt{setup},
 			method.Body.List...)
@@ -661,10 +653,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
             if strings.Compare(p.Name(), "_") == 0 {
                 // There is no variable to copy the value
                 // to, create a dummy value.
-                expr = callExpr("ad.Value", &ast.BasicLit{
-                    Kind:     token.FLOAT,
-                    Value:    "0.",
-                })
+                expr = callExpr("Value", floatExpr(0.))
             } else {
                 expr = &ast.UnaryExpr {
                     Op: token.AND,
@@ -680,23 +669,13 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
             }
         }
         enter := &ast.ExprStmt{
-            callExpr("ad.Enter", params...),
+            callExpr("Enter", params...),
         }
         method.Body.List = append([]ast.Stmt{enter},
             method.Body.List...)
 	}
 
 	return err
-}
-
-// callExpr returns an Expr for call 'name(args...)'.
-func callExpr(name string, args ...ast.Expr) ast.Expr {
-	return &ast.CallExpr{
-		Fun: &ast.Ident{
-			Name: name,
-		},
-		Args: args,
-	}
 }
 
 // isDifferentiated returns true iff the call
@@ -718,10 +697,9 @@ func (m *model) isDifferentiated(call *ast.CallExpr) bool {
     return ok
 }
 
-// isElemental returns true iff the call is of
-// an elemental function. It does not check whether
-// this is a differentiated function instead and should
-// be called after isDifferentiated.
+// isElemental returns true iff the call is of an elemental
+// function. It does not check whether this is a differentiated
+// function instead and should be called after isDifferentiated.
 func (m *model) isElemental(call *ast.CallExpr) bool {
     t := m.info.TypeOf(call.Fun).(*types.Signature)
     if t.Results().Len() != 1 {
@@ -751,6 +729,65 @@ func (m *model) isElemental(call *ast.CallExpr) bool {
     }
 
     return true
+}
+
+// intExpr returns an Expr for integer literal i.
+func intExpr(i int) ast.Expr {
+    return &ast.BasicLit{
+        Kind:     token.INT,
+        Value:    fmt.Sprintf("%v", i),
+    }
+}
+
+// floatExpr returns an Expr for floating point literal x.
+func floatExpr(x float64) ast.Expr {
+    return &ast.BasicLit{
+        Kind:     token.FLOAT,
+        Value:    fmt.Sprintf("%g", x),
+    }
+}
+
+// varExpr returns an Expr for variable or constant 'ad.name'.
+func varExpr(name string) ast.Expr {
+    return &ast.SelectorExpr {
+        X: &ast.Ident {
+            Name: "ad",
+        },
+        Sel: &ast.Ident{
+            Name: name,
+        },
+    }
+}
+
+// callExpr returns an Expr for call 'ad.name(args...)'.
+func callExpr(name string, args ...ast.Expr) ast.Expr {
+	return &ast.CallExpr{
+		Fun: varExpr(name),
+		Args: args,
+	}
+}
+
+// callWrapper returns an Expr for a wrapped differentiated
+// call.
+func callWrapper() *ast.FuncLit {
+    return &ast.FuncLit {
+        Type: &ast.FuncType {
+            Params: &ast.FieldList {
+                List: []*ast.Field {
+                    &ast.Field {
+                        Names: []*ast.Ident{
+                            &ast.Ident {
+                                Name: "_vararg",
+                            },
+                        },
+                        Type: &ast.ArrayType {
+                            Elt: &ast.Ident {
+                                Name: "float64",
+        }}}}}},
+        Body: &ast.BlockStmt {
+            // Todo: call here
+        },
+    }
 }
 
 // Writing

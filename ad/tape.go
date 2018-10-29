@@ -162,7 +162,6 @@ func Arithmetic(op int, px ...*float64) *float64 {
 // ParallelAssigment encodes a parallel assignment.
 func ParallelAssignment(ppx ...*float64) {
 	// Register
-	fmt.Printf("%v\n", ppx)
 	p, px := ppx[:len(ppx)/2], ppx[len(ppx)/2:]
 	r := record{
 		typ: typAssignment,

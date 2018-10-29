@@ -408,7 +408,7 @@ func TestDifferentiate(t *testing.T) {
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    return 0.0
+    return 0
 }
 
 func (m Model) Count() int {
@@ -423,7 +423,7 @@ type Model float64
 
 func (m Model) Observe(x []float64) float64 {
     ad.Setup(x)
-    return ad.Return(ad.Value(0.0))
+    return ad.Return(ad.Value(0))
 }
 
 func (m Model) Count() int {
@@ -691,7 +691,7 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) sum(x, _ float64, y float64) float64 {
-    ad.Enter(&x, ad.Value(0.), &y)
+    ad.Enter(&x, ad.Value(0), &y)
     return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y))
 }
 
