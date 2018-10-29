@@ -460,14 +460,16 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				if !basic || t.Kind() != types.Float64 {
 					return false
 				}
-                // SelectorExpr is peculiar: Sel is a child and
-                // implements Expr, but not an expression. I
-                // believe astutil should not traverse Sel at
-                // all.
-                switch c.Parent().(type) {
-                case *ast.SelectorExpr:
-                    if strings.Compare(c.Name(), "Sel")==0 {
-                        return false
+                if _, ok := n.(*ast.Ident); ok {
+                    // SelectorExpr is peculiar: Sel is a child and
+                    // implements Expr, but not an expression. I
+                    // believe astutil should not traverse Sel at
+                    // all.
+                    switch c.Parent().(type) {
+                    case *ast.SelectorExpr:
+                        if strings.Compare(c.Name(), "Sel")==0 {
+                            return false
+                        }
                     }
                 }
             case *ast.CallExpr:

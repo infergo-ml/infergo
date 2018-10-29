@@ -260,6 +260,23 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 
 // Calling differentiated functions
 
+// Call wraps a call to a differentiated subfunction.
+func Call(f func(), px ...*float64) *float64 {
+	// Register function parameters. The function will assign
+	// the actual parameters to the formal parameters on entry.
+	for _, py := range px {
+		tape.places = append(tape.places, py)
+	}
+	f()
+	// If the function returns a float64 value, the returned
+	// value is in the first place. Otherwise, the function
+	// is called as an expression statement, for side effects,
+	// and the return value is ignored.
+	return tape.places[0]
+}
+
+// Variadic wraps variadic arguments into a slice for 
+// passing to the underlying call.
 func Variadic(px ...*float64) []float64 {
 	// In order to pass variadic float64 arguments to a
 	// differentiated method, we build a slice on the caller
@@ -282,21 +299,6 @@ func Variadic(px ...*float64) []float64 {
 	// Now, the result of variadic is a slice, to be passed
 	// to the variadic argument.
 	return tape.values[v0:]
-}
-
-// Call wraps a call to a differentiated subfunction.
-func Call(f func(px ...*float64), px ...*float64) *float64 {
-	// Register function parameters. The function will assign
-	// the actual parameters to the formal parameters on entry.
-	for _, py := range px {
-		tape.places = append(tape.places, py)
-	}
-	f(px...)
-	// If the function returns a float64 value, the returned
-	// value is in the first place. Otherwise, the function
-	// is called as an expression statement, for side effects,
-	// and the return value is ignored.
-	return tape.places[0]
 }
 
 // Enter copies the actual parameters to the formal parameters.
