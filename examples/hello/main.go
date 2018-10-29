@@ -2,10 +2,14 @@ package main
 
 import (
     "flag"
+	"os"
+	"io"
+	"strconv"
+	"encoding/csv"
     "log"
     "math"
     "bitbucket.org/dtolpin/infergo/ad"
-    . "bitbucket.org/dtolpin/infergo/examples/normal/model/ad"
+    . "bitbucket.org/dtolpin/infergo/examples/hello/model/ad"
     
 )
 
@@ -21,7 +25,8 @@ var (
 
 func init() {
     flag.Usage = func() {
-        log.Printf("Inferring parameters of the normal distribution:")
+        log.Printf(`Inferring parameters of the normal distribution:
+		hello [OPTIONS] [data.csv]%s`, "\n")
         flag.PrintDefaults()
     }
     flag.Float64Var(&MEAN, "mean", MEAN, "initial mean")
@@ -35,15 +40,37 @@ func init() {
 func main () {
     flag.Parse()
 
-    if flag.NArg() > 0 {
-		log.Fatalf("unexpected position arguments: %v", flag.Args())
+    if flag.NArg() > 1 {
+		log.Fatalf("unexpected positional arguments: %v",
+			flag.Args()[1:])
 	}
 
-    m := &Model {
-        Data: []float64{
+	var data []float64
+	if flag.NArg() == 1 {
+		fname := flag.Arg(0)
+		file, err := os.Open(fname)
+		if err != nil {
+			log.Fatalf("Cannot open data file: %v", fname, err)
+		}
+		rdr := csv.NewReader(file)
+		for {
+			record, err := rdr.Read()
+			if err == io.EOF {
+				break
+			}
+			value, err := strconv.ParseFloat(record[0], 64)
+			if err != nil {
+				log.Fatalf("invalid data: %v", err)
+			}
+			data = append(data, value)
+		}
+		file.Close()
+	} else {
+		data = []float64{
             -0.854, 1.067, -1.220, 0.818, -0.749,
-             0.805, 1.443, 1.069, 1.426, 0.308},
-    }
+             0.805, 1.443, 1.069, 1.426, 0.308}
+	}
+    m := &Model{Data: data}
 
     s := 0.
     s2 := 0.

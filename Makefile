@@ -14,5 +14,10 @@ install: all
 	for package in $(PACKAGES); do install ./$$package; done
 	go install deriv.go
 
+hello: deriv
+	./deriv ./examples/hello/model
+	go build ./examples/hello
+	./hello
+
 clean:
-	-rm -rf deriv
+	-rm -rf deriv hello ./examples/hello/ad
