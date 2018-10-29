@@ -309,7 +309,7 @@ func (m Model) Observe(x []float64) float64 {
 	return 0.
 }`,
 			//----------------------------------------------------
-		`package simplestmt
+			`package simplestmt
 
 type Model float64
 

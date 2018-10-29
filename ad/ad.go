@@ -336,10 +336,10 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 					// Do nothing, all is well.
 				case token.DEFINE:
 					// Split into declaration and assignment.
-                    _, ok := c.Parent().(*ast.BlockStmt)
-                    if !ok {
-                        return false
-                    }
+					_, ok := c.Parent().(*ast.BlockStmt)
+					if !ok {
+						return false
+					}
 
 					// Declaration.
 					for i := 0; i != len(n.Lhs); i++ {
@@ -595,63 +595,61 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 			case *ast.CallExpr:
 				switch {
 				case m.isDifferentiated(n):
-                    // Collect arguments.
-                    var innerArgs, outerArgs []ast.Expr
-                    t := m.info.TypeOf(n.Fun).(*types.Signature)
-                    nparams := t.Params().Len()
-                    if t.Variadic() {
-                        nparams--
-                    }
-                    nargs := 0
-                    for i := 0; i != nparams; i++ {
-                        pt, ok := t.Params().At(i).Type().
-                            (*types.Basic)
-                        if ok && pt.Kind() == types.Float64 {
-                            // A float, pass 0 to the actual
-                            // function and the differentiated
-                            // expression to Call.
-                            innerArgs = append(innerArgs,
-                                floatExpr(0))
-                            outerArgs = append(outerArgs, n.Args[i])
-                            nargs++
-                        } else {
-                            // Anything else, just pass to the
-                            // actual call.
-                            innerArgs = append(innerArgs, n.Args[i])
-                        }
-                    }
+					// Collect arguments.
+					var innerArgs, outerArgs []ast.Expr
+					t := m.info.TypeOf(n.Fun).(*types.Signature)
+					nparams := t.Params().Len()
+					if t.Variadic() {
+						nparams--
+					}
+					nargs := 0
+					for i := 0; i != nparams; i++ {
+						pt, ok := t.Params().At(i).Type().(*types.Basic)
+						if ok && pt.Kind() == types.Float64 {
+							// A float, pass 0 to the actual
+							// function and the differentiated
+							// expression to Call.
+							innerArgs = append(innerArgs,
+								floatExpr(0))
+							outerArgs = append(outerArgs, n.Args[i])
+							nargs++
+						} else {
+							// Anything else, just pass to the
+							// actual call.
+							innerArgs = append(innerArgs, n.Args[i])
+						}
+					}
 
-                    ellipsis := token.NoPos
-                    if t.Variadic() && len(n.Args) > nparams {
-                        pt, ok := t.Params().At(nparams).Type().
-                            (*types.Slice).Elem().(*types.Basic)
-                        if ok && pt.Kind() == types.Float64 &&
-                            n.Ellipsis == token.NoPos {
-                                // Variadic float64 arguments
-                            innerArgs = append(innerArgs,
-                                &ast.Ident{
-                                    Name: "_vararg",
-                                })
-                            ellipsis = 1
-                            outerArgs = append(outerArgs,
-                                n.Args[nparams:]...)
-                        } else {
-                            // Either not float or a slice is
-                            // passed.
-                            innerArgs = append(innerArgs,
-                                n.Args[nparams:]...)
-                            ellipsis = n.Ellipsis
-                        }
-                    }
+					ellipsis := token.NoPos
+					if t.Variadic() && len(n.Args) > nparams {
+						pt, ok := t.Params().At(nparams).Type().(*types.Slice).Elem().(*types.Basic)
+						if ok && pt.Kind() == types.Float64 &&
+							n.Ellipsis == token.NoPos {
+							// Variadic float64 arguments
+							innerArgs = append(innerArgs,
+								&ast.Ident{
+									Name: "_vararg",
+								})
+							ellipsis = 1
+							outerArgs = append(outerArgs,
+								n.Args[nparams:]...)
+						} else {
+							// Either not float or a slice is
+							// passed.
+							innerArgs = append(innerArgs,
+								n.Args[nparams:]...)
+							ellipsis = n.Ellipsis
+						}
+					}
 
-                    outerArgs = append([]ast.Expr{intExpr(nargs)},
-                        outerArgs...)
+					outerArgs = append([]ast.Expr{intExpr(nargs)},
+						outerArgs...)
 
-                    differentiated := callExpr("Call",
-                        append([]ast.Expr{
-                            callWrapper(n.Fun, innerArgs, ellipsis),
-                        }, outerArgs...)...)
-                    c.Replace(differentiated)
+					differentiated := callExpr("Call",
+						append([]ast.Expr{
+							callWrapper(n.Fun, innerArgs, ellipsis),
+						}, outerArgs...)...)
+					c.Replace(differentiated)
 				case m.isElemental(n):
 					elemental := callExpr("Elemental",
 						append([]ast.Expr{n.Fun}, n.Args...)...)
@@ -830,9 +828,9 @@ func callExpr(name string, args ...ast.Expr) ast.Expr {
 // callWrapper returns an Expr for a wrapped differentiated
 // call.
 func callWrapper(
-    fun ast.Expr,
-    args []ast.Expr,
-    ellipsis token.Pos,
+	fun ast.Expr,
+	args []ast.Expr,
+	ellipsis token.Pos,
 ) *ast.FuncLit {
 	return &ast.FuncLit{
 		Type: &ast.FuncType{
@@ -851,9 +849,9 @@ func callWrapper(
 			List: []ast.Stmt{
 				&ast.ExprStmt{
 					X: &ast.CallExpr{
-						Fun:  fun,
-						Args: args,
-                        Ellipsis: ellipsis,
+						Fun:      fun,
+						Args:     args,
+						Ellipsis: ellipsis,
 					}}}},
 	}
 }
