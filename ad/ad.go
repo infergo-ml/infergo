@@ -336,6 +336,10 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 					// Do nothing, all is well.
 				case token.DEFINE:
 					// Split into declaration and assignment.
+                    _, ok := c.Parent().(*ast.BlockStmt)
+                    if !ok {
+                        return false
+                    }
 
 					// Declaration.
 					for i := 0; i != len(n.Lhs); i++ {

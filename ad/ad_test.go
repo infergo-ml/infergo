@@ -296,6 +296,33 @@ func (m Model) Observe(x []float64) float64 {
 }`,
 		},
 		//====================================================
+		{`package simplestmt
+
+type Model float64
+
+func foo() (int, interface{}) {return 0, &struct {}{}}
+
+func (m Model) Observe(x []float64) float64 {
+    if _, err := foo(); err != nil {
+        println("error")
+    }
+	return 0.
+}`,
+			//----------------------------------------------------
+		`package simplestmt
+
+type Model float64
+
+func foo() (int, interface{}) {return 0, &struct {}{}}
+
+func (m Model) Observe(x []float64) float64 {
+    if _, err := foo(); err != nil {
+        println("error")
+    }
+	return 0.
+}`,
+		},
+		//====================================================
 		{`package opassign
 
 type Model float64
