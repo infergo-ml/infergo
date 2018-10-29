@@ -132,10 +132,10 @@ func (m *model) check() (err error) {
 		files = append(files, file)
 	}
 	m.info = &types.Info{
-		Defs:  make(map[*ast.Ident]types.Object),
-		Uses:  make(map[*ast.Ident]types.Object),
-		Types: make(map[ast.Expr]types.TypeAndValue),
-        Selections: make(map[*ast.SelectorExpr]*types.Selection),
+		Defs:       make(map[*ast.Ident]types.Object),
+		Uses:       make(map[*ast.Ident]types.Object),
+		Types:      make(map[ast.Expr]types.TypeAndValue),
+		Selections: make(map[*ast.SelectorExpr]*types.Selection),
 	}
 	_, err = conf.Check(m.path, m.fset, files, m.info)
 	return err
@@ -295,16 +295,16 @@ func (m *model) isType(typ types.Type) bool {
 // errOnPanic turns panic from astutil.Apply into an error,
 // for consistent diagnostics.
 func errOnPanic(
-    caller string, 
-    err *error, 
-    pos token.Position,
+	caller string,
+	err *error,
+	pos token.Position,
 ) func() {
-    return func() {
-        if r := recover(); r != nil {
-            *err = fmt.Errorf("%v:%d:%d: %v: %v",
-            pos.Filename, pos.Line, pos.Column, caller, r)
-        }
-    }
+	return func() {
+		if r := recover(); r != nil {
+			*err = fmt.Errorf("%v:%d:%d: %v: %v",
+				pos.Filename, pos.Line, pos.Column, caller, r)
+		}
+	}
 }
 
 // simplify rewrites the syntax tree of a method to
@@ -314,21 +314,21 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 	// Apply panics on errors. When Apply panics, we return the
 	// error as do other functions.
 	defer errOnPanic(
-        "simplify",
-        &err,
-        m.fset.Position(method.Pos()),
-    )()
+		"simplify",
+		&err,
+		m.fset.Position(method.Pos()),
+	)()
 
 	astutil.Apply(method,
 		func(c *astutil.Cursor) bool {
 			n := c.Node()
-            if n != nil && n.Pos() != token.NoPos {
-                defer errOnPanic(
-                    "simplify/pre",
-                    &err,
-                    m.fset.Position(n.Pos()),
-                )()
-            }
+			if n != nil && n.Pos() != token.NoPos {
+				defer errOnPanic(
+					"simplify/pre",
+					&err,
+					m.fset.Position(n.Pos()),
+				)()
+			}
 			switch n := n.(type) {
 			case *ast.AssignStmt:
 				switch n.Tok {
@@ -427,48 +427,47 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 	// Apply panics on errors. When Apply panics, we return the
 	// error as do other functions.
 	defer errOnPanic(
-        "rewrite",
-        &err,
-        m.fset.Position(method.Pos()),
-    )()
+		"rewrite",
+		&err,
+		m.fset.Position(method.Pos()),
+	)()
 
-    // ontape switches rewriting on and off. If pre returns true
-    // but ontape is false, Apply traverses the children but
-    // they are not rewritten (until ontape is true).
+	// ontape switches rewriting on and off. If pre returns true
+	// but ontape is false, Apply traverses the children but
+	// they are not rewritten (until ontape is true).
 	ontape := false
 	astutil.Apply(method,
 		// pre focuses on the parts of the tree that
 		// are to be rewritten.
 		func(c *astutil.Cursor) bool {
 			n := c.Node()
-            if n != nil && n.Pos() != token.NoPos {
-                defer errOnPanic(
-                    "rewrite/pre",
-                    &err,
-                    m.fset.Position(n.Pos()),
-                )()
-            }
+			if n != nil && n.Pos() != token.NoPos {
+				defer errOnPanic(
+					"rewrite/pre",
+					&err,
+					m.fset.Position(n.Pos()),
+				)()
+			}
 			switch n := n.(type) {
 			case *ast.BasicLit, *ast.Ident,
 				*ast.IndexExpr, *ast.SelectorExpr,
-                *ast.StarExpr, *ast.UnaryExpr, *ast.BinaryExpr:
-				t, basic := m.info.TypeOf(n.(ast.Expr)).
-                    (*types.Basic)
+				*ast.StarExpr, *ast.UnaryExpr, *ast.BinaryExpr:
+				t, basic := m.info.TypeOf(n.(ast.Expr)).(*types.Basic)
 				if !basic || t.Kind() != types.Float64 {
 					return false
 				}
-            case *ast.CallExpr:
-                switch {
-                case m.isDifferentiated(n):
-                case m.isElemental(n):
-                default:
-                    // A function which is neither
-                    // differentiated nor elemental is called
-                    // with all their arguments unmodified.
-                    value := callExpr("Value", n)
-                    c.Replace(value)
-                    return false
-                }
+			case *ast.CallExpr:
+				switch {
+				case m.isDifferentiated(n):
+				case m.isElemental(n):
+				default:
+					// A function which is neither
+					// differentiated nor elemental is called
+					// with all their arguments unmodified.
+					value := callExpr("Value", n)
+					c.Replace(value)
+					return false
+				}
 			case *ast.ReturnStmt: // if float64
 				if len(n.Results) != 1 {
 					return false
@@ -493,7 +492,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				if !ok {
 					return false
 				}
-                if !m.isDifferentiated(call) {
+				if !m.isDifferentiated(call) {
 					return false
 				}
 				ontape = true
@@ -507,44 +506,44 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				return true
 			}
 			n := c.Node()
-            if n != nil && n.Pos() != token.NoPos {
-                defer errOnPanic(
-                    "rewrite/post",
-                    &err,
-                    m.fset.Position(n.Pos()),
-                )()
-            }
+			if n != nil && n.Pos() != token.NoPos {
+				defer errOnPanic(
+					"rewrite/post",
+					&err,
+					m.fset.Position(n.Pos()),
+				)()
+			}
 			switch n := n.(type) {
 			case *ast.BasicLit:
 				value := callExpr("Value", n)
 				c.Replace(value)
-            case *ast.Ident:
-                switch c.Parent().(type) {
-                case *ast.SelectorExpr:
-                    // SelectorExpr is peculiar: Sel is a child
-                    // and implements Expr, but not an
-                    // expression. I believe astutil should not
-                    // traverse Sel at all.
-                    if strings.Compare(c.Name(), "Sel")==0 {
-                        return true
-                    }
-                }
-                if n.Name[0] == '_' {
-                    panic(fmt.Sprintf("identifier %v is reserved",
-                        n.Name))
-                }
+			case *ast.Ident:
+				switch c.Parent().(type) {
+				case *ast.SelectorExpr:
+					// SelectorExpr is peculiar: Sel is a child
+					// and implements Expr, but not an
+					// expression. I believe astutil should not
+					// traverse Sel at all.
+					if strings.Compare(c.Name(), "Sel") == 0 {
+						return true
+					}
+				}
+				if n.Name[0] == '_' {
+					panic(fmt.Sprintf("identifier %v is reserved",
+						n.Name))
+				}
 				place := &ast.UnaryExpr{
 					Op: token.AND,
 					X:  n,
 				}
 				c.Replace(place)
-            case  *ast.IndexExpr:
+			case *ast.IndexExpr:
 				place := &ast.UnaryExpr{
 					Op: token.AND,
 					X:  n,
 				}
 				c.Replace(place)
-            case *ast.SelectorExpr:
+			case *ast.SelectorExpr:
 				place := &ast.UnaryExpr{
 					Op: token.AND,
 					X:  n,
@@ -568,14 +567,14 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 						"cannot rewrite unary %v", n.Op))
 				}
 			case *ast.BinaryExpr:
-                bin := callExpr("Arithmetic",
-                    map[token.Token]ast.Expr{
-                        token.ADD: varExpr("OpAdd"),
-                        token.SUB: varExpr("OpSub"),
-                        token.MUL: varExpr("OpMul"),
-                        token.QUO: varExpr("OpDiv"),
-                    }[n.Op],
-                    n.X, n.Y)
+				bin := callExpr("Arithmetic",
+					map[token.Token]ast.Expr{
+						token.ADD: varExpr("OpAdd"),
+						token.SUB: varExpr("OpSub"),
+						token.MUL: varExpr("OpMul"),
+						token.QUO: varExpr("OpDiv"),
+					}[n.Op],
+					n.X, n.Y)
 				c.Replace(bin)
 			case *ast.AssignStmt:
 				var asgn ast.Expr
@@ -590,13 +589,70 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				c.Replace(stmt)
 				ontape = false
 			case *ast.CallExpr:
-                switch {
-                case m.isDifferentiated(n):
-                case m.isElemental(n):
-                    elemental := callExpr("Elemental",
-                        append([]ast.Expr{n.Fun}, n.Args...)...)
-                    c.Replace(elemental)
-                }
+				switch {
+				case m.isDifferentiated(n):
+                    // Collect arguments.
+                    var innerArgs, outerArgs []ast.Expr
+                    t := m.info.TypeOf(n.Fun).(*types.Signature)
+                    nparams := t.Params().Len()
+                    if t.Variadic() {
+                        nparams--
+                    }
+                    nargs := 0
+                    for i := 0; i != nparams; i++ {
+                        pt, ok := t.Params().At(i).Type().
+                            (*types.Basic)
+                        if ok && pt.Kind() == types.Float64 {
+                            // A float, pass 0 to the actual
+                            // function and the differentiated
+                            // expression to Call.
+                            innerArgs = append(innerArgs,
+                                floatExpr(0))
+                            outerArgs = append(outerArgs, n.Args[i])
+                            nargs++
+                        } else {
+                            // Anything else, just pass to the
+                            // actual call.
+                            innerArgs = append(innerArgs, n.Args[i])
+                        }
+                    }
+
+                    ellipsis := token.NoPos
+                    if t.Variadic() && len(n.Args) > nparams {
+                        pt, ok := t.Params().At(nparams).Type().
+                            (*types.Slice).Elem().(*types.Basic)
+                        if ok && pt.Kind() == types.Float64 &&
+                            n.Ellipsis == token.NoPos {
+                                // Variadic float64 arguments
+                            innerArgs = append(innerArgs,
+                                &ast.Ident{
+                                    Name: "_vararg",
+                                })
+                            ellipsis = 1
+                            outerArgs = append(outerArgs,
+                                n.Args[nparams:]...)
+                        } else {
+                            // Either not float or a slice is
+                            // passed.
+                            innerArgs = append(innerArgs,
+                                n.Args[nparams:]...)
+                            ellipsis = n.Ellipsis
+                        }
+                    }
+
+                    outerArgs = append([]ast.Expr{intExpr(nargs)},
+                        outerArgs...)
+
+                    differentiated := callExpr("Call",
+                        append([]ast.Expr{
+                            callWrapper(n.Fun, innerArgs, ellipsis),
+                        }, outerArgs...)...)
+                    c.Replace(differentiated)
+				case m.isElemental(n):
+					elemental := callExpr("Elemental",
+						append([]ast.Expr{n.Fun}, n.Args...)...)
+					c.Replace(elemental)
+				}
 			case *ast.ExprStmt:
 				ontape = false
 			}
@@ -604,11 +660,11 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 		})
 
 	// Method entry
-    // Processed after the traversal so that Apply does not see
-    // the added function calls.
+	// Processed after the traversal so that Apply does not see
+	// the added function calls.
 
-    // If we are differentiating Observe, the entry is different
-    // than for other methods.
+	// If we are differentiating Observe, the entry is different
+	// than for other methods.
 	if strings.Compare(method.Name.Name,
 		"Observe") == 0 {
 		param := method.Type.Params.List[0]
@@ -617,8 +673,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 			"_") != 0 {
 			arg = param.Names[0]
 		} else {
-            // The parameter is as _; the argument is
-            // an empty slice.
+			// The parameter is as _; the argument is
+			// an empty slice.
 			arg = &ast.CompositeLit{
 				Type: param.Type,
 			}
@@ -629,50 +685,50 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 		method.Body.List = append([]ast.Stmt{setup},
 			method.Body.List...)
 	} else {
-        // Collect float64 parameters. Their values
-        // are copied from the tape.
-        t := m.info.TypeOf(method.Name).(*types.Signature)
-        var params []ast.Expr
-        n := t.Params().Len()
-        if t.Variadic() {
-            // If the function is variadic, 
-            // the last parameter is not a float64.
-            n-- 
-        }
-        // Signature parameters are flat, but ast parameters
-        // are two-dimensional: a parameter is a Field with
-        // possibly multiple names in it.
-        iparam, ifield := 0, 0   // ast indices
-        for i := 0; i != n; i++ {
-            p := t.Params().At(i)
-            pt, ok := p.Type().(*types.Basic)
-            if !ok || pt.Kind() != types.Float64 {
-                continue
-            }
-            var expr ast.Expr
-            if strings.Compare(p.Name(), "_") == 0 {
-                // There is no variable to copy the value
-                // to, create a dummy value.
-                expr = callExpr("Value", floatExpr(0.))
-            } else {
-                expr = &ast.UnaryExpr {
-                    Op: token.AND,
-                    X:  method.Type.Params.List[iparam].
-                            Names[ifield],
-                }
-            }
-            params = append(params, expr)
-            ifield++
-            if ifield == len(method.Type.Params.List[iparam].Names) {
-                iparam++
-                ifield = 0
-            }
-        }
-        enter := &ast.ExprStmt{
-            callExpr("Enter", params...),
-        }
-        method.Body.List = append([]ast.Stmt{enter},
-            method.Body.List...)
+		// Collect float64 parameters. Their values
+		// are copied from the tape.
+		t := m.info.TypeOf(method.Name).(*types.Signature)
+		var params []ast.Expr
+		n := t.Params().Len()
+		if t.Variadic() {
+			// If the function is variadic,
+			// the last parameter is not a float64.
+			n--
+		}
+		// Signature parameters are flat, but ast parameters
+		// are two-dimensional: a parameter is a Field with
+		// possibly multiple names in it.
+		iparam, ifield := 0, 0 // ast indices
+		for i := 0; i != n; i++ {
+			p := t.Params().At(i)
+			pt, ok := p.Type().(*types.Basic)
+			if !ok || pt.Kind() != types.Float64 {
+				continue
+			}
+			var expr ast.Expr
+			if strings.Compare(p.Name(), "_") == 0 {
+				// There is no variable to copy the value
+				// to, create a dummy value.
+				expr = callExpr("Value", floatExpr(0.))
+			} else {
+				expr = &ast.UnaryExpr{
+					Op: token.AND,
+					X: method.Type.Params.List[iparam].
+						Names[ifield],
+				}
+			}
+			params = append(params, expr)
+			ifield++
+			if ifield == len(method.Type.Params.List[iparam].Names) {
+				iparam++
+				ifield = 0
+			}
+		}
+		enter := &ast.ExprStmt{
+			callExpr("Enter", params...),
+		}
+		method.Body.List = append([]ast.Stmt{enter},
+			method.Body.List...)
 	}
 
 	return err
@@ -681,113 +737,121 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 // isDifferentiated returns true iff the call
 // is of a differentiated method
 func (m *model) isDifferentiated(call *ast.CallExpr) bool {
-    sel, ok := call.Fun.(*ast.SelectorExpr)
-    if !ok {
-        return ok
-    }
-    t, ok := m.info.Selections[sel]
-    if !ok {
-        return ok
-    }
-    ok = t.Kind() == types.MethodVal
-    if !ok {
-        return ok
-    }
-    ok = t.Recv() != nil && m.isType(t.Recv())
-    return ok
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return ok
+	}
+	t, ok := m.info.Selections[sel]
+	if !ok {
+		return ok
+	}
+	ok = t.Kind() == types.MethodVal
+	if !ok {
+		return ok
+	}
+	ok = t.Recv() != nil && m.isType(t.Recv())
+	return ok
 }
 
 // isElemental returns true iff the call is of an elemental
 // function. It does not check whether this is a differentiated
 // function instead and should be called after isDifferentiated.
 func (m *model) isElemental(call *ast.CallExpr) bool {
-    t := m.info.TypeOf(call.Fun).(*types.Signature)
-    if t.Results().Len() != 1 {
-        return false
-    }
+	t := m.info.TypeOf(call.Fun).(*types.Signature)
+	if t.Results().Len() != 1 {
+		return false
+	}
 	rt, ok := t.Results().At(0).Type().(*types.Basic)
 	if !ok {
 		return ok
 	}
 	ok = rt.Kind() == types.Float64 // the result is float64
-    if !ok {
-        return ok
-    }
+	if !ok {
+		return ok
+	}
 
-    if t.Params().Len()==0 {
-        return false
-    }
-    for i := 0; i != t.Params().Len(); i++ {
-        pt, ok := t.Params().At(i).Type().(*types.Basic)
-        if !ok {
-            return ok
-        }
-        ok = pt.Kind() == types.Float64
-        if !ok {
-            return ok
-        }
-    }
+	if t.Params().Len() == 0 {
+		return false
+	}
+	for i := 0; i != t.Params().Len(); i++ {
+		pt, ok := t.Params().At(i).Type().(*types.Basic)
+		if !ok {
+			return ok
+		}
+		ok = pt.Kind() == types.Float64
+		if !ok {
+			return ok
+		}
+	}
 
-    return true
+	return true
 }
 
 // intExpr returns an Expr for integer literal i.
 func intExpr(i int) ast.Expr {
-    return &ast.BasicLit{
-        Kind:     token.INT,
-        Value:    fmt.Sprintf("%v", i),
-    }
+	return &ast.BasicLit{
+		Kind:  token.INT,
+		Value: fmt.Sprintf("%v", i),
+	}
 }
 
 // floatExpr returns an Expr for floating point literal x.
 func floatExpr(x float64) ast.Expr {
-    return &ast.BasicLit{
-        Kind:     token.FLOAT,
-        Value:    fmt.Sprintf("%g", x),
-    }
+	return &ast.BasicLit{
+		Kind:  token.FLOAT,
+		Value: fmt.Sprintf("%v", x),
+	}
 }
 
 // varExpr returns an Expr for variable or constant 'ad.name'.
 func varExpr(name string) ast.Expr {
-    return &ast.SelectorExpr {
-        X: &ast.Ident {
-            Name: "ad",
-        },
-        Sel: &ast.Ident{
-            Name: name,
-        },
-    }
+	return &ast.SelectorExpr{
+		X: &ast.Ident{
+			Name: "ad",
+		},
+		Sel: &ast.Ident{
+			Name: name,
+		},
+	}
 }
 
 // callExpr returns an Expr for call 'ad.name(args...)'.
 func callExpr(name string, args ...ast.Expr) ast.Expr {
 	return &ast.CallExpr{
-		Fun: varExpr(name),
+		Fun:  varExpr(name),
 		Args: args,
 	}
 }
 
 // callWrapper returns an Expr for a wrapped differentiated
 // call.
-func callWrapper() *ast.FuncLit {
-    return &ast.FuncLit {
-        Type: &ast.FuncType {
-            Params: &ast.FieldList {
-                List: []*ast.Field {
-                    &ast.Field {
-                        Names: []*ast.Ident{
-                            &ast.Ident {
-                                Name: "_vararg",
-                            },
-                        },
-                        Type: &ast.ArrayType {
-                            Elt: &ast.Ident {
-                                Name: "float64",
-        }}}}}},
-        Body: &ast.BlockStmt {
-            // Todo: call here
-        },
-    }
+func callWrapper(
+    fun ast.Expr,
+    args []ast.Expr,
+    ellipsis token.Pos,
+) *ast.FuncLit {
+	return &ast.FuncLit{
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					&ast.Field{
+						Names: []*ast.Ident{
+							&ast.Ident{
+								Name: "_vararg",
+							}},
+						Type: &ast.ArrayType{
+							Elt: &ast.Ident{
+								Name: "float64",
+							}}}}}},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ExprStmt{
+					X: &ast.CallExpr{
+						Fun:  fun,
+						Args: args,
+                        Ellipsis: ellipsis,
+					}}}},
+	}
 }
 
 // Writing

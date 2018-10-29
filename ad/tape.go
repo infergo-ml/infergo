@@ -293,11 +293,11 @@ func variadic(px []*float64) []float64 {
 	// slice onto the tape.
 	var sides []*float64
 	v0 := len(tape.values)
-	for range px {                        // left-hand side
+	for range px { // left-hand side
 		sides = append(sides, Value(0.))
 	}
-	vararg := tape.values[v0:]            // the slice
-	sides = append(sides, px...)          // right-hand side
+	vararg := tape.values[v0:]   // the slice
+	sides = append(sides, px...) // right-hand side
 	ParallelAssignment(sides...)
 	// Now, the result of variadic is a slice, to be passed
 	// to the variadic argument.

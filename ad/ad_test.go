@@ -268,7 +268,7 @@ func TestSimplify(t *testing.T) {
 	for _, c := range []struct {
 		original, simplified string
 	}{
-//====================================================
+		//====================================================
 		{`package define
 
 type Model float64
@@ -279,7 +279,7 @@ func (m Model) Observe(x []float64) float64 {
     d, e := 3., 4.
 	return a + b[0]  - d - e
 }`,
-//----------------------------------------------------
+			//----------------------------------------------------
 			`package define
 
 type Model float64
@@ -295,7 +295,7 @@ func (m Model) Observe(x []float64) float64 {
 	return a + b[0] - d - e
 }`,
 		},
-//====================================================
+		//====================================================
 		{`package opassign
 
 type Model float64
@@ -308,7 +308,7 @@ func (m Model) Observe(x []float64) float64 {
     a /= 5.
 	return a
 }`,
-//----------------------------------------------------
+			//----------------------------------------------------
 			`package opassign
 
 type Model float64
@@ -322,7 +322,7 @@ func (m Model) Observe(x []float64) float64 {
 	return a
 }`,
 		},
-//====================================================
+		//====================================================
 		{`package incdec
 
 type Model float64
@@ -333,7 +333,7 @@ func (m Model) Observe(x []float64) float64 {
     a--
 	return a
 }`,
-//----------------------------------------------------
+			//----------------------------------------------------
 			`package incdec
 
 type Model float64
@@ -346,7 +346,7 @@ func (m Model) Observe(x []float64) float64 {
 	return a
 }`,
 		},
-//====================================================
+		//====================================================
 		{`package plus
 
 type Model float64
@@ -356,7 +356,7 @@ func (m Model) Observe(x []float64) float64 {
     b := +a
 	return b
 }`,
-//----------------------------------------------------
+			//----------------------------------------------------
 			`package plus
 
 type Model float64
@@ -368,7 +368,7 @@ func (m Model) Observe(x []float64) float64 {
     b = a
 	return b
 }`,
-//====================================================
+			//====================================================
 		},
 	} {
 		m := &model{}
@@ -402,7 +402,7 @@ func TestDifferentiate(t *testing.T) {
 	for _, c := range []struct {
 		original, differentiated string
 	}{
-//====================================================
+		//====================================================
 		{`package lit
 
 type Model float64
@@ -414,7 +414,7 @@ func (m Model) Observe(x []float64) float64 {
 func (m Model) Count() int {
     return 0
 }`,
-//----------------------------------------------------
+			//----------------------------------------------------
 			`package lit
 
 import "bitbucket.org/dtolpin/infergo/ad"
@@ -431,7 +431,7 @@ func (m Model) Count() int {
     return 0
 }`,
 		},
-//====================================================
+		//====================================================
 		{`package ident
 
 type Model float64
@@ -445,7 +445,7 @@ func (m Model) Count() int {
     y := 1
     return y
 }`,
-//----------------------------------------------------
+			//----------------------------------------------------
 			`package ident
 
 import "bitbucket.org/dtolpin/infergo/ad"
@@ -466,7 +466,7 @@ func (m Model) Count() int {
     return y
 }`,
 		},
-//====================================================
+		//====================================================
 		{`package index
 
 type Model float64
@@ -474,7 +474,7 @@ type Model float64
 func (m Model) Observe(x []float64) float64 {
     return x[0]
 }`,
-//----------------------------------------------------
+			//----------------------------------------------------
 			`package index
 
 import "bitbucket.org/dtolpin/infergo/ad"
@@ -486,7 +486,7 @@ func (m Model) Observe(x []float64) float64 {
     return ad.Return(&x[0])
 }`,
 		},
-//====================================================
+		//====================================================
 		{`package selector
 
 type Model struct {
@@ -496,7 +496,7 @@ type Model struct {
 func (m Model) Observe(x []float64) float64 {
     return m.y
 }`,
-//----------------------------------------------------
+			//----------------------------------------------------
 			`package selector
 
 import "bitbucket.org/dtolpin/infergo/ad"
@@ -510,7 +510,7 @@ func (m Model) Observe(x []float64) float64 {
     return ad.Return(&m.y)
 }`,
 		},
-//====================================================
+		//====================================================
 		{`package star
 
 type Model float64
@@ -519,7 +519,7 @@ func (m Model) Observe(x []float64) float64 {
     y := &x[0]
     return *y
 }`,
-//----------------------------------------------------
+			//----------------------------------------------------
 			`package star
 
 import "bitbucket.org/dtolpin/infergo/ad"
@@ -533,7 +533,7 @@ func (m Model) Observe(x []float64) float64 {
     return ad.Return(y)
 }`,
 		},
-//====================================================
+		//====================================================
 		{`package unary
 
 type Model float64
@@ -543,7 +543,7 @@ func (m Model) Observe(x []float64) float64 {
     y = -x[1]
     return y
 }`,
-//----------------------------------------------------
+			//----------------------------------------------------
 			`package unary
 
 import "bitbucket.org/dtolpin/infergo/ad"
@@ -558,7 +558,7 @@ func (m Model) Observe(x []float64) float64 {
     return ad.Return(&y)
 }`,
 		},
-//====================================================
+		//====================================================
 		{`package binary
 
 type Model float64
@@ -569,7 +569,7 @@ func (m Model) Observe(x []float64) float64 {
     y = y * x[3]
     return y / x[4]
 }`,
-//----------------------------------------------------
+			//----------------------------------------------------
 			`package binary
 
 import "bitbucket.org/dtolpin/infergo/ad"
@@ -585,7 +585,7 @@ func (m Model) Observe(x []float64) float64 {
     return ad.Return(ad.Arithmetic(ad.OpDiv, &y, &x[4]))
 }`,
 		},
-//====================================================
+		//====================================================
 		{`package elemental
 
 import "math"
@@ -600,7 +600,7 @@ func (m Model) Observe(x []float64) float64 {
     y := math.Sin(x[0])
     return y
 }`,
-//----------------------------------------------------
+			//----------------------------------------------------
 			`package elemental
 
 import (
@@ -621,7 +621,7 @@ func (m Model) Observe(x []float64) float64 {
     return ad.Return(&y)
 }`,
 		},
-//====================================================
+		//====================================================
 		{`package opaque
 
 type Model float64
@@ -643,7 +643,7 @@ func (m Model) Observe(x []float64) float64 {
     z := intpow(y, 3)
     return y * z
 }`,
-//----------------------------------------------------
+			//----------------------------------------------------
 			`package opaque
 
 import "bitbucket.org/dtolpin/infergo/ad"
@@ -671,7 +671,7 @@ func (m Model) Observe(x []float64) float64 {
     return ad.Return(ad.Arithmetic(ad.OpMul, &y, &z))
 }`,
 		},
-//====================================================
+		//====================================================
 		{`package enter
 
 type Model float64
@@ -683,7 +683,7 @@ func (m Model) sum(x, _ float64, y float64) float64 {
 func (m Model) Observe(x []float64) float64 {
     return m.sum(x[0], x[1], x[2])
 }`,
-//----------------------------------------------------
+			//----------------------------------------------------
 			`package enter
 
 import "bitbucket.org/dtolpin/infergo/ad"
@@ -697,10 +697,74 @@ func (m Model) sum(x, _ float64, y float64) float64 {
 
 func (m Model) Observe(x []float64) float64 {
     ad.Setup(x)
-    return ad.Return(m.sum(&x[0], &x[1], &x[2]))
+    return ad.Return(ad.Call(func (_vararg []float64) {
+        m.sum(0, 0, 0)
+    }, 3, &x[0], &x[1], &x[2]))
 }`,
 		},
-//====================================================
+		//====================================================
+		{`package call
+
+type Model float64
+
+func (m Model) sum(x, y float64) float64 {
+    return x + y
+}
+
+func (m Model) Observe(x []float64) float64 {
+    return m.sum(x[0], x[1])
+}`,
+			//----------------------------------------------------
+			`package call
+
+import "bitbucket.org/dtolpin/infergo/ad"
+
+type Model float64
+
+func (m Model) sum(x, y float64) float64 {
+    ad.Enter(&x, &y)
+    return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y))
+}
+
+func (m Model) Observe(x []float64) float64 {
+    ad.Setup(x)
+    return ad.Return(ad.Call(func (_vararg []float64) {
+            m.sum(0, 0)
+    }, 2, &x[0], &x[1]))
+}`,
+		},
+		//====================================================
+		{`package variadic
+
+type Model float64
+
+func (m Model) sum(x ...float64) float64 {
+    return x[0]
+}
+
+func (m Model) Observe(x []float64) float64 {
+    return m.sum(x[0], x[1], x[2])
+}`,
+			//----------------------------------------------------
+			`package variadic
+
+import "bitbucket.org/dtolpin/infergo/ad"
+
+type Model float64
+
+func (m Model) sum(x ...float64) float64 {
+    ad.Enter()
+    return ad.Return(&x[0])
+}
+
+func (m Model) Observe(x []float64) float64 {
+    ad.Setup(x)
+    return ad.Return(ad.Call(func (_vararg []float64) {
+        m.sum(_vararg...)
+    }, 0, &x[0], &x[1], &x[2]))
+}`,
+		},
+		//====================================================
 	} {
 		m := &model{}
 		parseTestModel(m, map[string]string{
@@ -711,7 +775,7 @@ func (m Model) Observe(x []float64) float64 {
 			t.Errorf("failed to check model %v: %s",
 				m.pkg.Name, err)
 		}
-        m.deriv()
+		m.deriv()
 		if !equiv(m.pkg.Files["original.go"], c.differentiated) {
 			b := new(bytes.Buffer)
 			printer.Fprint(b, m.fset, m.pkg.Files["original.go"])

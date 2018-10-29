@@ -8,6 +8,6 @@ type Model struct {
 
 // x[0] is the mean of the normal distribution
 func (m *Model) Observe(x []float64) float64 {
-    d := x[0] - m.y
-	return -d*d
+	d := x[0] - m.y
+	return -d * d
 }
