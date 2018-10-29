@@ -48,6 +48,6 @@ func main () {
     ll := m.Observe([]float64{MEAN, LOGV})
     grad := ad.Gradient()
     
-    log.Printf("mean=%.6g(%.6g) logv=%.6g(%.6g) ll=%.6g grad=%.6g, %.6g\n", 
+    log.Printf("mean=%.6g(≈%.6g) logv=%.6g(≈%.6g) ll=%.6g grad=%.6g, %.6g\n", 
         MEAN, mean, LOGV, logv, ll, grad[0], grad[1])
 }
