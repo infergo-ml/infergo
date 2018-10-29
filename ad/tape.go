@@ -263,10 +263,17 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 
 // Call wraps a call to a differentiated subfunction. narg is
 // the number of non-variadic arguments.
-func Call(f func([]float64), narg int, px ...*float64) *float64 {
+func Call(
+	f func(_vararg []float64),
+	narg int,
+	px ...*float64,
+) *float64 {
 	// Register function parameters. The function will assign
 	// the actual parameters to the formal parameters on entry.
-	vararg := variadic(px[narg:])
+	var vararg []float64
+	if narg < len(px) {
+		vararg = variadic(px[narg:])
+	}
 	for _, py := range px[:narg] {
 		tape.places = append(tape.places, py)
 	}
@@ -278,22 +285,21 @@ func Call(f func([]float64), narg int, px ...*float64) *float64 {
 	return tape.places[0]
 }
 
-// variadic wraps variadic arguments into a slice for 
-// passing to the underlying call.
+// variadic wraps variadic arguments into a slice for passing to
+// the underlying call.
 func variadic(px []*float64) []float64 {
 	// In order to pass variadic float64 arguments to a
 	// differentiated method, we build a slice on the caller
-	// side and assign the arguments to the slice.
-	p0 := len(tape.places)
+	// side and assign the arguments to the slice. We put the
+	// slice onto the tape.
+	var sides []*float64
 	v0 := len(tape.values)
-	// Left-hand side of the assignment.
-	for range px {
-		tape.places = append(tape.places, Value(0.))
+	for range px {                        // left-hand side
+		sides = append(sides, Value(0.))
 	}
-	vararg := tape.values[v0:]
-	// Right-hand side.
-	tape.places = append(tape.places, px...)
-	ParallelAssignment(tape.places[p0:len(tape.places)]...)
+	vararg := tape.values[v0:]            // the slice
+	sides = append(sides, px...)          // right-hand side
+	ParallelAssignment(sides...)
 	// Now, the result of variadic is a slice, to be passed
 	// to the variadic argument.
 	return vararg

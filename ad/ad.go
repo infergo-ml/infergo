@@ -461,18 +461,6 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				if !basic || t.Kind() != types.Float64 {
 					return false
 				}
-                if _, ok := n.(*ast.Ident); ok {
-                    // SelectorExpr is peculiar: Sel is a child and
-                    // implements Expr, but not an expression. I
-                    // believe astutil should not traverse Sel at
-                    // all.
-                    switch c.Parent().(type) {
-                    case *ast.SelectorExpr:
-                        if strings.Compare(c.Name(), "Sel")==0 {
-                            return false
-                        }
-                    }
-                }
             case *ast.CallExpr:
                 switch {
                 case m.isDifferentiated(n):
@@ -534,10 +522,30 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 			case *ast.BasicLit:
 				value := callExpr("ad.Value", n)
 				c.Replace(value)
-			case *ast.Ident, *ast.IndexExpr:
+            case *ast.Ident:
+                switch c.Parent().(type) {
+                case *ast.SelectorExpr:
+                    // SelectorExpr is peculiar: Sel is a child
+                    // and implements Expr, but not an
+                    // expression. I believe astutil should not
+                    // traverse Sel at all.
+                    if strings.Compare(c.Name(), "Sel")==0 {
+                        return true
+                    }
+                }
+                if n.Name[0] == '_' {
+                    panic(fmt.Sprintf("identifier %v is reserved",
+                        n.Name))
+                }
 				place := &ast.UnaryExpr{
 					Op: token.AND,
-					X:  n.(ast.Expr),
+					X:  n,
+				}
+				c.Replace(place)
+            case  *ast.IndexExpr:
+				place := &ast.UnaryExpr{
+					Op: token.AND,
+					X:  n,
 				}
 				c.Replace(place)
             case *ast.SelectorExpr:
