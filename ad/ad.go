@@ -564,9 +564,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				switch n.Op {
 				case token.SUB:
 					neg := callExpr("ad.Arithmetic",
-						&ast.BasicLit{
-							Kind:  token.INT,
-							Value: "ad.OpNeg",
+						&ast.Ident{
+							Name: "ad.OpNeg",
 						},
 						n.X)
 					c.Replace(neg)
@@ -576,9 +575,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				}
 			case *ast.BinaryExpr:
 				bin := callExpr("ad.Arithmetic",
-					&ast.BasicLit{
-						Kind: token.INT,
-						Value: map[token.Token]string{
+					&ast.Ident{
+						Name: map[token.Token]string{
 							token.ADD: "ad.OpAdd",
 							token.SUB: "ad.OpSub",
 							token.MUL: "ad.OpMul",
