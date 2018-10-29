@@ -43,7 +43,7 @@ func (m *Model) Observe(x []float64) float64 {
 m := &Model{[]float64{
 	-0.854, 1.067, -1.220, 0.818, -0.749,
 	0.805, 1.443, 1.069, 1.426, 0.308}}
-// mean ≈ 0.4113, logv ≈ -0.11698
+// mean ≈ 0.411, logv ≈ -0.117
 	
 // Parameters of gradient descent 
 n := 100
