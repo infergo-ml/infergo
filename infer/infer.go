@@ -14,15 +14,15 @@ type Optimizer interface {
 
 // Gradient descent (or ascent for negative step).
 type GD struct {
-	Step float64
+	Rate float64
 	Decay float64
 }
 
-func (opt *GD) Advance(m model.Model, x []float64) {
+func (opt *GD) Step(m model.Model, x []float64) {
 	m.Observe(x)
 	grad := ad.Gradient()
 	for i := 0; i != len(x); i++ {
-		x[i] -= grad[i] * opt.Step
+		x[i] -= grad[i] * opt.Rate
 	}
-	opt.Step *= opt.Decay
+	opt.Rate *= opt.Decay
 }

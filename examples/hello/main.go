@@ -18,7 +18,7 @@ import (
 var (
 	MEAN  float64 = 0.
 	LOGV  float64 = 0.
-	STEP  float64 = 0.01
+	RATE  float64 = 0.01
 	DECAY float64 = 0.995
 	NITER int     = 100
 )
@@ -31,8 +31,8 @@ func init() {
 	}
 	flag.Float64Var(&MEAN, "mean", MEAN, "initial mean")
 	flag.Float64Var(&LOGV, "logv", LOGV, "initial log var")
-	flag.Float64Var(&STEP, "step", STEP, "step size")
-	flag.Float64Var(&DECAY, "decay", DECAY, "step decay")
+	flag.Float64Var(&RATE, "rate", RATE, "learning rate")
+	flag.Float64Var(&DECAY, "decay", DECAY, "rate decay")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	log.SetFlags(0)
 }
@@ -109,11 +109,11 @@ func main() {
 
 	// Run the optimizer
 	opt := &infer.GD {
-		Step: -STEP,
+		Rate: -RATE,
 		Decay: DECAY,
 	}
 	for iter := 0; iter != NITER; iter++ {
-		opt.Advance(m, x)
+		opt.Step(m, x)
 	}
 
 	ll = m.Observe(x)
