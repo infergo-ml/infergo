@@ -162,6 +162,7 @@ func Arithmetic(op int, px ...*float64) *float64 {
 // ParallelAssigment encodes a parallel assignment.
 func ParallelAssignment(ppx ...*float64) {
 	// Register
+	fmt.Printf("%v\n", ppx)
 	p, px := ppx[:len(ppx)/2], ppx[len(ppx)/2:]
 	r := record{
 		typ: typAssignment,
@@ -260,14 +261,16 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 
 // Calling differentiated functions
 
-// Call wraps a call to a differentiated subfunction.
-func Call(f func(), px ...*float64) *float64 {
+// Call wraps a call to a differentiated subfunction. narg is
+// the number of non-variadic arguments.
+func Call(f func([]float64), narg int, px ...*float64) *float64 {
 	// Register function parameters. The function will assign
 	// the actual parameters to the formal parameters on entry.
-	for _, py := range px {
+	vararg := variadic(px[narg:])
+	for _, py := range px[:narg] {
 		tape.places = append(tape.places, py)
 	}
-	f()
+	f(vararg)
 	// If the function returns a float64 value, the returned
 	// value is in the first place. Otherwise, the function
 	// is called as an expression statement, for side effects,
@@ -275,9 +278,9 @@ func Call(f func(), px ...*float64) *float64 {
 	return tape.places[0]
 }
 
-// Variadic wraps variadic arguments into a slice for 
+// variadic wraps variadic arguments into a slice for 
 // passing to the underlying call.
-func Variadic(px ...*float64) []float64 {
+func variadic(px []*float64) []float64 {
 	// In order to pass variadic float64 arguments to a
 	// differentiated method, we build a slice on the caller
 	// side and assign the arguments to the slice.
@@ -287,18 +290,13 @@ func Variadic(px ...*float64) []float64 {
 	for range px {
 		tape.places = append(tape.places, Value(0.))
 	}
+	vararg := tape.values[v0:]
 	// Right-hand side.
-	for _, py := range px {
-		tape.places = append(tape.places, py)
-	}
-	ParallelAssignment(tape.places[p0:]...)
-	// We keep the values but drop the places, which were
-	// only used to pass arguments to ParallelAssignment.
-	tape.places = tape.places[:p0]
-
+	tape.places = append(tape.places, px...)
+	ParallelAssignment(tape.places[p0:len(tape.places)]...)
 	// Now, the result of variadic is a slice, to be passed
 	// to the variadic argument.
-	return tape.values[v0:]
+	return vararg
 }
 
 // Enter copies the actual parameters to the formal parameters.

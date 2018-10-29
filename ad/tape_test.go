@@ -357,24 +357,26 @@ func TestCall(t *testing.T) {
 	runsuite(t, []testcase{
 		{"(x -> x)(x)",
 			func(x []float64) {
-				Call(func() {
-					func(a float64) float64 {
-						Enter(&a)
-						return Return(&a)
-					}(0.)
-				}, &x[0])
+				Return(
+					Call(func(_vararg []float64) {
+						func(a float64) float64 {
+							Enter(&a)
+							return Return(&a)
+						}(0.)
+					}, 1, &x[0]))
 			},
 			[][][]float64{
 				{{0.}, {1.}},
 				{{1.}, {1.}}}},
 		{"(x -> x * x)(x)",
 			func(x []float64) {
-				Call(func() {
-					func(a float64) float64 {
-						Enter(&a)
-						return Return(Arithmetic(OpMul, &a, &a))
-					}(0.)
-				}, &x[0])
+				Return(
+					Call(func(_vararg []float64) {
+						func(a float64) float64 {
+							Enter(&a)
+							return Return(Arithmetic(OpMul, &a, &a))
+						}(0.)
+					}, 1, &x[0]))
 			},
 			[][][]float64{
 				{{0.}, {0.}},
@@ -382,13 +384,15 @@ func TestCall(t *testing.T) {
 				{{2.}, {4.}}}},
 		{"y = (x -> x * x)(x)",
 			func(x []float64) {
-				Assignment(Value(0.),
-					Call(func() {
+				var y float64
+				Assignment(&y,
+					Call(func(_vararg []float64) {
 						func(a float64) float64 {
 							Enter(&a)
 							return Return(Arithmetic(OpMul, &a, &a))
 						}(0.)
-					}, &x[0]))
+					}, 1, &x[0]))
+				Return(&y)
 			},
 			[][][]float64{
 				{{0.}, {0.}},
@@ -396,23 +400,24 @@ func TestCall(t *testing.T) {
 				{{2.}, {4.}}}},
 		{"(x, y -> x + y)(x, y)",
 			func(x []float64) {
-				Call(func() {
-					func(a, b float64) float64 {
-						Enter(&a, &b)
-						return Return(Arithmetic(OpAdd, &a, &b))
-					}(0., 0.)
-				}, &x[0], &x[1])
+				Return(
+					Call(func(_vararg []float64) {
+						func(a, b float64) float64 {
+							Enter(&a, &b)
+							return Return(Arithmetic(OpAdd, &a, &b))
+						}(0., 0.)
+					}, 2, &x[0], &x[1]))
 			},
 			[][][]float64{
 				{{0., 0.}, {1., 1.}},
 				{{1., 2.}, {1., 1.}}}},
 		{"(px, py -> *px = *py)(&x, &y); x + y",
 			func(x []float64) {
-				Call(func() {
+				Call(func(_vararg []float64) {
 					func(a, b *float64) {
 						Assignment(a, b)
 					}(&x[0], &x[1])
-				})
+				}, 0)
 				Return(Arithmetic(OpAdd, &x[0], &x[1]))
 			},
 			[][][]float64{
@@ -420,16 +425,43 @@ func TestCall(t *testing.T) {
 				{{1., 2.}, {0., 2.}}}},
 		{"(px, py -> *px = *py)(&x, &y); x * y",
 			func(x []float64) {
-				Call(func() {
+				Call(func(_vararg []float64) {
 					func(a, b *float64) {
+						Enter()
 						Assignment(a, b)
 					}(&x[0], &x[1])
-				})
+				}, 0)
 				Return(Arithmetic(OpMul, &x[0], &x[1]))
 			},
 			[][][]float64{
 				{{0., 0.}, {0., 0.}},
 				{{1., 2.}, {0., 4.}},
 				{{1., 3.}, {0., 6.}}}},
+		{"(...x -> x[0] + x[1])(x, y)",
+			func(x []float64) {
+				Return(
+					Call(func(_vararg []float64) {
+						func(a ...float64) {
+							Enter()
+							Return(Arithmetic(OpAdd, &a[0], &a[1]))
+						}(_vararg...)
+					}, 0, &x[0], &x[1]))
+			},
+			[][][]float64{
+				{{0., 0.}, {1., 1.}},
+				{{1., 2.}, {1., 1.}}}},
+		{"(x, ...y -> x * y[0])(x, y)",
+			func(x []float64) {
+				Return(
+					Call(func(_vararg []float64) {
+						func(a float64, b ...float64) {
+							Enter(&a)
+							Return(Arithmetic(OpMul, &a, &b[0]))
+						}(0., _vararg...)
+					}, 1, &x[0], &x[1]))
+			},
+			[][][]float64{
+				{{0., 0.}, {0., 0.}},
+				{{1., 2.}, {2., 1.}}}},
 	})
 }

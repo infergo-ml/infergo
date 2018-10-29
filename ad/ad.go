@@ -14,6 +14,7 @@ package ad
 //      c) standalone calls to methods on the type implementing
 //         model.Model (apparently called for side  effects on
 //         the model).
+//   4. Non-dummy dentifiers starting with '_' are reserved.
 //
 // Functions are considered elementals (and must have a
 // registered derivative):

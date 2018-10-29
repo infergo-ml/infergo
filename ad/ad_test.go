@@ -559,6 +559,33 @@ func (m Model) Observe(x []float64) float64 {
 }`,
 		},
 //====================================================
+		{`package binary
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    y := x[0] + x[1]
+    y = y - x[2]
+    y = y * x[3]
+    return y / x[4]
+}`,
+//----------------------------------------------------
+			`package binary
+
+import "bitbucket.org/dtolpin/infergo/ad"
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+    ad.Setup(x)
+    var y float64
+    ad.Assignment(&y, ad.Arithmetic(ad.OpAdd, &x[0], &x[1]))
+    ad.Assignment(&y, ad.Arithmetic(ad.OpSub, &y, &x[2]))
+    ad.Assignment(&y, ad.Arithmetic(ad.OpMul, &y, &x[3]))
+    return ad.Return(ad.Arithmetic(ad.OpDiv, &y, &x[4]))
+}`,
+		},
+//====================================================
 		{`package elemental
 
 import "math"
