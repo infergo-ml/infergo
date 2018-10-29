@@ -2,6 +2,7 @@ package main
 
 import (
 	"bitbucket.org/dtolpin/infergo/ad"
+	"bitbucket.org/dtolpin/infergo/infer"
 	. "bitbucket.org/dtolpin/infergo/examples/hello/model/ad"
 	"encoding/csv"
 	"flag"
@@ -44,8 +45,10 @@ func main() {
 			flag.Args()[1:])
 	}
 
+	// Get the data
 	var data []float64
 	if flag.NArg() == 1 {
+		// Read the CSV
 		fname := flag.Arg(0)
 		file, err := os.Open(fname)
 		if err != nil {
@@ -65,12 +68,14 @@ func main() {
 		}
 		file.Close()
 	} else {
+		// Use an embedded data set, for self-check
 		data = []float64{
 			-0.854, 1.067, -1.220, 0.818, -0.749,
 			0.805, 1.443, 1.069, 1.426, 0.308}
 	}
 	m := &Model{Data: data}
 
+	// Compute sample statistics, for comparison
 	s := 0.
 	s2 := 0.
 	for i := 0; i != len(m.Data); i++ {
@@ -82,12 +87,9 @@ func main() {
 	sampleLogv := math.Log(
 		s2/float64(len(m.Data)) - sampleMean*sampleMean)
 
-	ll := m.Observe([]float64{MEAN, LOGV})
+	x := []float64{MEAN, LOGV}
+	ll := m.Observe(x)
 	grad := ad.Gradient()
-
-	mean := MEAN
-	logv := LOGV
-
 	printState := func(when string) {
 		log.Printf(`
 %s:
@@ -97,21 +99,24 @@ func main() {
     grad: %.6g, %.6g
 `,
 			when,
-			mean, sampleMean,
-			logv, sampleLogv,
+			x[0], sampleMean,
+			x[1], sampleLogv,
 			ll,
 			grad[0], grad[1])
 	}
 
 	printState("Initially")
-	step := STEP
-	for iter := 0; iter != NITER; iter++ {
-		mean += step * grad[0]
-		logv += step * grad[1]
-		step *= DECAY
-		ll = m.Observe([]float64{mean, logv})
-		grad = ad.Gradient()
-	}
-	printState("Finally")
 
+	// Run the optimizer
+	opt := &infer.GD {
+		Step: -STEP,
+		Decay: DECAY,
+	}
+	for iter := 0; iter != NITER; iter++ {
+		opt.Advance(m, x)
+	}
+
+	ll = m.Observe(x)
+	grad = ad.Gradient()
+	printState("Finally")
 }
