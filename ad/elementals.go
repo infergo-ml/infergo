@@ -1,8 +1,8 @@
 package ad
 
 import (
-	"math"
 	"bitbucket.org/dtolpin/infergo/mathx"
+	"math"
 	"reflect"
 )
 
@@ -68,7 +68,7 @@ func init() {
 }
 
 func init() {
-	// d lse(x, y) / dx = exp(x) / exp(x) + exp(y) 
+	// d lse(x, y) / dx = exp(x) / exp(x) + exp(y)
 	//                  = 1 / 1 + exp(y - x)
 	// d lse(x, y) / dy = exp(y) / exp(x) + exp(y)
 	//                  = exp(y - x) / 1 + exp(y - x)

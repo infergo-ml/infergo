@@ -11,6 +11,13 @@ var (
 )
 
 func init() {
+	flag.Usage = func() {
+		log.Printf(`Generates a differentiated model. Usage:
+    deriv [path/to/model/directory/]
+If the path is omitted, the model in the current directory
+is differentiated. The differentiated model is placed into
+the 'ad/' subdirectory.` + "\n")
+	}
 	log.SetFlags(0)
 }
 

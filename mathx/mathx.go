@@ -15,5 +15,5 @@ func LogSumExp(x, y float64) float64 {
 	if y > z {
 		z = y
 	}
-	return z + math.Log(math.Exp(x - z) + math.Exp(y - z))
+	return z + math.Log(math.Exp(x-z)+math.Exp(y-z))
 }

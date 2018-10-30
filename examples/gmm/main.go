@@ -1,8 +1,8 @@
 package main
 
 import (
+	. "bitbucket.org/dtolpin/infergo/examples/gmm/model/ad"
 	"bitbucket.org/dtolpin/infergo/infer"
-    . "bitbucket.org/dtolpin/infergo/examples/gmm/model/ad"
 	"encoding/csv"
 	"flag"
 	"io"
@@ -15,7 +15,7 @@ import (
 // Command line arguments
 
 var (
-	NCOMP int = 2
+	NCOMP int     = 2
 	RATE  float64 = 0.01
 	DECAY float64 = 0.995
 	NITER int     = 100
@@ -24,7 +24,7 @@ var (
 func init() {
 	flag.Usage = func() {
 		log.Printf(`Gaussian mixture model:
-		gmm [OPTIONS]`+"\n")
+		gmm [OPTIONS]` + "\n")
 		flag.PrintDefaults()
 	}
 	flag.IntVar(&NCOMP, "ncomp", NCOMP, "number of components")
@@ -85,14 +85,14 @@ func main() {
 	} else {
 		// Spread the initial components wide and thin
 		for j := 0; j != m.NComp; j++ {
-			x[2*j] = -2. + 4./float64(m.NComp - 1) * float64(j)
-			x[2*j + 1] = 1.
+			x[2*j] = -2. + 4./float64(m.NComp-1)*float64(j)
+			x[2*j+1] = 1.
 		}
 	}
 
 	// Run the optimizer
-	opt := &infer.GD {
-		Rate: -RATE,
+	opt := &infer.GD{
+		Rate:  -RATE,
 		Decay: DECAY,
 	}
 	for iter := 0; iter != NITER; iter++ {
@@ -103,6 +103,6 @@ func main() {
 	log.Printf("Components:\n")
 	for j := 0; j != m.NComp; j++ {
 		log.Printf("\t%d: 𝜇=%.4g, 𝜎²=%.4g\n",
-			j, x[2*j], math.Exp(x[2*j + 1]))
+			j, x[2*j], math.Exp(x[2*j+1]))
 	}
 }

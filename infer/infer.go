@@ -2,8 +2,8 @@
 package infer
 
 import (
-	"bitbucket.org/dtolpin/infergo/model"
 	"bitbucket.org/dtolpin/infergo/ad"
+	"bitbucket.org/dtolpin/infergo/model"
 )
 
 // Optimizer is the interface of gradient-based
@@ -14,7 +14,7 @@ type Optimizer interface {
 
 // Gradient descent (or ascent for negative step).
 type GD struct {
-	Rate float64
+	Rate  float64
 	Decay float64
 }
 

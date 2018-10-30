@@ -1,8 +1,8 @@
 package main
 
 import (
+	. "bitbucket.org/dtolpin/infergo/examples/hello/model/ad"
 	"bitbucket.org/dtolpin/infergo/infer"
-    . "bitbucket.org/dtolpin/infergo/examples/hello/model/ad"
 	"encoding/csv"
 	"flag"
 	"io"
@@ -25,7 +25,7 @@ var (
 func init() {
 	flag.Usage = func() {
 		log.Printf(`Inferring parameters of the normal distribution:
-		hello [OPTIONS] [data.csv]`+"\n")
+		hello [OPTIONS] [data.csv]` + "\n")
 		flag.PrintDefaults()
 	}
 	flag.Float64Var(&MEAN, "mean", MEAN, "initial mean")
@@ -104,8 +104,8 @@ func main() {
 	printState("Initially")
 
 	// Run the optimizer
-	opt := &infer.GD {
-		Rate: -RATE,
+	opt := &infer.GD{
+		Rate:  -RATE,
 		Decay: DECAY,
 	}
 	for iter := 0; iter != NITER; iter++ {
