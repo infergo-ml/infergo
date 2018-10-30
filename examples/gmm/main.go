@@ -78,7 +78,7 @@ func main() {
 	m := &Model{Data: data, NComp: NCOMP}
 	x := make([]float64, 2*m.NComp)
 
-	// set a starting  point
+	// Set a starting  point
 	if m.NComp == 1 {
 		x[0] = 0.
 		x[1] = 1.

@@ -1,5 +1,5 @@
 // Gaussian mixture
-package normal
+package model
 
 import (
 	"bitbucket.org/dtolpin/infergo/mathx"

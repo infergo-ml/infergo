@@ -1,6 +1,6 @@
 // Learning the parameters of the Normal distribution from
 // observations
-package normal
+package model
 
 import "math"
 
