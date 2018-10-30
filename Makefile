@@ -1,6 +1,4 @@
-all: build deriv
-
-.PHONY: deriv
+all: build
 
 PACKAGES=ad model infer mathx cmd/deriv
 
@@ -16,10 +14,6 @@ GOFILES=ad/ad.go ad/elementals.go ad/tape.go \
 
 install: all test
 	for package in $(PACKAGES); do go install ./$$package; done
-	go install .
-
-clean:
-	rm -f ./deriv
 
 # Examples
 #
