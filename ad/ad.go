@@ -341,9 +341,8 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 				if decl.Tok != token.VAR {
 					return false
 				}
-				ast.Fprint(os.Stdout, m.fset, decl.Specs, nil)
 				for ispec, spec := range decl.Specs {
-					spec, _ := spec.(*ast.ValueSpec) 
+					spec, _ := spec.(*ast.ValueSpec)
 					if spec.Values != nil {
 						// If a variable declaration assigns
 						// values, prune the values and then
@@ -369,9 +368,9 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 							for i := 0; i != len(spec.Names); i++ {
 								typast, _ := parser.ParseExpr(
 									m.info.TypeOf(spec.Names[i]).String())
-								typedSpec := &ast.ValueSpec {
-									Names: spec.Names[i:i+1],
-									Type: typast,
+								typedSpec := &ast.ValueSpec{
+									Names: spec.Names[i : i+1],
+									Type:  typast,
 								}
 								// We override the first specification, and then
 								// append the rest of specifications.

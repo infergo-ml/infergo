@@ -61,9 +61,9 @@ func equiv(gotTree *ast.File, expected string) bool {
 func TestEquiv(t *testing.T) {
 	// kick the tyres
 	for _, c := range []struct {
-		got		 string
+		got      string
 		expected string
-		equal	 bool
+		equal    bool
 	}{
 		{
 			"package a; func foo() {}",
