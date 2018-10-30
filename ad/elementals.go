@@ -73,7 +73,6 @@ func init() {
 		})
 }
 
-
 // Logarithm of union probability
 func LogSumExp(x, y float64) float64 {
 	z := x
