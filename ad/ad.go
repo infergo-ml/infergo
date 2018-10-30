@@ -682,8 +682,9 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 
 					ellipsis := token.NoPos
 					if t.Variadic() && len(n.Args) > nparams {
-						pt, ok := t.Params().At(nparams).Type().(*types.Slice).Elem().(*types.Basic)
-						if ok && pt.Kind() == types.Float64 &&
+						pt, _ := t.Params().At(nparams).Type().(*types.Slice)
+						et, ok := pt.Elem().(*types.Basic)
+						if ok && et.Kind() == types.Float64 &&
 							n.Ellipsis == token.NoPos {
 							// Variadic float64 arguments
 							innerArgs = append(innerArgs,
