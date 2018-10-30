@@ -1,9 +1,8 @@
 package main
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	"bitbucket.org/dtolpin/infergo/infer"
-	. "bitbucket.org/dtolpin/infergo/examples/hello/model/ad"
+    . "bitbucket.org/dtolpin/infergo/examples/hello/model/ad"
 	"encoding/csv"
 	"flag"
 	"io"
@@ -89,20 +88,17 @@ func main() {
 
 	x := []float64{MEAN, LOGV}
 	ll := m.Observe(x)
-	grad := ad.Gradient()
 	printState := func(when string) {
 		log.Printf(`
 %s:
     mean: %.6g(≈%.6g)
     logv: %.6g(≈%.6g)
     ll: %.6g
-    grad: %.6g, %.6g
 `,
 			when,
 			x[0], sampleMean,
 			x[1], sampleLogv,
-			ll,
-			grad[0], grad[1])
+			ll)
 	}
 
 	printState("Initially")
@@ -117,6 +113,5 @@ func main() {
 	}
 
 	ll = m.Observe(x)
-	grad = ad.Gradient()
 	printState("Finally")
 }

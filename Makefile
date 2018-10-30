@@ -1,4 +1,4 @@
-all: deriv
+all: test deriv
 
 .PHONY: deriv
 
@@ -7,17 +7,24 @@ PACKAGES=ad model infer
 test:
 	for package in $(PACKAGES); do go test ./$$package; done
 
-deriv: test
+GOFILES=ad/ad.go ad/elementals.go ad/tape.go \
+	model/model.go \
+	infer/infer.go
+
+deriv: $(GOFILES)
 	go build deriv.go
 
-install: all
-	for package in $(PACKAGES); do install ./$$package; done
+install: all test
+	for package in $(PACKAGES); do go install ./$$package; done
 	go install deriv.go
 
-hello: deriv
-	./deriv ./examples/hello/model
-	go build ./examples/hello
-	./hello
-
 clean:
-	-rm -rf deriv hello ./examples/hello/ad
+	rm -f ./deriv
+
+# Examples
+#
+# Probabilistic Hello Wolrd: Inferring parameters of normal 
+# distribution
+.PHONY: hello
+hello: 
+	(cd examples/hello && make)
