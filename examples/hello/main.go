@@ -51,7 +51,7 @@ func main() {
 		fname := flag.Arg(0)
 		file, err := os.Open(fname)
 		if err != nil {
-			log.Fatalf("Cannot open data file: %v", fname, err)
+			log.Fatalf("Cannot open data file %q: %v", fname, err)
 		}
 		rdr := csv.NewReader(file)
 		for {
