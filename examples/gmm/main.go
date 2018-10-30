@@ -102,7 +102,7 @@ func main() {
 	// Print the result.
 	log.Printf("Components:\n")
 	for j := 0; j != m.NComp; j++ {
-		log.Printf("\t%d: %.4g, %.4g\n",
+		log.Printf("\t%d: 𝜇=%.4g, 𝜎²=%.4g\n",
 			j, x[2*j], math.Exp(x[2*j + 1]))
 	}
 }
