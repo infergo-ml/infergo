@@ -61,9 +61,9 @@ func equiv(gotTree *ast.File, expected string) bool {
 func TestEquiv(t *testing.T) {
 	// kick the tyres
 	for _, c := range []struct {
-		got      string
+		got		 string
 		expected string
-		equal    bool
+		equal	 bool
 	}{
 		{
 			"package a; func foo() {}",
@@ -269,30 +269,31 @@ func TestSimplify(t *testing.T) {
 		original, simplified string
 	}{
 		//====================================================
-		{`package define
+		{`package vardecl
 
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    a := 0.
-	b := []float64{1.}
-    d, e := 3., 4.
-	return a + b[0]  - d - e
+	var a, c, e = 0., 'c', 1
+	var b float64
+	println(c, e)
+	return a + b
 }`,
 			//----------------------------------------------------
-			`package define
+			`package vardecl
 
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    var a float64
-    a = 0.
-    var b []float64
-	b = []float64{1.}
-    var d float64
-    var e float64
-    d, e = 3., 4.
-	return a + b[0] - d - e
+	var (
+		a float64
+		c rune
+		e int
+	)
+	a, c, e = 0., 'c', 1
+	var b float64
+	println(c, e)
+	return a + b
 }`,
 		},
 		//====================================================
@@ -303,9 +304,9 @@ type Model float64
 func foo() (int, interface{}) {return 0, &struct {}{}}
 
 func (m Model) Observe(x []float64) float64 {
-    if _, err := foo(); err != nil {
-        println("error")
-    }
+	if _, err := foo(); err != nil {
+		println("error")
+	}
 	return 0.
 }`,
 			//----------------------------------------------------
@@ -316,9 +317,9 @@ type Model float64
 func foo() (int, interface{}) {return 0, &struct {}{}}
 
 func (m Model) Observe(x []float64) float64 {
-    if _, err := foo(); err != nil {
-        println("error")
-    }
+	if _, err := foo(); err != nil {
+		println("error")
+	}
 	return 0.
 }`,
 		},
@@ -328,11 +329,11 @@ func (m Model) Observe(x []float64) float64 {
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    var a float64
-    a += 2
-    a -= 3.
-    a *= 4.
-    a /= 5.
+	var a float64
+	a += 2
+	a -= 3.
+	a *= 4.
+	a /= 5.
 	return a
 }`,
 			//----------------------------------------------------
@@ -341,11 +342,11 @@ func (m Model) Observe(x []float64) float64 {
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    var a float64
-    a = a + 2
-    a = a - 3.
-    a = a * 4.
-    a = a / 5.
+	var a float64
+	a = a + 2
+	a = a - 3.
+	a = a * 4.
+	a = a / 5.
 	return a
 }`,
 		},
@@ -355,9 +356,9 @@ func (m Model) Observe(x []float64) float64 {
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    a := 1.
-    a++
-    a--
+	a := 1.
+	a++
+	a--
 	return a
 }`,
 			//----------------------------------------------------
@@ -366,10 +367,10 @@ func (m Model) Observe(x []float64) float64 {
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    var a float64
-    a = 1.
-    a = a + 1
-    a = a - 1
+	var a float64
+	a = 1.
+	a = a + 1
+	a = a - 1
 	return a
 }`,
 		},
@@ -379,8 +380,8 @@ func (m Model) Observe(x []float64) float64 {
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    a := 1.
-    b := +a
+	a := 1.
+	b := +a
 	return b
 }`,
 			//----------------------------------------------------
@@ -389,10 +390,10 @@ func (m Model) Observe(x []float64) float64 {
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    var a float64
-    a = 1.
-    var b float64
-    b = a
+	var a float64
+	a = 1.
+	var b float64
+	b = a
 	return b
 }`,
 			//====================================================
@@ -435,11 +436,11 @@ func TestDifferentiate(t *testing.T) {
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    return 0
+	return 0
 }
 
 func (m Model) Count() int {
-    return 0
+	return 0
 }`,
 			//----------------------------------------------------
 			`package lit
@@ -449,13 +450,13 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    ad.Setup(x)
-    return ad.Return(ad.Value(0))
+	ad.Setup(x)
+	return ad.Return(ad.Value(0))
 }
 
 func (m Model) Count() int {
-    ad.Enter()
-    return 0
+	ad.Enter()
+	return 0
 }`,
 		},
 		//====================================================
@@ -464,13 +465,13 @@ func (m Model) Count() int {
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    y := 1.
-    return y
+	y := 1.
+	return y
 }
 
 func (m Model) Count() int {
-    y := 1
-    return y
+	y := 1
+	return y
 }`,
 			//----------------------------------------------------
 			`package ident
@@ -480,17 +481,17 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    ad.Setup(x)
-    var y float64
-    ad.Assignment(&y, ad.Value(1.))
-    return ad.Return(&y)
+	ad.Setup(x)
+	var y float64
+	ad.Assignment(&y, ad.Value(1.))
+	return ad.Return(&y)
 }
 
 func (m Model) Count() int {
-    ad.Enter()
-    var y int
-    y = 1
-    return y
+	ad.Enter()
+	var y int
+	y = 1
+	return y
 }`,
 		},
 		//====================================================
@@ -499,7 +500,7 @@ func (m Model) Count() int {
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    return x[0]
+	return x[0]
 }`,
 			//----------------------------------------------------
 			`package index
@@ -509,19 +510,19 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    ad.Setup(x)
-    return ad.Return(&x[0])
+	ad.Setup(x)
+	return ad.Return(&x[0])
 }`,
 		},
 		//====================================================
 		{`package selector
 
 type Model struct {
-    y float64
+	y float64
 }
 
 func (m Model) Observe(x []float64) float64 {
-    return m.y
+	return m.y
 }`,
 			//----------------------------------------------------
 			`package selector
@@ -529,12 +530,12 @@ func (m Model) Observe(x []float64) float64 {
 import "bitbucket.org/dtolpin/infergo/ad"
 
 type Model struct {
-    y float64
+	y float64
 }
 
 func (m Model) Observe(x []float64) float64 {
-    ad.Setup(x)
-    return ad.Return(&m.y)
+	ad.Setup(x)
+	return ad.Return(&m.y)
 }`,
 		},
 		//====================================================
@@ -543,8 +544,8 @@ func (m Model) Observe(x []float64) float64 {
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    y := &x[0]
-    return *y
+	y := &x[0]
+	return *y
 }`,
 			//----------------------------------------------------
 			`package star
@@ -554,10 +555,10 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    ad.Setup(x)
-    var y *float64
-    y = &x[0]
-    return ad.Return(y)
+	ad.Setup(x)
+	var y *float64
+	y = &x[0]
+	return ad.Return(y)
 }`,
 		},
 		//====================================================
@@ -566,9 +567,9 @@ func (m Model) Observe(x []float64) float64 {
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    y := +x[0]
-    y = -x[1]
-    return y
+	y := +x[0]
+	y = -x[1]
+	return y
 }`,
 			//----------------------------------------------------
 			`package unary
@@ -578,11 +579,11 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    ad.Setup(x)
-    var y float64
-    ad.Assignment(&y, &x[0])
-    ad.Assignment(&y, ad.Arithmetic(ad.OpNeg, &x[1]))
-    return ad.Return(&y)
+	ad.Setup(x)
+	var y float64
+	ad.Assignment(&y, &x[0])
+	ad.Assignment(&y, ad.Arithmetic(ad.OpNeg, &x[1]))
+	return ad.Return(&y)
 }`,
 		},
 		//====================================================
@@ -591,10 +592,10 @@ func (m Model) Observe(x []float64) float64 {
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    y := x[0] + x[1]
-    y = y - x[2]
-    y = y * x[3]
-    return y / x[4]
+	y := x[0] + x[1]
+	y = y - x[2]
+	y = y * x[3]
+	return y / x[4]
 }`,
 			//----------------------------------------------------
 			`package binary
@@ -604,12 +605,12 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    ad.Setup(x)
-    var y float64
-    ad.Assignment(&y, ad.Arithmetic(ad.OpAdd, &x[0], &x[1]))
-    ad.Assignment(&y, ad.Arithmetic(ad.OpSub, &y, &x[2]))
-    ad.Assignment(&y, ad.Arithmetic(ad.OpMul, &y, &x[3]))
-    return ad.Return(ad.Arithmetic(ad.OpDiv, &y, &x[4]))
+	ad.Setup(x)
+	var y float64
+	ad.Assignment(&y, ad.Arithmetic(ad.OpAdd, &x[0], &x[1]))
+	ad.Assignment(&y, ad.Arithmetic(ad.OpSub, &y, &x[2]))
+	ad.Assignment(&y, ad.Arithmetic(ad.OpMul, &y, &x[3]))
+	return ad.Return(ad.Arithmetic(ad.OpDiv, &y, &x[4]))
 }`,
 		},
 		//====================================================
@@ -620,32 +621,32 @@ import "math"
 type Model float64
 
 func pi() float64 {
-    return 3.14159
+	return 3.14159
 }
 
 func (m Model) Observe(x []float64) float64 {
-    y := math.Sin(x[0])
-    return y
+	y := math.Sin(x[0])
+	return y
 }`,
 			//----------------------------------------------------
 			`package elemental
 
 import (
-    "math"
-    "bitbucket.org/dtolpin/infergo/ad"
+	"math"
+	"bitbucket.org/dtolpin/infergo/ad"
 )
 
 type Model float64
 
 func pi() float64 {
-    return 3.14159
+	return 3.14159
 }
 
 func (m Model) Observe(x []float64) float64 {
-    ad.Setup(x)
-    var y float64
-    ad.Assignment(&y, ad.Elemental(math.Sin, &x[0]))
-    return ad.Return(&y)
+	ad.Setup(x)
+	var y float64
+	ad.Assignment(&y, ad.Elemental(math.Sin, &x[0]))
+	return ad.Return(&y)
 }`,
 		},
 		//====================================================
@@ -654,21 +655,21 @@ func (m Model) Observe(x []float64) float64 {
 type Model float64
 
 func pi() float64 {
-    return 3.14159
+	return 3.14159
 }
 
 func intpow(a float64, n int) float64 {
-    pow := 1.
-    for i := 0; i != n; i++ {
-        pow *= a
-    }
-    return pow
+	pow := 1.
+	for i := 0; i != n; i++ {
+		pow *= a
+	}
+	return pow
 }
 
 func (m Model) Observe(x []float64) float64 {
-    y := pi()
-    z := intpow(y, 3)
-    return y * z
+	y := pi()
+	z := intpow(y, 3)
+	return y * z
 }`,
 			//----------------------------------------------------
 			`package opaque
@@ -678,24 +679,24 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func pi() float64 {
-    return 3.14159
+	return 3.14159
 }
 
 func intpow(a float64, n int) float64 {
-    pow := 1.
-    for i := 0; i != n; i++ {
-        pow *= a
-    }
-    return pow
+	pow := 1.
+	for i := 0; i != n; i++ {
+		pow *= a
+	}
+	return pow
 }
 
 func (m Model) Observe(x []float64) float64 {
-    ad.Setup(x)
-    var y float64
-    ad.Assignment(&y, ad.Value(pi()))
-    var z float64
-    ad.Assignment(&z, ad.Value(intpow(y, 3)))
-    return ad.Return(ad.Arithmetic(ad.OpMul, &y, &z))
+	ad.Setup(x)
+	var y float64
+	ad.Assignment(&y, ad.Value(pi()))
+	var z float64
+	ad.Assignment(&z, ad.Value(intpow(y, 3)))
+	return ad.Return(ad.Arithmetic(ad.OpMul, &y, &z))
 }`,
 		},
 		//====================================================
@@ -704,11 +705,11 @@ func (m Model) Observe(x []float64) float64 {
 type Model float64
 
 func (m Model) sum(x, _ float64, y float64) float64 {
-    return x + y
+	return x + y
 }
 
 func (m Model) Observe(x []float64) float64 {
-    return m.sum(x[0], x[1], x[2])
+	return m.sum(x[0], x[1], x[2])
 }`,
 			//----------------------------------------------------
 			`package enter
@@ -718,15 +719,15 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) sum(x, _ float64, y float64) float64 {
-    ad.Enter(&x, ad.Value(0), &y)
-    return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y))
+	ad.Enter(&x, ad.Value(0), &y)
+	return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y))
 }
 
 func (m Model) Observe(x []float64) float64 {
-    ad.Setup(x)
-    return ad.Return(ad.Call(func (_vararg []float64) {
-        m.sum(0, 0, 0)
-    }, 3, &x[0], &x[1], &x[2]))
+	ad.Setup(x)
+	return ad.Return(ad.Call(func (_vararg []float64) {
+		m.sum(0, 0, 0)
+	}, 3, &x[0], &x[1], &x[2]))
 }`,
 		},
 		//====================================================
@@ -735,11 +736,11 @@ func (m Model) Observe(x []float64) float64 {
 type Model float64
 
 func (m Model) sum(x, y float64) float64 {
-    return x + y
+	return x + y
 }
 
 func (m Model) Observe(x []float64) float64 {
-    return m.sum(x[0], x[1])
+	return m.sum(x[0], x[1])
 }`,
 			//----------------------------------------------------
 			`package call
@@ -749,15 +750,15 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) sum(x, y float64) float64 {
-    ad.Enter(&x, &y)
-    return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y))
+	ad.Enter(&x, &y)
+	return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y))
 }
 
 func (m Model) Observe(x []float64) float64 {
-    ad.Setup(x)
-    return ad.Return(ad.Call(func (_vararg []float64) {
-            m.sum(0, 0)
-    }, 2, &x[0], &x[1]))
+	ad.Setup(x)
+	return ad.Return(ad.Call(func (_vararg []float64) {
+			m.sum(0, 0)
+	}, 2, &x[0], &x[1]))
 }`,
 		},
 		//====================================================
@@ -766,11 +767,11 @@ func (m Model) Observe(x []float64) float64 {
 type Model float64
 
 func (m Model) sum(x ...float64) float64 {
-    return x[0]
+	return x[0]
 }
 
 func (m Model) Observe(x []float64) float64 {
-    return m.sum(x[0], x[1], x[2])
+	return m.sum(x[0], x[1], x[2])
 }`,
 			//----------------------------------------------------
 			`package variadic
@@ -780,15 +781,15 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) sum(x ...float64) float64 {
-    ad.Enter()
-    return ad.Return(&x[0])
+	ad.Enter()
+	return ad.Return(&x[0])
 }
 
 func (m Model) Observe(x []float64) float64 {
-    ad.Setup(x)
-    return ad.Return(ad.Call(func (_vararg []float64) {
-        m.sum(_vararg...)
-    }, 0, &x[0], &x[1], &x[2]))
+	ad.Setup(x)
+	return ad.Return(ad.Call(func (_vararg []float64) {
+		m.sum(_vararg...)
+	}, 0, &x[0], &x[1], &x[2]))
 }`,
 		},
 		//====================================================
@@ -797,11 +798,11 @@ func (m Model) Observe(x []float64) float64 {
 type Model float64
 
 func (m Model) sum(x, y ...float64) float64 {
-    return x + y[0]
+	return x + y[0]
 }
 
 func (m Model) Observe(x []float64) float64 {
-    return m.sum(x[0], x[1], x[2])
+	return m.sum(x[0], x[1], x[2])
 }`,
 			//----------------------------------------------------
 			`package semivari
@@ -811,15 +812,15 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) sum(x, y ...float64) float64 {
-    ad.Enter(&x)
-    return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y[0]))
+	ad.Enter(&x)
+	return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y[0]))
 }
 
 func (m Model) Observe(x []float64) float64 {
-    ad.Setup(x)
-    return ad.Return(ad.Call(func (_vararg []float64) {
-        m.sum(0, _vararg...)
-    }, 1, &x[0], &x[1], &x[2]))
+	ad.Setup(x)
+	return ad.Return(ad.Call(func (_vararg []float64) {
+		m.sum(0, _vararg...)
+	}, 1, &x[0], &x[1], &x[2]))
 }`,
 		},
 		//====================================================

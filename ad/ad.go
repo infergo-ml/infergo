@@ -334,6 +334,61 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 				)()
 			}
 			switch n := n.(type) {
+			case *ast.DeclStmt:
+				// If a variable declaration, split into
+				// declaration and assignment.
+				decl, _ := n.Decl.(*ast.GenDecl)
+				if decl.Tok != token.VAR {
+					return false
+				}
+				ast.Fprint(os.Stdout, m.fset, decl.Specs, nil)
+				for ispec, spec := range decl.Specs {
+					spec, _ := spec.(*ast.ValueSpec) 
+					if spec.Values != nil {
+						// If a variable declaration assigns
+						// values, prune the values and then
+						// assign.
+						var lhs []ast.Expr
+						for _, name := range spec.Names {
+							lhs = append(lhs, name)
+						}
+						asgn := &ast.AssignStmt{
+							Lhs:    lhs,
+							TokPos: n.Pos(),
+							Tok:    token.ASSIGN,
+							Rhs:    spec.Values,
+						}
+						c.InsertAfter(asgn)
+						spec.Values = nil
+						if spec.Type == nil {
+							// Implicit type, we need to make it explicit
+							// because we removed the initialization.
+							// Different variables in a single specification
+							// with implicit type may have different types.
+							// Split them into separate specifications.
+							for i := 0; i != len(spec.Names); i++ {
+								typast, _ := parser.ParseExpr(
+									m.info.TypeOf(spec.Names[i]).String())
+								typedSpec := &ast.ValueSpec {
+									Names: spec.Names[i:i+1],
+									Type: typast,
+								}
+								// We override the first specification, and then
+								// append the rest of specifications.
+								if i == 0 {
+									decl.Specs[ispec] = typedSpec
+								} else {
+									decl.Specs = append(decl.Specs, typedSpec)
+								}
+							}
+							if len(decl.Specs) > 1 && decl.Lparen == token.NoPos {
+								// The printer needs a non-zero parenthesis
+								// position to print multiple specs per decl.
+								decl.Lparen, decl.Rparen = 1, 1
+							}
+						}
+					}
+				}
 			case *ast.AssignStmt:
 				switch n.Tok {
 				case token.ASSIGN:
