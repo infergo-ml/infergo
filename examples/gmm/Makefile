@@ -10,4 +10,4 @@ model/ad/model.go: model/model.go
 	$(DERIV) model
 
 clean:
-	rm -f ./gmm
+	rm -f ./gmm model/ad/*.go
