@@ -2,7 +2,7 @@ all: test deriv
 
 .PHONY: deriv
 
-PACKAGES=ad model infer
+PACKAGES=ad model infer mathx
 
 test:
 	for package in $(PACKAGES); do go test ./$$package; done

@@ -4,6 +4,7 @@ package ad
 
 import (
 	"math"
+	"bitbucket.org/dtolpin/infergo/mathx"
 	"testing"
 )
 
@@ -59,7 +60,7 @@ func TestMath(t *testing.T) {
 
 // Check the gradient of Sigm.
 func TestSigm(t *testing.T) {
-	grad, ok := ElementalGradient(Sigm)
+	grad, ok := ElementalGradient(mathx.Sigm)
 	if !ok {
 		t.Errorf("No gradient for Sigm")
 	}
@@ -70,7 +71,7 @@ func TestSigm(t *testing.T) {
 		{20., 0.},
 		{-20., 0.},
 	} {
-		y := Sigm(c.x)
+		y := mathx.Sigm(c.x)
 		g := grad(y, c.x)[0]
 		if math.Abs(g - c.g) > 1.0E-6 {
 			t.Errorf("Wrong gradient of Sigm: " +
@@ -82,7 +83,7 @@ func TestSigm(t *testing.T) {
 
 // Check the gradient of LogSumExp.
 func TestLogSumExp(t *testing.T) {
-	grad, ok := ElementalGradient(LogSumExp)
+	grad, ok := ElementalGradient(mathx.LogSumExp)
 	if !ok {
 		t.Errorf("No gradient for LogSumExp")
 	}
@@ -95,7 +96,7 @@ func TestLogSumExp(t *testing.T) {
 		{0., 0.5, [2]float64{0.3775407, 0.6224593}},
 		{0.5, 0., [2]float64{0.6224593, 0.3775407}},
 	} {
-		z := LogSumExp(c.x, c.x)
+		z := mathx.LogSumExp(c.x, c.x)
 		g := grad(z, c.x, c.y)
 		if math.Abs(g[0] - c.g[0]) > 1.0E-6 ||
 			math.Abs(g[1] - c.g[1]) > 1.0E-6 {
