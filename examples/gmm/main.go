@@ -2,7 +2,7 @@ package main
 
 import (
 	"bitbucket.org/dtolpin/infergo/infer"
-    . "bitbucket.org/dtolpin/infergo/examples/hello/model/ad"
+    . "bitbucket.org/dtolpin/infergo/examples/gmm/model/ad"
 	"encoding/csv"
 	"flag"
 	"io"
@@ -15,8 +15,7 @@ import (
 // Command line arguments
 
 var (
-	MEAN  float64 = 0.
-	LOGV  float64 = 0.
+	NCOMP int = 2
 	RATE  float64 = 0.01
 	DECAY float64 = 0.995
 	NITER int     = 100
@@ -24,12 +23,11 @@ var (
 
 func init() {
 	flag.Usage = func() {
-		log.Printf(`Inferring parameters of the normal distribution:
-		hello [OPTIONS] [data.csv]`+"\n")
+		log.Printf(`Gaussian mixture model:
+		gmm [OPTIONS]`+"\n")
 		flag.PrintDefaults()
 	}
-	flag.Float64Var(&MEAN, "mean", MEAN, "initial mean")
-	flag.Float64Var(&LOGV, "logv", LOGV, "initial log var")
+	flag.IntVar(&NCOMP, "ncomp", NCOMP, "number of components")
 	flag.Float64Var(&RATE, "rate", RATE, "learning rate")
 	flag.Float64Var(&DECAY, "decay", DECAY, "rate decay")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
@@ -69,39 +67,28 @@ func main() {
 	} else {
 		// Use an embedded data set, for self-check
 		data = []float64{
-			-0.854, 1.067, -1.220, 0.818, -0.749,
-			0.805, 1.443, 1.069, 1.426, 0.308}
-	}
-	m := &Model{Data: data}
-
-	// Compute sample statistics, for comparison
-	s := 0.
-	s2 := 0.
-	for i := 0; i != len(m.Data); i++ {
-		x := m.Data[i]
-		s += x
-		s2 += x * x
-	}
-	sampleMean := s / float64(len(m.Data))
-	sampleLogv := math.Log(
-		s2/float64(len(m.Data)) - sampleMean*sampleMean)
-
-	x := []float64{MEAN, LOGV}
-	ll := m.Observe(x)
-	printState := func(when string) {
-		log.Printf(`
-%s:
-    mean: %.6g(≈%.6g)
-    logv: %.6g(≈%.6g)
-    ll: %.6g
-`,
-			when,
-			x[0], sampleMean,
-			x[1], sampleLogv,
-			ll)
+			1.899, -1.11, -0.9068, 1.291, -0.755,
+			-0.4422, -0.144, 1.214, -0.8183, -0.3386,
+			0.3863, -1.036, -0.6248, 1.014, 1.336,
+			-1.487, 0.8223, -0.4268, 0.6754, 0.6206,
+		}
 	}
 
-	printState("Initially")
+	// Define the problem
+	m := &Model{Data: data, NComp: NCOMP}
+	x := make([]float64, 2*m.NComp)
+
+	// set a starting  point
+	if m.NComp == 1 {
+		x[0] = 0.
+		x[1] = 1.
+	} else {
+		// Spread the initial components wide and thin
+		for j := 0; j != m.NComp; j++ {
+			x[2*j] = -2. + 4./float64(m.NComp - 1) * float64(j)
+			x[2*j + 1] = 1.
+		}
+	}
 
 	// Run the optimizer
 	opt := &infer.GD {
@@ -112,6 +99,10 @@ func main() {
 		opt.Step(m, x)
 	}
 
-	ll = m.Observe(x)
-	printState("Finally")
+	// Print the result.
+	log.Printf("Components:\n")
+	for j := 0; j != m.NComp; j++ {
+		log.Printf("\t%d: %.4g, %.4g\n",
+			j, x[2*j], math.Exp(x[2*j + 1]))
+	}
 }

@@ -105,7 +105,12 @@ func (m *model) parse(mpath string) (err error) {
 	m.fset = token.NewFileSet()
 	pkgs, err := parser.ParseDir(m.fset, m.path, nil, 0)
 	if err != nil { // parse error
-		goto End
+		return err
+	}
+
+	if len(pkgs) == 0 {
+		err = fmt.Errorf("no package in %q", m.path)
+		return err
 	}
 
 	// There should be a single package, retrieve it.
@@ -114,12 +119,11 @@ func (m *model) parse(mpath string) (err error) {
 		if m.pkg != nil {
 			err = fmt.Errorf("multiple packages in %q: %s and %s",
 				m.path, m.pkg.Name, k)
-			goto End
+			return err
 		}
 		m.pkg = v
 	}
 
-End:
 	return err
 }
 
@@ -338,6 +342,8 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 					// Split into declaration and assignment.
 					_, ok := c.Parent().(*ast.BlockStmt)
 					if !ok {
+						// We can't do it for simple statement,
+						// but we do not care either.
 						return false
 					}
 
