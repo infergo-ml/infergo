@@ -33,7 +33,7 @@ type Model struct {
 
 func (m *Model) Observe(x []float64) float64 {
 	//  There are m.J + 2 parameters:
-	// mu, logtau, eta/J
+	// mu, logtau, eta[J]
 	mu := x[0]
 	tau := math.Exp(x[1])
 	eta := x[2:]
