@@ -26,8 +26,8 @@ import "math"
 
 // data are the observations
 type Model struct {
-	J int // number of schools
-	Y []float64 
+	J     int // number of schools
+	Y     []float64
 	Sigma []float64
 }
 
@@ -40,7 +40,7 @@ func (m *Model) Observe(x []float64) float64 {
 
 	ll := 0.
 	for i, y := range m.Y {
-		theta := mu + tau * eta[i]
+		theta := mu + tau*eta[i]
 		sigma2 := m.Sigma[i] * m.Sigma[i]
 		d := y - theta
 		ll -= d*d/sigma2 + math.Log(sigma2)

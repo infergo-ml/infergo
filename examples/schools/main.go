@@ -5,8 +5,8 @@ import (
 	"bitbucket.org/dtolpin/infergo/infer"
 	"flag"
 	"fmt"
-	"os"
 	"math"
+	"os"
 )
 
 // Command line arguments
@@ -37,13 +37,13 @@ func main() {
 		os.Exit(1)
 	}
 
-    // Define the problem
+	// Define the problem
 	m := &Model{
-		J: 8,
-		Y: []float64{28,  8, -3,  7, -1,  1, 18, 12},
-		Sigma: []float64{15, 10, 16, 11,  9, 11, 10, 18},
+		J:     8,
+		Y:     []float64{28, 8, -3, 7, -1, 1, 18, 12},
+		Sigma: []float64{15, 10, 16, 11, 9, 11, 10, 18},
 	}
-	x := make([]float64, 2 + m.J)
+	x := make([]float64, 2+m.J)
 
 	// Set a starting point
 	x[0] = 0.
@@ -53,7 +53,7 @@ func main() {
 	}
 
 	// Run the optimizer
-	opt := &infer.GD {
+	opt := &infer.GD{
 		Rate:  -RATE,
 		Decay: DECAY,
 	}
@@ -64,7 +64,7 @@ func main() {
 	fmt.Printf("Finally:\n\tmu=%.4g\n\ttau=%.4g\n\teta=",
 		x[0], math.Exp(x[1]))
 	for _, eta := range x[2:] {
-		fmt.Printf("%.4g ",  eta)
+		fmt.Printf("%.4g ", eta)
 	}
 	fmt.Printf("\n")
 }

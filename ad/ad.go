@@ -360,29 +360,35 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 						c.InsertAfter(asgn)
 						spec.Values = nil
 						if spec.Type == nil {
-							// Implicit type, we need to make it explicit
-							// because we removed the initialization.
-							// Different variables in a single specification
-							// with implicit type may have different types.
-							// Split them into separate specifications.
+							// Implicit type, we need to make it
+							// explicit because we removed the
+							// initialization.  Different variables in
+							// a single specification with implicit
+							// type may have different types.  Split
+							// them into separate specifications.
 							for i := 0; i != len(spec.Names); i++ {
-								typast, _ := parser.ParseExpr(
-									m.info.TypeOf(spec.Names[i]).String())
+								t := m.info.TypeOf(spec.Names[i])
+								tast, _ := parser.ParseExpr(
+									t.String())
 								typedSpec := &ast.ValueSpec{
 									Names: spec.Names[i : i+1],
-									Type:  typast,
+									Type:  tast,
 								}
-								// We override the first specification, and then
-								// append the rest of specifications.
+								// We override the first
+								// specification, and then append the
+								// rest of specifications.
 								if i == 0 {
 									decl.Specs[ispec] = typedSpec
 								} else {
-									decl.Specs = append(decl.Specs, typedSpec)
+									decl.Specs = append(decl.Specs,
+										typedSpec)
 								}
 							}
-							if len(decl.Specs) > 1 && decl.Lparen == token.NoPos {
-								// The printer needs a non-zero parenthesis
-								// position to print multiple specs per decl.
+							if len(decl.Specs) > 1 &&
+								decl.Lparen == token.NoPos {
+								// The printer needs a non-zero
+								// parenthesis position to print
+								// multiple specs per decl.
 								decl.Lparen, decl.Rparen = 1, 1
 							}
 						}
@@ -406,15 +412,15 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 						ident := n.Lhs[i].(*ast.Ident)
 						// The shortest way from go/types to go/ast
 						// is to stringify and reparse.
-						typ := m.info.TypeOf(n.Lhs[i])
-						typast, err := parser.ParseExpr(typ.String())
+						t := m.info.TypeOf(n.Lhs[i])
+						tast, err := parser.ParseExpr(t.String())
 						if err != nil {
 							panic(fmt.Sprintf(
-								"cannot parse type %v: %v", typ, err))
+								"cannot parse type %v: %v", t, err))
 						}
 						spec := &ast.ValueSpec{
 							Names: []*ast.Ident{ident},
-							Type:  typast}
+							Type:  tast}
 						c.InsertBefore(&ast.DeclStmt{
 							Decl: &ast.GenDecl{
 								Tok:   token.VAR,
@@ -516,7 +522,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 			case *ast.BasicLit, *ast.Ident,
 				*ast.IndexExpr, *ast.SelectorExpr,
 				*ast.StarExpr, *ast.UnaryExpr, *ast.BinaryExpr:
-				t, basic := m.info.TypeOf(n.(ast.Expr)).(*types.Basic)
+				e, _ := n.(ast.Expr)
+				t, basic := m.info.TypeOf(e).(*types.Basic)
 				if !basic || t.Kind() != types.Float64 {
 					return false
 				}
@@ -664,7 +671,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					}
 					nargs := 0
 					for i := 0; i != nparams; i++ {
-						pt, ok := t.Params().At(i).Type().(*types.Basic)
+						param := t.Params().At(i)
+						pt, ok := param.Type().(*types.Basic)
 						if ok && pt.Kind() == types.Float64 {
 							// A float, pass 0 to the actual
 							// function and the differentiated
@@ -682,8 +690,9 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 
 					ellipsis := token.NoPos
 					if t.Variadic() && len(n.Args) > nparams {
-						pt, _ := t.Params().At(nparams).Type().(*types.Slice)
-						et, ok := pt.Elem().(*types.Basic)
+						variadic := t.Params().At(nparams)
+						vt, _ := variadic.Type().(*types.Slice)
+						et, ok := vt.Elem().(*types.Basic)
 						if ok && et.Kind() == types.Float64 &&
 							n.Ellipsis == token.NoPos {
 							// Variadic float64 arguments
