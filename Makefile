@@ -22,8 +22,13 @@ install: all test
 .PHONY: hello
 hello: 
 	(cd examples/hello && make)
-#
+
 # Gaussian mixture model
 .PHONY: gmm
 gmm: 
 	(cd examples/gmm && make)
+
+#  8 schools
+.PHONY: schools
+schools: 
+	(cd examples/schools && make)
