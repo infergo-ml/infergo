@@ -25,8 +25,7 @@ type Model struct {
 
 // x[0] is the mean, x[1] is the logvariance
 func (m *Model) Observe(x []float64) float64 {
-    mean := x[0]
-    logv := x[1]
+    mean, logv := x[0], x[1]
     vari := math.Exp(logv)
     ll := 0.
     for i := 0; i != len(m.Data); i++ {
