@@ -61,7 +61,7 @@ func main() {
 		opt.Step(m, x)
 	}
 
-	fmt.Printf("Finally:\n\tmu = %.4g\n\ttau=%.4g\n\teta=",
+	fmt.Printf("Finally:\n\tmu=%.4g\n\ttau=%.4g\n\teta=",
 		x[0], math.Exp(x[1]))
 	for _, eta := range x[2:] {
 		fmt.Printf("%.4g ",  eta)
