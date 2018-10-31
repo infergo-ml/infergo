@@ -8,6 +8,8 @@ MIT license (see [LICENSE](LICENSE))
 
 ## Example
 
+\[[more examples](https://bitbucket.org/dtolpin/infergo/src/master/examples)\]
+
 ### Model
 
 Learning parameters of the Normal distribution from
