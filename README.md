@@ -10,9 +10,10 @@ MIT license (see [LICENSE](LICENSE))
 
 ### Model
 
+Learning parameters of the Normal distribution from
+observations:
+
 ```Go
-// Learning the parameters of the Normal distribution from
-// observations
 package normal
 
 import "math"
@@ -44,18 +45,20 @@ m := &Model{[]float64{
 	-0.854, 1.067, -1.220, 0.818, -0.749,
 	0.805, 1.443, 1.069, 1.426, 0.308}}
 // mean ≈ 0.411, logv ≈ -0.117
-	
-// Parameters of gradient descent 
-n := 100
-step := 0.01
-decay := 0.995
 
+// Parameters
 mean, logv := 0., 0.
-for i := 0; i != n; i++ {
-    m.Observe([]float64{mean, logv})
-    grad := ad.Gradient()
-    mean += step*grad[0]
-    logv += step*grad[1]
-    step *= decay
+x := []float64{mean, logv}
+	
+// Optimizing
+opt := &infer.GD{
+    Rate:  -RATE,
+    Decay: DECAY,
 }
+for iter := 0; iter != NITER; iter++ {
+    opt.Step(m, x)
+}
+
+// Results
+mean, logv := x[0], x[1]
 ```
