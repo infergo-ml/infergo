@@ -21,8 +21,8 @@ package ad
 //   a) if they are defined in a different package, and
 //   b) their signature is of kind
 //                  func (float64, ...float64) float64
-//      that is, at least one float64 argument and float64 return
-//      value. For example, function
+//      that is, at least one float64 argument and float64
+//      return value. For example, function
 //                  func (float64, float64, float64) float64
 //      is considered elemental, while functions
 //                  func ([]float64) float64
@@ -454,8 +454,8 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 					}
 					n.Rhs[0] = expr
 					// We introduced a new expression after
-					// typechecking. Let's add it to the
-					// type map.
+					// typechecking. Let's add it to the type
+					// map.
 					m.info.Types[expr] = m.info.Types[n.Lhs[0]]
 				}
 			case *ast.IncDecStmt:
@@ -478,8 +478,7 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 					Rhs:    []ast.Expr{expr},
 				}
 				// We introduced new expressions after
-				// typechecking. Let's add them to the
-				// type map.
+				// typechecking. Let's add them to the type map.
 				m.info.Types[one] = m.info.Types[n.X]
 				m.info.Types[expr] = m.info.Types[n.X]
 				c.Replace(asgn)
@@ -510,8 +509,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 	// they are not rewritten (until ontape is true).
 	ontape := false
 	astutil.Apply(method,
-		// pre focuses on the parts of the tree that
-		// are to be rewritten.
+		// pre focuses on the parts of the tree that are to be
+		// rewritten.
 		func(c *astutil.Cursor) bool {
 			n := c.Node()
 			if n != nil && n.Pos() != token.NoPos {
@@ -764,13 +763,13 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 		var params []ast.Expr
 		n := t.Params().Len()
 		if t.Variadic() {
-			// If the function is variadic,
-			// the last parameter is not a float64.
+			// If the function is variadic, the last parameter
+			// is not a float64.
 			n--
 		}
-		// Signature parameters are flat, but ast parameters
-		// are two-dimensional: a parameter is a Field with
-		// possibly multiple names in it.
+		// Signature parameters are flat, but ast parameters are
+		// two-dimensional: a parameter is a Field with possibly
+		// multiple names in it.
 		iparam, ifield := 0, 0 // ast indices
 		for i := 0; i != n; i++ {
 			p := t.Params().At(i)
