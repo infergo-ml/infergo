@@ -758,8 +758,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 		method.Body.List = append([]ast.Stmt{setup},
 			method.Body.List...)
 	} else {
-		// Collect float64 parameters. Their values
-		// are copied from the tape.
+		// Collect float64 parameters. Their values are copied
+		// from the tape.
 		t := m.info.TypeOf(method.Name).(*types.Signature)
 		var params []ast.Expr
 		n := t.Params().Len()
@@ -780,8 +780,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 			}
 			var expr ast.Expr
 			if p.Name() == "_" {
-				// There is no variable to copy the value
-				// to, create a dummy value.
+				// There is no variable to copy the value to,
+				// create a dummy value.
 				expr = callExpr("Value", floatExpr(0.))
 			} else {
 				expr = &ast.UnaryExpr{
@@ -807,8 +807,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 	return err
 }
 
-// isDifferentiated returns true iff the call
-// is of a differentiated method
+// isDifferentiated returns true iff the call is of a
+// differentiated method
 func (m *model) isDifferentiated(call *ast.CallExpr) bool {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok {
