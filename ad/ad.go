@@ -113,8 +113,8 @@ func (m *model) parse(mpath string) (err error) {
 		return err
 	}
 
-	// There should be a single package, retrieve it.
-	// If there is more than a single package, stop.
+	// There should be a single package, retrieve it. If there
+	// is more than a single package, stop.
 	for k, v := range pkgs {
 		if m.pkg != nil {
 			err = fmt.Errorf("multiple packages in %q: %s and %s",
