@@ -797,7 +797,7 @@ func (m Model) Observe(x []float64) float64 {
 
 type Model float64
 
-func (m Model) sum(x, y ...float64) float64 {
+func (m Model) sum(x float64, y ...float64) float64 {
 	return x + y[0]
 }
 
@@ -811,7 +811,7 @@ import "bitbucket.org/dtolpin/infergo/ad"
 
 type Model float64
 
-func (m Model) sum(x, y ...float64) float64 {
+func (m Model) sum(x float64, y ...float64) float64 {
 	ad.Enter(&x)
 	return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y[0]))
 }

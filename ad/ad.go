@@ -389,7 +389,7 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 								// The printer needs a non-zero
 								// parenthesis position to print
 								// multiple specs per decl.
-								decl.Lparen, decl.Rparen = 1, 1
+								// decl.Lparen, decl.Rparen = 1, 1
 							}
 						}
 					}
