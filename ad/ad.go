@@ -388,7 +388,10 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 								decl.Lparen == token.NoPos {
 								// The printer needs a non-zero
 								// parenthesis position to print
-								// multiple specs per decl.
+								// multiple specs per decl. This is
+								// apparently a bug in Go, pull
+								// request 146657 with a fix was
+								// submitted.
 								decl.Lparen, decl.Rparen = 1, 1
 							}
 						}
