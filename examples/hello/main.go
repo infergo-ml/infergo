@@ -104,8 +104,8 @@ func main() {
 	printState("Initially")
 
 	// Run the optimizer
-	opt := &infer.GD{
-		Rate:  -RATE,
+	opt := &infer.Grad{
+		Rate:  RATE,
 		Decay: DECAY,
 	}
 	for iter := 0; iter != NITER; iter++ {

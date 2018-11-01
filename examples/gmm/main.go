@@ -18,6 +18,7 @@ var (
 	NCOMP int     = 2
 	RATE  float64 = 0.01
 	DECAY float64 = 0.995
+    MOMENTUM float64 = 0.5
 	NITER int     = 100
 )
 
@@ -30,6 +31,7 @@ func init() {
 	flag.IntVar(&NCOMP, "ncomp", NCOMP, "number of components")
 	flag.Float64Var(&RATE, "rate", RATE, "learning rate")
 	flag.Float64Var(&DECAY, "decay", DECAY, "rate decay")
+	flag.Float64Var(&MOMENTUM, "momentum", MOMENTUM, "gradient momentum")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	log.SetFlags(0)
 }
@@ -91,9 +93,10 @@ func main() {
 	}
 
 	// Run the optimizer
-	opt := &infer.GD{
-		Rate:  -RATE,
+	opt := &infer.Grad{
+		Rate:  RATE,
 		Decay: DECAY,
+        Momentum: MOMENTUM,
 	}
 	for iter := 0; iter != NITER; iter++ {
 		opt.Step(m, x)
