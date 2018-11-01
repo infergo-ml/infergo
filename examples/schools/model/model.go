@@ -24,11 +24,10 @@ package model
 
 import "math"
 
-// data are the observations
 type Model struct {
-	J     int // number of schools
-	Y     []float64
-	Sigma []float64
+	J     int       // number of schools
+	Y     []float64 // estimated treatment effects
+	Sigma []float64 // s.e. of effect estimates
 }
 
 func (m *Model) Observe(x []float64) float64 {

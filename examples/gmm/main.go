@@ -15,11 +15,11 @@ import (
 // Command line arguments
 
 var (
-	NCOMP int     = 2
-	RATE  float64 = 0.01
-	DECAY float64 = 0.995
-    MOMENTUM float64 = 0.5
-	NITER int     = 100
+	NCOMP    int     = 2
+	RATE     float64 = 0.01
+	DECAY    float64 = 0.995
+	MOMENTUM float64 = 0.5
+	NITER    int     = 100
 )
 
 func init() {
@@ -94,9 +94,9 @@ func main() {
 
 	// Run the optimizer
 	opt := &infer.Grad{
-		Rate:  RATE,
-		Decay: DECAY,
-        Momentum: MOMENTUM,
+		Rate:     RATE,
+		Decay:    DECAY,
+		Momentum: MOMENTUM,
 	}
 	for iter := 0; iter != NITER; iter++ {
 		opt.Step(m, x)
