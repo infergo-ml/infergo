@@ -194,7 +194,7 @@ func (m *model) collectTypes() (err error) {
 	for _, file := range m.pkg.Files {
 		for _, d := range file.Decls {
 			if d, ok := d.(*ast.FuncDecl); ok {
-				if strings.Compare(d.Name.Name, "Observe") == 0 {
+				if d.Name.Name == "Observe" {
 					// May be the observe method, but check the
 					// signature.
 					t := m.info.TypeOf(d.Name).(*types.Signature)
@@ -598,7 +598,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					// and implements Expr, but not an
 					// expression. I believe astutil should not
 					// traverse Sel at all.
-					if strings.Compare(c.Name(), "Sel") == 0 {
+					if c.Name() == "Sel" {
 						return true
 					}
 				}
@@ -740,19 +740,17 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 
 	// If we are differentiating Observe, the entry is different
 	// than for other methods.
-	if strings.Compare(method.Name.Name,
-		"Observe") == 0 {
+	if method.Name.Name == "Observe" {
 		param := method.Type.Params.List[0]
 		var arg ast.Expr
-		if strings.Compare(param.Names[0].Name,
-			"_") != 0 {
-			arg = param.Names[0]
-		} else {
-			// The parameter is as _; the argument is
-			// an empty slice.
+		if param.Names[0].Name == "_" {
+			// The parameter is _; the argument is an empty
+			// slice.
 			arg = &ast.CompositeLit{
 				Type: param.Type,
 			}
+		} else {
+			arg = param.Names[0]
 		}
 		setup := &ast.ExprStmt{
 			callExpr("Setup", arg),
@@ -781,7 +779,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				continue
 			}
 			var expr ast.Expr
-			if strings.Compare(p.Name(), "_") == 0 {
+			if p.Name() == "_" {
 				// There is no variable to copy the value
 				// to, create a dummy value.
 				expr = callExpr("Value", floatExpr(0.))
