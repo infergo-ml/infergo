@@ -13,7 +13,7 @@ type Optimizer interface {
 }
 
 // Gradient ascent with momentum. If the momentum
-// is not, and thus 0., reduces to vanilla gradient
+// is not set, and thus 0., reduces to vanilla gradient
 // ascent.
 type Grad struct {
 	Rate  float64    //learning rate
