@@ -312,9 +312,9 @@ func errOnPanic(
 	}
 }
 
-// desugar rewrites the syntax tree of a method to
-// differentiate and desugars the syntax, to make the
-// differentiate code simpler to write and debug.
+// desugar desugars the syntax of a method to differentiate to
+// make the automatic differentiation code simpler to write and
+// debug.
 func (m *model) desugar(method *ast.FuncDecl) (err error) {
 	// Apply panics on errors. When Apply panics, we return the
 	// error as do other functions.
