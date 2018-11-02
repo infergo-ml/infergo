@@ -264,7 +264,7 @@ func (m Model) Sample() float64 {
 	}
 }
 
-func TestSimplify(t *testing.T) {
+func TestDesugar(t *testing.T) {
 	for _, c := range []struct {
 		original, simplified string
 	}{
@@ -426,7 +426,7 @@ func (m Model) Observe(x []float64) float64 {
 	}
 }
 
-func TestDifferentiate(t *testing.T) {
+func TestRewrite(t *testing.T) {
 	for _, c := range []struct {
 		original, differentiated string
 	}{

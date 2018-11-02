@@ -813,6 +813,9 @@ func (m *model) isDifferentiated(call *ast.CallExpr) bool {
 	if !ok {
 		return ok
 	}
+    if sel.Sel.Name == "Observe" {
+        panic("Observe called from another method")
+    }
 	t, ok := m.info.Selections[sel]
 	if !ok {
 		return ok
