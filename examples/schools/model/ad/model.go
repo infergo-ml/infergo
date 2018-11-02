@@ -1,18 +1,22 @@
 package model
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	"math"
+	"bitbucket.org/dtolpin/infergo/ad"
 )
 
 type Model struct {
-	J     int
-	Y     []float64
-	Sigma []float64
+	J	int
+	Y	[]float64
+	Sigma	[]float64
 }
 
 func (m *Model) Observe(x []float64) float64 {
-	ad.Setup(x)
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
 	var mu float64
 	ad.Assignment(&mu, &x[0])
 	var tau float64
