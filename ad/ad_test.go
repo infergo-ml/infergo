@@ -61,9 +61,9 @@ func equiv(gotTree *ast.File, expected string) bool {
 func TestEquiv(t *testing.T) {
 	// kick the tyres
 	for _, c := range []struct {
-		got      string
+		got		 string
 		expected string
-		equal    bool
+		equal	 bool
 	}{
 		{
 			"package a; func foo() {}",
@@ -459,8 +459,12 @@ func (m Model) Observe(x []float64) float64 {
 }
 
 func (m Model) Count() int {
-	ad.Enter()
-	return 0
+    if ad.Called() {
+        ad.Enter()
+    } else {
+        panic("Count called outside Observe.")
+    }
+    return 0
 }`,
 		},
 		//====================================================
@@ -496,8 +500,12 @@ func (m Model) Observe(x []float64) float64 {
 }
 
 func (m Model) Count() int {
-	ad.Enter()
-	var y int
+    if ad.Called() {
+        ad.Enter()
+    } else {
+        panic("Count called outside Observe.")
+    }
+    var y int
 	y = 1
 	return y
 }`,
@@ -757,7 +765,11 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) sum(x, _ float64, y float64) float64 {
-	ad.Enter(&x, ad.Value(0), &y)
+    if ad.Called() {
+        ad.Enter(&x, ad.Value(0), &y)
+    } else {
+        panic("sum called outside Observe.")
+    }
 	return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y))
 }
 
@@ -792,8 +804,12 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) sum(x, y float64) float64 {
-	ad.Enter(&x, &y)
-	return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y))
+    if ad.Called() {
+        ad.Enter(&x, &y)
+    } else {
+        panic("sum called outside Observe.")
+    }
+    return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y))
 }
 
 func (m Model) Observe(x []float64) float64 {
@@ -827,8 +843,12 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) sum(x ...float64) float64 {
-	ad.Enter()
-	return ad.Return(&x[0])
+    if ad.Called() {
+        ad.Enter()
+    } else {
+        panic("sum called outside Observe.")
+    }
+    return ad.Return(&x[0])
 }
 
 func (m Model) Observe(x []float64) float64 {
@@ -862,7 +882,11 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) sum(x float64, y ...float64) float64 {
-	ad.Enter(&x)
+    if ad.Called() {
+        ad.Enter(&x)
+    } else {
+        panic("sum called outside Observe.")
+    }
 	return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y[0]))
 }
 
@@ -876,13 +900,14 @@ func (m Model) Observe(x []float64) float64 {
 		m.sum(0, _vararg...)
 	}, 1, &x[0], &x[1], &x[2]))
 }`,
-		},
+        },
 		//====================================================
 		{`package composite
 
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
+    
 	return m.Observe([]float64{x[0]})
 }`,
 			//----------------------------------------------------
@@ -902,7 +927,7 @@ func (m Model) Observe(x []float64) float64 {
 		m.Observe([]float64{x[0]})
 	}, 0))
 }`,
-		},
+        },
 	} {
 		m := &model{}
 		parseTestModel(m, map[string]string{

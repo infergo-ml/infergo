@@ -754,27 +754,36 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 	// If we are differentiating Observe, the entry is different
 	// than for other methods. Depending on whether Observe was
 	// called from another model method (on the same or a
-	// different model), or from a non-differentiated context,
+	// different model), or from a undifferentiated context,
 	// the prologue is either like of any other method (Enter)
-	// or the beginning of a tape frame (Setup).
+	// or the beginning of a tape frame (Setup). Any other
+    // method can only be called from differentiated context
+    // and panicks otherwise.
+    var foreign ast.Stmt
 	if method.Name.Name == "Observe" {
-		method.Body.List = append([]ast.Stmt{
-			&ast.IfStmt{
-				Cond: callExpr("Called"),
-				Body: &ast.BlockStmt{
-					List: []ast.Stmt{
-						m.enterStmt(method),
-					}},
-				Else: &ast.BlockStmt{
-					List: []ast.Stmt{
-						m.setupStmt(method),
-					}}}},
-			method.Body.List...)
+        foreign = m.setupStmt(method)
 	} else {
-		method.Body.List = append([]ast.Stmt{
-			m.enterStmt(method),
-		}, method.Body.List...)
-	}
+        foreign = &ast.ExprStmt{
+            &ast.CallExpr{
+                Fun:  &ast.Ident {Name: "panic"},
+                Args: []ast.Expr{
+                    &ast.BasicLit{
+                        Value: fmt.Sprintf(
+                            "\"%v called outside Observe.\"",
+                            method.Name.Name),
+                        Kind: token.STRING,
+                    }}}}
+    }
+    prologue := &ast.IfStmt{
+        Cond: callExpr("Called"),
+        Body: &ast.BlockStmt{
+            List: []ast.Stmt{
+                m.enterStmt(method),
+            }},
+            Else: &ast.BlockStmt{
+                List: []ast.Stmt{foreign}}}
+    method.Body.List = append([]ast.Stmt{prologue},
+        method.Body.List...)
 
 	return err
 }
