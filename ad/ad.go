@@ -529,31 +529,27 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					"https://bitbucket.org/dtolpin/infergo/issues/1.",
 					pos.Filename, pos.Line, pos.Column)
 				return false
-			case *ast.BasicLit, *ast.Ident,
+			case *ast.BasicLit,
 				*ast.IndexExpr, *ast.SelectorExpr,
 				*ast.StarExpr, *ast.UnaryExpr, *ast.BinaryExpr:
-				if _, ok := n.(*ast.Ident); ok {
-					// Prevent processing of identifiers (as
-					// variables) for nodes where identifiers
-					// may potentionally be of type float64 but
-					// are not variables.
-					switch c.Parent().(type) {
-					case *ast.ArrayType:
-						return false
-					case *ast.Field:
-						return false
-					case *ast.SelectorExpr:
-						if c.Name() == "Sel" {
-							return false
-						}
-					case *ast.TypeAssertExpr:
-						if c.Name() == "Type" {
-							return false
-						}
-					}
-				}
+                // Expressions must be of type float64
 				e, _ := n.(ast.Expr)
 				t, basic := m.info.TypeOf(e).(*types.Basic)
+				if !basic || t.Kind() != types.Float64 {
+					return false
+				}
+            case *ast.Ident:
+                o := m.info.ObjectOf(n)
+                if o == nil {
+                    return false
+                }
+                // We only need identifiers which are variables
+                // and not fields ...
+                if v, ok := o.(*types.Var); !ok || v.IsField() {
+                    return false
+                }
+                // ... the type must be float64.
+                t, basic := m.info.TypeOf(n).(*types.Basic)
 				if !basic || t.Kind() != types.Float64 {
 					return false
 				}
