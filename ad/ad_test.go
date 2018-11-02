@@ -450,11 +450,11 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    if ad.Called() {
-        ad.Enter()
-    } else {
-        ad.Setup(x)
-    }
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
 	return ad.Return(ad.Value(0))
 }
 
@@ -485,11 +485,11 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    if ad.Called() {
-        ad.Enter()
-    } else {
-        ad.Setup(x)
-    }
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
 	var y float64
 	ad.Assignment(&y, ad.Value(1.))
 	return ad.Return(&y)
@@ -518,11 +518,11 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    if ad.Called() {
-        ad.Enter()
-    } else {
-        ad.Setup(x)
-    }
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
 	return ad.Return(&x[0])
 }`,
 		},
@@ -546,11 +546,11 @@ type Model struct {
 }
 
 func (m Model) Observe(x []float64) float64 {
-    if ad.Called() {
-        ad.Enter()
-    } else {
-        ad.Setup(x)
-    }
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
 	return ad.Return(&m.y)
 }`,
 		},
@@ -571,11 +571,11 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    if ad.Called() {
-        ad.Enter()
-    } else {
-        ad.Setup(x)
-    }
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
 	var y *float64
 	y = &x[0]
 	return ad.Return(y)
@@ -599,11 +599,11 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    if ad.Called() {
-        ad.Enter()
-    } else {
-        ad.Setup(x)
-    }
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
 	var y float64
 	ad.Assignment(&y, &x[0])
 	ad.Assignment(&y, ad.Arithmetic(ad.OpNeg, &x[1]))
@@ -629,11 +629,11 @@ import "bitbucket.org/dtolpin/infergo/ad"
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-    if ad.Called() {
-        ad.Enter()
-    } else {
-        ad.Setup(x)
-    }
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
 	var y float64
 	ad.Assignment(&y, ad.Arithmetic(ad.OpAdd, &x[0], &x[1]))
 	ad.Assignment(&y, ad.Arithmetic(ad.OpSub, &y, &x[2]))
@@ -671,11 +671,11 @@ func pi() float64 {
 }
 
 func (m Model) Observe(x []float64) float64 {
-    if ad.Called() {
-        ad.Enter()
-    } else {
-        ad.Setup(x)
-    }
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
 	var y float64
 	ad.Assignment(&y, ad.Elemental(math.Sin, &x[0]))
 	return ad.Return(&y)
@@ -701,6 +701,7 @@ func intpow(a float64, n int) float64 {
 func (m Model) Observe(x []float64) float64 {
 	y := pi()
 	z := intpow(y, 3)
+	z = float64(z)
 	return y * z
 }`,
 			//----------------------------------------------------
@@ -723,15 +724,16 @@ func intpow(a float64, n int) float64 {
 }
 
 func (m Model) Observe(x []float64) float64 {
-    if ad.Called() {
-        ad.Enter()
-    } else {
-        ad.Setup(x)
-    }
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
 	var y float64
 	ad.Assignment(&y, ad.Value(pi()))
 	var z float64
 	ad.Assignment(&z, ad.Value(intpow(y, 3)))
+	ad.Assignment(&z, ad.Value(float64(z)))
 	return ad.Return(ad.Arithmetic(ad.OpMul, &y, &z))
 }`,
 		},
@@ -760,11 +762,11 @@ func (m Model) sum(x, _ float64, y float64) float64 {
 }
 
 func (m Model) Observe(x []float64) float64 {
-    if ad.Called() {
-        ad.Enter()
-    } else {
-        ad.Setup(x)
-    }
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
 	return ad.Return(ad.Call(func (_vararg []float64) {
 		m.sum(0, 0, 0)
 	}, 3, &x[0], &x[1], &x[2]))
@@ -795,11 +797,11 @@ func (m Model) sum(x, y float64) float64 {
 }
 
 func (m Model) Observe(x []float64) float64 {
-    if ad.Called() {
-        ad.Enter()
-    } else {
-        ad.Setup(x)
-    }
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
 	return ad.Return(ad.Call(func (_vararg []float64) {
 			m.sum(0, 0)
 	}, 2, &x[0], &x[1]))
@@ -830,11 +832,11 @@ func (m Model) sum(x ...float64) float64 {
 }
 
 func (m Model) Observe(x []float64) float64 {
-    if ad.Called() {
-        ad.Enter()
-    } else {
-        ad.Setup(x)
-    }
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
 	return ad.Return(ad.Call(func (_vararg []float64) {
 		m.sum(_vararg...)
 	}, 0, &x[0], &x[1], &x[2]))
@@ -865,17 +867,42 @@ func (m Model) sum(x float64, y ...float64) float64 {
 }
 
 func (m Model) Observe(x []float64) float64 {
-    if ad.Called() {
-        ad.Enter()
-    } else {
-        ad.Setup(x)
-    }
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
 	return ad.Return(ad.Call(func (_vararg []float64) {
 		m.sum(0, _vararg...)
 	}, 1, &x[0], &x[1], &x[2]))
 }`,
 		},
 		//====================================================
+		{`package composite
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	return m.Observe([]float64{x[0]})
+}`,
+			//----------------------------------------------------
+			`package composite
+
+import "bitbucket.org/dtolpin/infergo/ad"
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
+	return ad.Return(ad.Call(func (_vararg []float64) {
+		m.Observe([]float64{x[0]})
+	}, 0))
+}`,
+		},
 	} {
 		m := &model{}
 		parseTestModel(m, map[string]string{

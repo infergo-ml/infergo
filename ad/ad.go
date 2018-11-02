@@ -47,6 +47,7 @@ import (
 	"go/token"
 	"go/types"
 	"golang.org/x/tools/go/ast/astutil"
+	"log"
 	"os"
 	"path"
 	"strings"
@@ -521,9 +522,36 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				)()
 			}
 			switch n := n.(type) {
+			case *ast.CompositeLit:
+				pos := m.fset.Position(n.Pos())
+				log.Printf("WARNING: %v:%v:%v: composite literals "+
+					"are not differentiated yet; see "+
+					"https://bitbucket.org/dtolpin/infergo/issues/1.",
+					pos.Filename, pos.Line, pos.Column)
+				return false
 			case *ast.BasicLit, *ast.Ident,
 				*ast.IndexExpr, *ast.SelectorExpr,
 				*ast.StarExpr, *ast.UnaryExpr, *ast.BinaryExpr:
+				if _, ok := n.(*ast.Ident); ok {
+					// Prevent processing of identifiers (as
+					// variables) for nodes where identifiers
+					// may potentionally be of type float64 but
+					// are not variables.
+					switch c.Parent().(type) {
+					case *ast.ArrayType:
+						return false
+					case *ast.Field:
+						return false
+					case *ast.SelectorExpr:
+						if c.Name() == "Sel" {
+							return false
+						}
+					case *ast.TypeAssertExpr:
+						if c.Name() == "Type" {
+							return false
+						}
+					}
+				}
 				e, _ := n.(ast.Expr)
 				t, basic := m.info.TypeOf(e).(*types.Basic)
 				if !basic || t.Kind() != types.Float64 {
@@ -591,16 +619,6 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				value := callExpr("Value", n)
 				c.Replace(value)
 			case *ast.Ident:
-				switch c.Parent().(type) {
-				case *ast.SelectorExpr:
-					// SelectorExpr is peculiar: Sel is a child
-					// and implements Expr, but not an
-					// expression. I believe astutil should not
-					// traverse Sel at all.
-					if c.Name() == "Sel" {
-						return true
-					}
-				}
 				if n.Name[0] == '_' {
 					panic(fmt.Sprintf("identifier %v is reserved",
 						n.Name))
@@ -738,24 +756,28 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 	// the added function calls.
 
 	// If we are differentiating Observe, the entry is different
-	// than for other methods.
+	// than for other methods. Depending on whether Observe was
+	// called from another model method (on the same or a
+	// different model), or from a non-differentiated context,
+	// the prologue is either like of any other method (Enter)
+	// or the beginning of a tape frame (Setup).
 	if method.Name.Name == "Observe" {
 		method.Body.List = append([]ast.Stmt{
-            &ast.IfStmt {
-                Cond: callExpr("Called"),
-                Body: &ast.BlockStmt {
-                    List: []ast.Stmt {
-                        m.enterStmt(method),
-                    }},
-                Else: &ast.BlockStmt {
-                    List: []ast.Stmt {
-                        m.setupStmt(method),
-                    }}}},
-        method.Body.List...)
+			&ast.IfStmt{
+				Cond: callExpr("Called"),
+				Body: &ast.BlockStmt{
+					List: []ast.Stmt{
+						m.enterStmt(method),
+					}},
+				Else: &ast.BlockStmt{
+					List: []ast.Stmt{
+						m.setupStmt(method),
+					}}}},
+			method.Body.List...)
 	} else {
 		method.Body.List = append([]ast.Stmt{
-            m.enterStmt(method),
-        }, method.Body.List...)
+			m.enterStmt(method),
+		}, method.Body.List...)
 	}
 
 	return err
@@ -764,70 +786,69 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 // setupStmt  returns the ast for the Setup or Enter
 // conditional at the beginning of an Observe method.
 func (m *model) setupStmt(method *ast.FuncDecl) ast.Stmt {
-    param := method.Type.Params.List[0]
-    var arg ast.Expr
-    if param.Names[0].Name == "_" {
-        // The parameter is _; the argument is an empty
-        // slice.
-        arg = &ast.CompositeLit{
-            Type: param.Type,
-        }
-    } else {
-        arg = param.Names[0]
-    }
-    setup := &ast.ExprStmt{
-        callExpr("Setup", arg),
-    }
-    return setup
+	param := method.Type.Params.List[0]
+	var arg ast.Expr
+	if param.Names[0].Name == "_" {
+		// The parameter is _; the argument is an empty
+		// slice.
+		arg = &ast.CompositeLit{
+			Type: param.Type,
+		}
+	} else {
+		arg = param.Names[0]
+	}
+	setup := &ast.ExprStmt{
+		callExpr("Setup", arg),
+	}
+	return setup
 }
-
 
 // enterStmt returns the ast for the Enter statement
 // at the beginning of a model method.
-func (m *model) enterStmt (method *ast.FuncDecl) ast.Stmt {
-    // Collect float64 parameters. Their values are copied
-    // from the tape.
-    t := m.info.TypeOf(method.Name).(*types.Signature)
-    var params []ast.Expr
-    n := t.Params().Len()
-    if t.Variadic() {
-        // If the function is variadic, the last parameter
-        // is not a float64.
-        n--
-    }
-    // Signature parameters are flat, but ast parameters are
-    // two-dimensional: a parameter is a Field with possibly
-    // multiple names in it.
-    iparam, ifield := 0, 0 // ast indices
-    for i := 0; i != n; i++ {
-        p := t.Params().At(i)
-        pt, ok := p.Type().(*types.Basic)
-        if !ok || pt.Kind() != types.Float64 {
-            continue
-        }
-        var expr ast.Expr
-        if p.Name() == "_" {
-            // There is no variable to copy the value to,
-            // create a dummy value.
-            expr = callExpr("Value", floatExpr(0.))
-        } else {
-            expr = &ast.UnaryExpr{
-                Op: token.AND,
-                X: method.Type.Params.List[iparam].
-                Names[ifield],
-            }
-        }
-        params = append(params, expr)
-        ifield++
-        if ifield == len(method.Type.Params.List[iparam].Names) {
-            iparam++
-            ifield = 0
-        }
-    }
-    enter := &ast.ExprStmt{
-        callExpr("Enter", params...),
-    }
-    return enter
+func (m *model) enterStmt(method *ast.FuncDecl) ast.Stmt {
+	// Collect float64 parameters. Their values are copied
+	// from the tape.
+	t := m.info.TypeOf(method.Name).(*types.Signature)
+	var params []ast.Expr
+	n := t.Params().Len()
+	if t.Variadic() {
+		// If the function is variadic, the last parameter
+		// is not a float64.
+		n--
+	}
+	// Signature parameters are flat, but ast parameters are
+	// two-dimensional: a parameter is a Field with possibly
+	// multiple names in it.
+	iparam, ifield := 0, 0 // ast indices
+	for i := 0; i != n; i++ {
+		p := t.Params().At(i)
+		pt, ok := p.Type().(*types.Basic)
+		if !ok || pt.Kind() != types.Float64 {
+			continue
+		}
+		var expr ast.Expr
+		if p.Name() == "_" {
+			// There is no variable to copy the value to,
+			// create a dummy value.
+			expr = callExpr("Value", floatExpr(0.))
+		} else {
+			expr = &ast.UnaryExpr{
+				Op: token.AND,
+				X: method.Type.Params.List[iparam].
+					Names[ifield],
+			}
+		}
+		params = append(params, expr)
+		ifield++
+		if ifield == len(method.Type.Params.List[iparam].Names) {
+			iparam++
+			ifield = 0
+		}
+	}
+	enter := &ast.ExprStmt{
+		callExpr("Enter", params...),
+	}
+	return enter
 }
 
 // isDifferentiated returns true iff the call is of a
@@ -853,7 +874,10 @@ func (m *model) isDifferentiated(call *ast.CallExpr) bool {
 // function. It does not check whether this is a differentiated
 // function instead and should be called after isDifferentiated.
 func (m *model) isElemental(call *ast.CallExpr) bool {
-	t := m.info.TypeOf(call.Fun).(*types.Signature)
+	t, ok := m.info.TypeOf(call.Fun).(*types.Signature)
+	if !ok { // a type cast rather than a call
+		return false
+	}
 	if t.Results().Len() != 1 {
 		return false
 	}

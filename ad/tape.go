@@ -32,8 +32,8 @@ func init() {
 	// The returned value is in the first place;
 	// see Call and Return below.
 	tape.places = append(tape.places, Value(0.))
-    tape.records = append(tape.records,
-        record{typ: typDummy})
+	tape.records = append(tape.records,
+		record{typ: typDummy})
 }
 
 // A record specifies the record type and indexes the tape
@@ -68,11 +68,11 @@ type counters struct {
 
 // Record types
 const (
-	typDummy = iota // placeholder
-    typAssignment   // assignment statement 
-	typArithmetic   // unary or binary 
-	typElemental    // call to an elemental function
-    typCall         // last on the tape before a method call
+	typDummy      = iota // placeholder
+	typAssignment        // assignment statement
+	typArithmetic        // unary or binary
+	typElemental         // call to an elemental function
+	typCall              // last on the tape before a method call
 )
 
 // arithmetic operations
@@ -266,9 +266,9 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 
 // True iff the last record on the tape is a Call record.
 // A call record is added before a call to a differentiated
-// method from another differentiated method. 
+// method from another differentiated method.
 func Called() bool {
-    return tape.records[len(tape.records) -1].typ == typCall
+	return tape.records[len(tape.records)-1].typ == typCall
 }
 
 // Call wraps a call to a differentiated subfunction. narg is
@@ -287,15 +287,15 @@ func Call(
 	for _, py := range px[:narg] {
 		tape.places = append(tape.places, py)
 	}
-    // Let the method know that it was called from 
-    // another method.
-    icall := len(tape.records)
-    tape.records = append(tape.records, record{typ: typCall})
+	// Let the method know that it was called from
+	// another method.
+	icall := len(tape.records)
+	tape.records = append(tape.records, record{typ: typCall})
 	f(vararg)
-    // Call records are biodegradable; should be never
-    // seen during the backward pass.
-    tape.records[icall].typ = typDummy
-    // 
+	// Call records are biodegradable; should be never
+	// seen during the backward pass.
+	tape.records[icall].typ = typDummy
+	//
 	// If the function returns a float64 value, the returned
 	// value is in the first place. Otherwise, the function
 	// is called as an expression statement, for side effects,
@@ -370,7 +370,7 @@ func backward() {
 		// Only assignment may have the same location
 		// on both the right-hand and the left-hand.
 		switch r.typ {
-        case typDummy: // do nothing, obviously
+		case typDummy: // do nothing, obviously
 		case typAssignment: // x; d/dx = 1
 			if r.op == 1 { // Most assignments are single-valued
 				// Restore the previous value.

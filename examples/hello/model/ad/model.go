@@ -10,7 +10,11 @@ type Model struct {
 }
 
 func (m *Model) Observe(x []float64) float64 {
-	ad.Setup(x)
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
 	var mean float64
 	ad.Assignment(&mean, &x[0])
 	var logv float64

@@ -14,7 +14,6 @@ func (m *Model) Observe(x []float64) float64 {
 	mean := x[0]
 	logv := x[1]
 	vari := math.Exp(logv)
-    m.Observe(x)
 	ll := 0.
 	for i := 0; i != len(m.Data); i++ {
 		d := m.Data[i] - mean
