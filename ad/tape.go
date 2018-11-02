@@ -67,11 +67,11 @@ type counters struct {
 // Record types
 const (
 	typAssignment = iota
-	typArithmetic
-	typElemental
+	typArithmetic  // Unary or binary 
+	typElemental   // Call to an elemental function
 )
 
-// Arithmetic operations
+// arithmetic operations
 const (
 	OpNeg = iota
 	OpAdd

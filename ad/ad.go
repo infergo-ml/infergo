@@ -740,70 +740,94 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 	// If we are differentiating Observe, the entry is different
 	// than for other methods.
 	if method.Name.Name == "Observe" {
-		param := method.Type.Params.List[0]
-		var arg ast.Expr
-		if param.Names[0].Name == "_" {
-			// The parameter is _; the argument is an empty
-			// slice.
-			arg = &ast.CompositeLit{
-				Type: param.Type,
-			}
-		} else {
-			arg = param.Names[0]
-		}
-		setup := &ast.ExprStmt{
-			callExpr("Setup", arg),
-		}
-		method.Body.List = append([]ast.Stmt{setup},
-			method.Body.List...)
+		method.Body.List = append([]ast.Stmt{
+            &ast.IfStmt {
+                Cond: callExpr("Called"),
+                Body: &ast.BlockStmt {
+                    List: []ast.Stmt {
+                        m.enterStmt(method),
+                    }},
+                Else: &ast.BlockStmt {
+                    List: []ast.Stmt {
+                        m.setupStmt(method),
+                    }}}},
+        method.Body.List...)
 	} else {
-		// Collect float64 parameters. Their values are copied
-		// from the tape.
-		t := m.info.TypeOf(method.Name).(*types.Signature)
-		var params []ast.Expr
-		n := t.Params().Len()
-		if t.Variadic() {
-			// If the function is variadic, the last parameter
-			// is not a float64.
-			n--
-		}
-		// Signature parameters are flat, but ast parameters are
-		// two-dimensional: a parameter is a Field with possibly
-		// multiple names in it.
-		iparam, ifield := 0, 0 // ast indices
-		for i := 0; i != n; i++ {
-			p := t.Params().At(i)
-			pt, ok := p.Type().(*types.Basic)
-			if !ok || pt.Kind() != types.Float64 {
-				continue
-			}
-			var expr ast.Expr
-			if p.Name() == "_" {
-				// There is no variable to copy the value to,
-				// create a dummy value.
-				expr = callExpr("Value", floatExpr(0.))
-			} else {
-				expr = &ast.UnaryExpr{
-					Op: token.AND,
-					X: method.Type.Params.List[iparam].
-						Names[ifield],
-				}
-			}
-			params = append(params, expr)
-			ifield++
-			if ifield == len(method.Type.Params.List[iparam].Names) {
-				iparam++
-				ifield = 0
-			}
-		}
-		enter := &ast.ExprStmt{
-			callExpr("Enter", params...),
-		}
-		method.Body.List = append([]ast.Stmt{enter},
-			method.Body.List...)
+		method.Body.List = append([]ast.Stmt{
+            m.enterStmt(method),
+        }, method.Body.List...)
 	}
 
 	return err
+}
+
+// setupStmt  returns the ast for the Setup or Enter
+// conditional at the beginning of an Observe method.
+func (m *model) setupStmt(method *ast.FuncDecl) ast.Stmt {
+    param := method.Type.Params.List[0]
+    var arg ast.Expr
+    if param.Names[0].Name == "_" {
+        // The parameter is _; the argument is an empty
+        // slice.
+        arg = &ast.CompositeLit{
+            Type: param.Type,
+        }
+    } else {
+        arg = param.Names[0]
+    }
+    setup := &ast.ExprStmt{
+        callExpr("Setup", arg),
+    }
+    return setup
+}
+
+
+// enterStmt returns the ast for the Enter statement
+// at the beginning of a model method.
+func (m *model) enterStmt (method *ast.FuncDecl) ast.Stmt {
+    // Collect float64 parameters. Their values are copied
+    // from the tape.
+    t := m.info.TypeOf(method.Name).(*types.Signature)
+    var params []ast.Expr
+    n := t.Params().Len()
+    if t.Variadic() {
+        // If the function is variadic, the last parameter
+        // is not a float64.
+        n--
+    }
+    // Signature parameters are flat, but ast parameters are
+    // two-dimensional: a parameter is a Field with possibly
+    // multiple names in it.
+    iparam, ifield := 0, 0 // ast indices
+    for i := 0; i != n; i++ {
+        p := t.Params().At(i)
+        pt, ok := p.Type().(*types.Basic)
+        if !ok || pt.Kind() != types.Float64 {
+            continue
+        }
+        var expr ast.Expr
+        if p.Name() == "_" {
+            // There is no variable to copy the value to,
+            // create a dummy value.
+            expr = callExpr("Value", floatExpr(0.))
+        } else {
+            expr = &ast.UnaryExpr{
+                Op: token.AND,
+                X: method.Type.Params.List[iparam].
+                Names[ifield],
+            }
+        }
+        params = append(params, expr)
+        ifield++
+        if ifield == len(method.Type.Params.List[iparam].Names) {
+            iparam++
+            ifield = 0
+        }
+    }
+    enter := &ast.ExprStmt{
+        callExpr("Enter", params...),
+    }
+    return enter
 }
 
 // isDifferentiated returns true iff the call is of a
@@ -813,9 +837,6 @@ func (m *model) isDifferentiated(call *ast.CallExpr) bool {
 	if !ok {
 		return ok
 	}
-    if sel.Sel.Name == "Observe" {
-        panic("Observe called from another method")
-    }
 	t, ok := m.info.Selections[sel]
 	if !ok {
 		return ok
