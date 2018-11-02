@@ -61,9 +61,9 @@ func equiv(gotTree *ast.File, expected string) bool {
 func TestEquiv(t *testing.T) {
 	// kick the tyres
 	for _, c := range []struct {
-		got		 string
+		got      string
 		expected string
-		equal	 bool
+		equal    bool
 	}{
 		{
 			"package a; func foo() {}",
@@ -266,7 +266,7 @@ func (m Model) Sample() float64 {
 
 func TestDesugar(t *testing.T) {
 	for _, c := range []struct {
-		original, simplified string
+		original, desugared string
 	}{
 		//====================================================
 		{`package vardecl
@@ -411,9 +411,9 @@ func (m Model) Observe(x []float64) float64 {
 		err = m.collectTypes()
 		methods, err := m.collectMethods()
 		for _, method := range methods {
-			m.simplify(method)
+			m.desugar(method)
 		}
-		if !equiv(m.pkg.Files["original.go"], c.simplified) {
+		if !equiv(m.pkg.Files["original.go"], c.desugared) {
 			b := new(bytes.Buffer)
 			printer.Fprint(b, m.fset, m.pkg.Files["original.go"])
 
@@ -421,7 +421,7 @@ func (m Model) Observe(x []float64) float64 {
 				" not equivalent to \n---\n%v\n---\n",
 				m.pkg.Name,
 				b.String(),
-				c.simplified)
+				c.desugared)
 		}
 	}
 }
@@ -900,7 +900,7 @@ func (m Model) Observe(x []float64) float64 {
 		m.sum(0, _vararg...)
 	}, 1, &x[0], &x[1], &x[2]))
 }`,
-        },
+		},
 		//====================================================
 		{`package composite
 
@@ -927,7 +927,7 @@ func (m Model) Observe(x []float64) float64 {
 		m.Observe([]float64{x[0]})
 	}, 0))
 }`,
-        },
+		},
 	} {
 		m := &model{}
 		parseTestModel(m, map[string]string{

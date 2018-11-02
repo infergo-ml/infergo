@@ -166,7 +166,7 @@ func (m *model) deriv() (err error) {
 	// Simplify the code first so that differentiation
 	// is less cumbersome.
 	for _, method := range methods {
-		err = m.simplify(method)
+		err = m.desugar(method)
 		if err != nil {
 			return err
 		}
@@ -312,14 +312,14 @@ func errOnPanic(
 	}
 }
 
-// simplify rewrites the syntax tree of a method to
+// desugar rewrites the syntax tree of a method to
 // differentiate and desugars the syntax, to make the
 // differentiate code simpler to write and debug.
-func (m *model) simplify(method *ast.FuncDecl) (err error) {
+func (m *model) desugar(method *ast.FuncDecl) (err error) {
 	// Apply panics on errors. When Apply panics, we return the
 	// error as do other functions.
 	defer errOnPanic(
-		"simplify",
+		"desugar",
 		&err,
 		m.fset.Position(method.Pos()),
 	)()
@@ -329,7 +329,7 @@ func (m *model) simplify(method *ast.FuncDecl) (err error) {
 			n := c.Node()
 			if n != nil && n.Pos() != token.NoPos {
 				defer errOnPanic(
-					"simplify/pre",
+					"desugar/pre",
 					&err,
 					m.fset.Position(n.Pos()),
 				)()
@@ -532,24 +532,24 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 			case *ast.BasicLit,
 				*ast.IndexExpr, *ast.SelectorExpr,
 				*ast.StarExpr, *ast.UnaryExpr, *ast.BinaryExpr:
-                // Expressions must be of type float64
+				// Expressions must be of type float64
 				e, _ := n.(ast.Expr)
 				t, basic := m.info.TypeOf(e).(*types.Basic)
 				if !basic || t.Kind() != types.Float64 {
 					return false
 				}
-            case *ast.Ident:
-                o := m.info.ObjectOf(n)
-                if o == nil {
-                    return false
-                }
-                // We only need identifiers which are variables
-                // and not fields ...
-                if v, ok := o.(*types.Var); !ok || v.IsField() {
-                    return false
-                }
-                // ... the type must be float64.
-                t, basic := m.info.TypeOf(n).(*types.Basic)
+			case *ast.Ident:
+				o := m.info.ObjectOf(n)
+				if o == nil {
+					return false
+				}
+				// We only need identifiers which are variables
+				// and not fields ...
+				if v, ok := o.(*types.Var); !ok || v.IsField() {
+					return false
+				}
+				// ... the type must be float64.
+				t, basic := m.info.TypeOf(n).(*types.Basic)
 				if !basic || t.Kind() != types.Float64 {
 					return false
 				}
@@ -757,33 +757,33 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 	// different model), or from a undifferentiated context,
 	// the prologue is either like of any other method (Enter)
 	// or the beginning of a tape frame (Setup). Any other
-    // method can only be called from differentiated context
-    // and panicks otherwise.
-    var foreign ast.Stmt
+	// method can only be called from differentiated context
+	// and panicks otherwise.
+	var foreign ast.Stmt
 	if method.Name.Name == "Observe" {
-        foreign = m.setupStmt(method)
+		foreign = m.setupStmt(method)
 	} else {
-        foreign = &ast.ExprStmt{
-            &ast.CallExpr{
-                Fun:  &ast.Ident {Name: "panic"},
-                Args: []ast.Expr{
-                    &ast.BasicLit{
-                        Value: fmt.Sprintf(
-                            "\"%v called outside Observe.\"",
-                            method.Name.Name),
-                        Kind: token.STRING,
-                    }}}}
-    }
-    prologue := &ast.IfStmt{
-        Cond: callExpr("Called"),
-        Body: &ast.BlockStmt{
-            List: []ast.Stmt{
-                m.enterStmt(method),
-            }},
-            Else: &ast.BlockStmt{
-                List: []ast.Stmt{foreign}}}
-    method.Body.List = append([]ast.Stmt{prologue},
-        method.Body.List...)
+		foreign = &ast.ExprStmt{
+			&ast.CallExpr{
+				Fun: &ast.Ident{Name: "panic"},
+				Args: []ast.Expr{
+					&ast.BasicLit{
+						Value: fmt.Sprintf(
+							"\"%v called outside Observe.\"",
+							method.Name.Name),
+						Kind: token.STRING,
+					}}}}
+	}
+	prologue := &ast.IfStmt{
+		Cond: callExpr("Called"),
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				m.enterStmt(method),
+			}},
+		Else: &ast.BlockStmt{
+			List: []ast.Stmt{foreign}}}
+	method.Body.List = append([]ast.Stmt{prologue},
+		method.Body.List...)
 
 	return err
 }
