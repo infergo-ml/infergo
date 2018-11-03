@@ -484,11 +484,11 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					return false
 				}
 				// We only need identifiers which are variables
-				// and not fields ...
+				// but not fields ...
 				if v, ok := o.(*types.Var); !ok || v.IsField() {
 					return false
 				}
-				// ... the type must be float64.
+				// ... and the type must be float64.
 				t, basic := m.info.TypeOf(n).(*types.Basic)
 				if !basic || t.Kind() != types.Float64 {
 					return false
