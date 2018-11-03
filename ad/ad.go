@@ -53,6 +53,25 @@ import (
 	"strings"
 )
 
+// modelInterface is used to identify model types
+var modelInterface *types.Interface
+
+func init () {
+    modelInterface = types.NewInterface(
+        []*types.Func {
+            types.NewFunc(0, nil, "Observe",
+                types.NewSignature(nil,
+                    types.NewTuple(
+                        types.NewVar(0, nil, "x",
+                            types.NewSlice(types.Typ[types.Float64]))),
+                    types.NewTuple(
+                        types.NewVar(0, nil, "",
+                            types.Typ[types.Float64])),
+                    false)),
+        },
+        nil)
+}
+
 // Structure model contains shared data structures for
 // differentiating the model. Functions operating on *model are
 // defined as method to use shorter names.
@@ -61,7 +80,6 @@ type model struct {
 	fset *token.FileSet
 	pkg  *ast.Package
 	info *types.Info
-	typs []types.Type
 }
 
 // Deriv differentiates a model. The original model is in the
@@ -152,12 +170,7 @@ const infergoImport = "bitbucket.org/dtolpin/infergo/ad"
 
 // deriv differentiates the model through rewriting the ASTs.
 func (m *model) deriv() (err error) {
-	if err = m.collectTypes(); err != nil {
-		return err
-	}
-
 	// Differentiate each model method
-
 	methods, err := m.collectMethods()
 	if err != nil {
 		return err
@@ -185,69 +198,6 @@ func (m *model) deriv() (err error) {
 	}
 
 	return err
-}
-
-// collectTypes collects and returns the types of models defined
-// in the package.
-func (m *model) collectTypes() (err error) {
-	// Identify the model type (or types)
-	m.typs = make([]types.Type, 0, 1)
-	for _, file := range m.pkg.Files {
-		for _, d := range file.Decls {
-			if d, ok := d.(*ast.FuncDecl); ok {
-				if d.Name.Name == "Observe" {
-					// May be the observe method, but check the
-					// signature.
-					t := m.info.TypeOf(d.Name).(*types.Signature)
-					if isObserve(t) {
-						m.typs = append(m.typs, t.Recv().Type())
-					}
-				}
-			}
-		}
-	}
-	if len(m.typs) == 0 {
-		err = fmt.Errorf("no model in package %s", m.pkg.Name)
-	}
-	return err
-}
-
-// isObserve returns true iff the signature is that of the
-// Observe method: func ([]float64) float64
-func isObserve(t *types.Signature) (ok bool) {
-	// Consider pattern matching for go/types
-	ok = true
-
-	// Is a method
-	ok = ok && t.Recv() != nil
-
-	// Returns a single float64
-	ok = ok && t.Results().Len() == 1 // returns a single result
-	if !ok {
-		return ok
-	}
-	rt, ok := t.Results().At(0).Type().(*types.Basic)
-	if !ok {
-		return ok
-	}
-	ok = rt.Kind() == types.Float64 // the result is float64
-
-	// Accepts a single []float64
-	ok = ok && t.Params().Len() == 1
-	if !ok {
-		return ok
-	}
-	pt, ok := t.Params().At(0).Type().(*types.Slice) // a slice
-	if !ok {
-		return ok
-	}
-	et, ok := pt.Elem().(*types.Basic)
-	if !ok {
-		return ok
-	}
-	ok = et.Kind() == types.Float64 // the element type is float64
-
-	return ok
 }
 
 // collectMethods collects ASTs of methods defined on the
@@ -282,19 +232,9 @@ func (m *model) isMethod(
 	return m.isType(t.Recv().Type())
 }
 
-// isType returns true iff typ is one of model types, or
-// pointed to by one of typs.
+// isType returns true iff typ implements the Model interface.
 func (m *model) isType(typ types.Type) bool {
-	for _, t := range m.typs {
-		if types.Identical(t, typ) {
-			return true
-		}
-		if t, ok := t.(*types.Pointer); ok &&
-			types.Identical(t.Elem(), typ) {
-			return true
-		}
-	}
-	return false
+    return types.Implements(typ, modelInterface)
 }
 
 // errOnPanic turns panic from astutil.Apply into an error,
@@ -876,7 +816,9 @@ func (m *model) isDifferentiated(call *ast.CallExpr) bool {
 }
 
 // isElemental returns true iff the call is of an elemental
-// function. It does not check whether this is a differentiated
+// function. An elemental function is a function with one or
+// more non-variadic float64 parameters returning float64.
+// isElemental does not check whether this is a differentiated
 // function instead and should be called after isDifferentiated.
 func (m *model) isElemental(call *ast.CallExpr) bool {
 	t, ok := m.info.TypeOf(call.Fun).(*types.Signature)
@@ -895,7 +837,7 @@ func (m *model) isElemental(call *ast.CallExpr) bool {
 		return ok
 	}
 
-	if t.Params().Len() == 0 {
+	if t.Params().Len() == 0 || t.Variadic() {
 		return false
 	}
 	for i := 0; i != t.Params().Len(); i++ {

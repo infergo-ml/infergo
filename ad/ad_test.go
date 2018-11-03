@@ -95,86 +95,6 @@ func TestEquiv(t *testing.T) {
 
 // Tests of ad transformations, stage by stage
 
-func TestCollectTypes(t *testing.T) {
-	for _, c := range []struct {
-		model map[string]string
-		types map[string]bool
-	}{
-		// Single model
-		{map[string]string{
-			"single.go": `package single
-
-type Model float64
-
-func (m Model) Observe(x []float64) float64 {
-	return - float64(m) * x[0]
-}
-`,
-		},
-			map[string]bool{
-				"single.Model": true,
-			}},
-
-		// No model
-		{map[string]string{
-			"nomodel.go": `package nomodel
-
-type Model float64
-
-func (m Model) observe(x []float64) float64 {
-	return - float64(m) * x[0]
-}
-`,
-		},
-			map[string]bool{}},
-
-		// Two models
-		{map[string]string{
-			"double.go": `package double
-
-type ModelA float64
-type ModelB float64
-
-func (m ModelA) Observe(x []float64) float64 {
-	return - float64(m) * x[0]
-}
-
-func (m ModelB) Observe(x []float64) float64 {
-	return - float64(m) / x[0]
-}
-`,
-		},
-			map[string]bool{
-				"double.ModelA": true,
-				"double.ModelB": true,
-			}},
-	} {
-		m := &model{}
-		parseTestModel(m, c.model)
-		err := m.check()
-		if err != nil {
-			t.Errorf("failed to check model %v: %s",
-				m.pkg.Name, err)
-		}
-		err = m.collectTypes()
-		if len(m.typs) > 0 && err != nil {
-			// Ignore the error when there is no model
-			panic(err)
-		}
-		for _, mt := range m.typs {
-			if !c.types[mt.String()] {
-				t.Errorf("model %v: type %v is not a model",
-					m.pkg.Name, mt)
-			}
-			delete(c.types, mt.String())
-		}
-		for k := range c.types {
-			t.Errorf("model %v: type %v was not collected",
-				m.pkg.Name, k)
-		}
-	}
-}
-
 func TestCollectMethods(t *testing.T) {
 	for _, c := range []struct {
 		model  map[string]string
@@ -243,7 +163,6 @@ func (m Model) Sample() float64 {
 			t.Errorf("failed to check model %v: %s",
 				m.pkg.Name, err)
 		}
-		err = m.collectTypes()
 		methods, err := m.collectMethods()
 		if len(methods) > 0 && err != nil {
 			// Ignore the error when there is no model
@@ -408,7 +327,6 @@ func (m Model) Observe(x []float64) float64 {
 			t.Errorf("failed to check model %v: %s",
 				m.pkg.Name, err)
 		}
-		err = m.collectTypes()
 		methods, err := m.collectMethods()
 		for _, method := range methods {
 			m.desugar(method)
