@@ -56,20 +56,20 @@ import (
 // modelInterface is used to identify model types
 var modelInterface *types.Interface
 
-func init () {
-    modelInterface = types.NewInterface(
-        []*types.Func {
-            types.NewFunc(0, nil, "Observe",
-                types.NewSignature(nil,
-                    types.NewTuple(
-                        types.NewVar(0, nil, "x",
-                            types.NewSlice(types.Typ[types.Float64]))),
-                    types.NewTuple(
-                        types.NewVar(0, nil, "",
-                            types.Typ[types.Float64])),
-                    false)),
-        },
-        nil)
+func init() {
+	modelInterface = types.NewInterface(
+		[]*types.Func{
+			types.NewFunc(0, nil, "Observe",
+				types.NewSignature(nil,
+					types.NewTuple(
+						types.NewVar(0, nil, "x",
+							types.NewSlice(types.Typ[types.Float64]))),
+					types.NewTuple(
+						types.NewVar(0, nil, "",
+							types.Typ[types.Float64])),
+					false)),
+		},
+		nil)
 }
 
 // Structure model contains shared data structures for
@@ -234,7 +234,7 @@ func (m *model) isMethod(
 
 // isType returns true iff typ implements the Model interface.
 func (m *model) isType(typ types.Type) bool {
-    return types.Implements(typ, modelInterface)
+	return types.Implements(typ, modelInterface)
 }
 
 // errOnPanic turns panic from astutil.Apply into an error,

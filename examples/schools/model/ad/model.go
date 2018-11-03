@@ -1,14 +1,14 @@
 package model
 
 import (
-	"math"
 	"bitbucket.org/dtolpin/infergo/ad"
+	"math"
 )
 
 type Model struct {
-	J	int
-	Y	[]float64
-	Sigma	[]float64
+	J     int
+	Y     []float64
+	Sigma []float64
 }
 
 func (m *Model) Observe(x []float64) float64 {

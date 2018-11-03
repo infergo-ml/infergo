@@ -1,8 +1,8 @@
 package model
 
 import (
-	"math"
 	"bitbucket.org/dtolpin/infergo/ad"
+	"math"
 )
 
 type Model struct {
