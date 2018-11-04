@@ -19,7 +19,7 @@ func (m *Model) Observe(x []float64) float64 {
 	vari := math.Exp(logv)
 	ll := 0.
 	for i := 0; i != len(m.Data); i++ {
-		ll += Normal{m.Data[i]}.PDf(mean, logv)
+		ll += dist.Normal{m.Data[i]}.PDf(mean, logv)
 	}
 	return ll
 }
