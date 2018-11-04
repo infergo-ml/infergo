@@ -1,7 +1,7 @@
 package main
 
 import (
-	. "bitbucket.org/dtolpin/ppv-pp/goppv/model/ad"
+	. "bitbucket.org/dtolpin/infergo/examples/ppv/model/ad"
 	"bitbucket.org/dtolpin/infergo/ad"
 	"bitbucket.org/dtolpin/infergo/infer"
 	"encoding/csv"

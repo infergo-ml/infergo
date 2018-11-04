@@ -1,11 +1,11 @@
-all: goppv
+all: ppv
 
-goppv: model/ad/model.go main.go
+ppv: model/ad/model.go main.go
 	go build .
-	./goppv
+	./ppv
 
 model/ad/model.go: model/model.go
 	deriv model
 
 clean:
-	rm -f ./goppv model/ad/*.go
+	rm -f ./ppv model/ad/*.go
