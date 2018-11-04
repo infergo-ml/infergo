@@ -1,14 +1,15 @@
 package model
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	"bitbucket.org/dtolpin/infergo/mathx"
+	"bitbucket.org/dtolpin/infergo/ad"
+	"bitbucket.org/dtolpin/infergo/dist/ad"
 	"math"
 )
 
 type Model struct {
-	Data  []float64
-	NComp int
+	Data	[]float64
+	NComp	int
 }
 
 func (m *Model) Observe(x []float64) float64 {
@@ -37,10 +38,10 @@ func (m *Model) Observe(x []float64) float64 {
 	for i := 0; i != len(m.Data); i = i + 1 {
 		var l float64
 		for j := 0; j != m.NComp; j = j + 1 {
-			var d float64
-			ad.Assignment(&d, ad.Arithmetic(ad.OpSub, &m.Data[i], &mean[j]))
 			var lj float64
-			ad.Assignment(&lj, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpDiv, ad.Arithmetic(ad.OpMul, ad.Arithmetic(ad.OpNeg, &d), &d), &vari[j]), &logv[j]))
+			ad.Assignment(&lj, ad.Call(func(_vararg []float64) {
+				dist.Normal{m.Data[i]}.Pdf(0, 0)
+			}, 2, &mean[j], &logv[j]))
 			if j == 0 {
 				ad.Assignment(&l, &lj)
 			} else {

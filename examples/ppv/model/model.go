@@ -3,6 +3,7 @@
 package model
 
 import (
+	"bitbucket.org/dtolpin/infergo/dist/ad"
 	"math"
 )
 
@@ -25,7 +26,9 @@ func (m *Model) Observe(x []float64) float64 {
 	}
 
     // put a prior on the bandwidth
-	target :=  -bandwidth / m.PriorBandwidth
+	expon := dist.Expon{}
+	expon.X = bandwidth
+	target :=  expon.Expon(1./m.PriorBandwidth)
 
 	for _, ppv := range m.PPV {
 		for j := 0; j != m.NPages; j++ {

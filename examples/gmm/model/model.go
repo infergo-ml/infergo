@@ -3,6 +3,7 @@ package model
 
 import (
 	"bitbucket.org/dtolpin/infergo/mathx"
+	"bitbucket.org/dtolpin/infergo/dist/ad"
 	"math"
 )
 
@@ -30,8 +31,7 @@ func (m *Model) Observe(x []float64) float64 {
 	for i := 0; i != len(m.Data); i++ {
 		var l float64
 		for j := 0; j != m.NComp; j++ {
-			d := m.Data[i] - mean[j]
-			lj := -d*d/vari[j] - logv[j]
+			lj := dist.Normal{m.Data[i]}.Pdf(mean[j], logv[j])
 			if j == 0 {
 				l = lj
 			} else {

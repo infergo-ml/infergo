@@ -24,3 +24,17 @@ func (dist Normal) Pdf(mu, logv float64) float64 {
 	vari := math.Exp(logv)
 	return -0.5*(d*d/vari + logv + log2pi)
 }
+
+// Exponential distribution
+type Expon struct {
+	X float64
+}
+
+func (dist Expon) Observe(x []float64) float64 {
+	return dist.Pdf(x[0], x[1])
+}
+
+func (dist Expon) Pdf(lambda float64) float64 {
+	return math.Log(lambda) - lambda * dist.X
+}
+

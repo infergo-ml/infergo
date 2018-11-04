@@ -22,7 +22,10 @@
 //
 package model
 
-import "math"
+import (
+	"bitbucket.org/dtolpin/infergo/dist/ad"
+	"math"
+)
 
 type Model struct {
 	J     int       // number of schools
@@ -37,19 +40,15 @@ func (m *Model) Observe(x []float64) float64 {
 	//  There are m.J + 2 parameters:
 	// mu, logtau, eta[J]
 	mu := x[0]
-	// Normal(0, vartau)
-	ll -= x[1]*x[1]/math.Exp(m.LogVtau) + m.LogVtau
+	ll += dist.Normal{0.}.Pdf(x[1], m.LogVtau)
 	tau := math.Exp(x[1])
 	eta := x[2:]
 
 	for i, y := range m.Y {
-		// Normal(0, vareta)
-		ll -= eta[i]*eta[i]/math.Exp(m.LogVeta) + m.LogVeta
+		ll += dist.Normal{0}.Pdf(eta[i], m.LogVeta) 
 		theta := mu + tau*eta[i]
-		sigma2 := m.Sigma[i] * m.Sigma[i]
-		d := y - theta
-		// Normal(theta, sigma2)
-		ll -= d*d/sigma2 + math.Log(sigma2)
+		logVtheta := math.Log(m.Sigma[i] * m.Sigma[i])
+		ll += dist.Normal{y}.Pdf(theta, logVtheta)
 	}
 	return ll
 }
