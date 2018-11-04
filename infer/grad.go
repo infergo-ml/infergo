@@ -17,9 +17,9 @@ type Grad struct {
 	lastUpdate []float64
 }
 
-func (opt *Grad) Step(m model.Model, x []float64) {
-	m.Observe(x)
-	grad := ad.Gradient()
+func (opt *Grad) Step(m model.Model, x []float64) (ll float64, grad []float64) {
+	ll = m.Observe(x)
+	grad = ad.Gradient()
 	if opt.lastUpdate == nil {
 		// lastUpdate is initialized to zeros.
 		opt.lastUpdate = make([]float64, len(x))
@@ -31,4 +31,5 @@ func (opt *Grad) Step(m model.Model, x []float64) {
 		opt.lastUpdate[i] = update
 	}
 	opt.Rate *= opt.Decay
+	return ll, grad
 }

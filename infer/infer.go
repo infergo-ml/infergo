@@ -11,5 +11,5 @@ import (
 // optimizers. Step makes a single step over
 // parameters in the gradient direction.
 type Optimizer interface {
-	Step(m model.Model, x []float64)
+	Step(m model.Model, x []float64) (ll float64, grad []float64)
 }
