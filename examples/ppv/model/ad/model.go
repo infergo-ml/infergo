@@ -1,8 +1,9 @@
 package model
 
 import (
-	"math"
+	. "bitbucket.org/dtolpin/infergo/dist/ad"
 	"bitbucket.org/dtolpin/infergo/ad"
+	"math"
 )
 
 type Model struct {
@@ -30,7 +31,9 @@ func (m *Model) Observe(x []float64) float64 {
 		ad.Assignment(&beliefs[j][1], ad.Arithmetic(ad.OpMul, ad.Value(2.), (ad.Arithmetic(ad.OpSub, ad.Value(1), &churn_probability))))
 	}
 	var target float64
-	ad.Assignment(&target, ad.Arithmetic(ad.OpDiv, ad.Arithmetic(ad.OpNeg, &bandwidth), &m.PriorBandwidth))
+	ad.Assignment(&target, ad.Call(func(_vararg []float64) {
+		Expon.Pdf(0, 0)
+	}, 2, &bandwidth, ad.Arithmetic(ad.OpDiv, ad.Value(1.), &m.PriorBandwidth)))
 
 	for _, ppv := range m.PPV {
 		for j := 0; j != m.NPages; j = j + 1 {

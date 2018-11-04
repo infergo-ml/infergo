@@ -3,7 +3,7 @@
 package model
 
 import (
-	"bitbucket.org/dtolpin/infergo/dist/ad"
+	. "bitbucket.org/dtolpin/infergo/dist/ad"
 )
 
 // data are the observations
@@ -15,7 +15,7 @@ type Model struct {
 func (m *Model) Observe(x []float64) float64 {
 	ll := 0.
 	for i := 0; i != len(m.Data); i++ {
-		ll += dist.Normal{m.Data[i]}.Observe(x)
+		ll += Normal.Pdf(m.Data[i], x[0], x[1])
 	}
 	return ll
 }

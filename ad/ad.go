@@ -309,11 +309,9 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 							// them into separate specifications.
 							for i := 0; i != len(spec.Names); i++ {
 								t := m.info.TypeOf(spec.Names[i])
-								tast, _ := parser.ParseExpr(
-									t.String())
 								typedSpec := &ast.ValueSpec{
 									Names: spec.Names[i : i+1],
-									Type:  tast,
+									Type:  m.typeAst(t),
 								}
 								// We override the first
 								// specification, and then append the
@@ -357,14 +355,10 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 						// The shortest way from go/types to go/ast
 						// is to stringify and reparse.
 						t := m.info.TypeOf(n.Lhs[i])
-						tast, err := parser.ParseExpr(t.String())
-						if err != nil {
-							panic(fmt.Sprintf(
-								"cannot parse type %v: %v", t, err))
-						}
 						spec := &ast.ValueSpec{
 							Names: []*ast.Ident{ident},
-							Type:  tast}
+							Type:  m.typeAst(t),
+						}
 						c.InsertBefore(&ast.DeclStmt{
 							Decl: &ast.GenDecl{
 								Tok:   token.VAR,
@@ -434,6 +428,23 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 
 	return err
 }
+
+// typeAst returns the AST for the given type. Used to
+// generate variable declarations.
+func (m *model) typeAst(t types.Type) ast.Expr {
+	tast, err := parser.ParseExpr(types.TypeString(t,
+	    // We must qualify the package by name to yield
+		// a syntactically correct type ast.
+		func (pkg *types.Package) string {
+			return pkg.Name()
+		}))
+	if err != nil {
+		panic(fmt.Sprintf(
+			"cannot parse type %v: %v", t, err))
+	}
+	return tast
+}
+
 
 // rewrite rewrites the method using tape-writing calls.
 func (m *model) rewrite(method *ast.FuncDecl) (err error) {
