@@ -9,7 +9,7 @@ type Normal struct {
 	X float64
 }
 
-func (dist *Normal) Observe(x []float64) float64 {
+func (dist Normal) Observe(x []float64) float64 {
 	if ad.Called() {
 		ad.Enter()
 	} else {
@@ -26,7 +26,7 @@ func init() {
 	log2pi = math.Log(2. * math.Pi)
 }
 
-func (dist *Normal) Pdf(mu, logv float64) float64 {
+func (dist Normal) Pdf(mu, logv float64) float64 {
 	if ad.Called() {
 		ad.Enter(&mu, &logv)
 	} else {
