@@ -1,8 +1,8 @@
 package main
 
 import (
-	. "bitbucket.org/dtolpin/infergo/examples/ppv/model/ad"
 	"bitbucket.org/dtolpin/infergo/ad"
+	. "bitbucket.org/dtolpin/infergo/examples/ppv/model/ad"
 	"bitbucket.org/dtolpin/infergo/infer"
 	"encoding/csv"
 	"flag"
@@ -17,11 +17,11 @@ import (
 // Command line arguments
 
 var (
-	RATE  float64 = 0.01
-	DECAY float64 = 0.997
+	RATE     float64 = 0.01
+	DECAY    float64 = 0.997
 	MOMENTUM float64 = 0.5
-	NITER int     = 1000
-	EPS float64 = 1E-6
+	NITER    int     = 1000
+	EPS      float64 = 1E-6
 )
 
 func init() {
@@ -72,24 +72,24 @@ func main() {
 	} else {
 		// Use an embedded data set, for self-check
 		data = []int{
-			2, 10,  7,  3,  2,  4,  5,  1,  6,  4,
-			4,  1,  1,  8,  3,  2,  1,  2,  1,  1,
-			1,  3,  1,  3,  1,  2,  1,  1,  1,  2,
-			3,  2,  1,  1,  5,  1,  7,  6,  2,  1,
-			2,  1,  1,  1,  1,  1,  4,  1,  4,  1,
-			4,  2,  3,  1,  1,  1,  1,  1,  1,  1,
-			1,  1,  1,  3,  1,  1,  1,  1,  1,  1,
-			5,  1,  1,  2,  2,  2,  1,  1,  2,  1,
-			1,  1,  1,  2,  2,  1,  1,  1,  1,  1,
-			2,  1,  1,  1,  1,  1,  1,  1,  2,  1,
+			2, 10, 7, 3, 2, 4, 5, 1, 6, 4,
+			4, 1, 1, 8, 3, 2, 1, 2, 1, 1,
+			1, 3, 1, 3, 1, 2, 1, 1, 1, 2,
+			3, 2, 1, 1, 5, 1, 7, 6, 2, 1,
+			2, 1, 1, 1, 1, 1, 4, 1, 4, 1,
+			4, 2, 3, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 3, 1, 1, 1, 1, 1, 1,
+			5, 1, 1, 2, 2, 2, 1, 1, 2, 1,
+			1, 1, 1, 2, 2, 1, 1, 1, 1, 1,
+			2, 1, 1, 1, 1, 1, 1, 1, 2, 1,
 		}
 	}
 
 	// Define the problem
 	m := &Model{
 		// Taken from stan worksheet
-		PPV: data,
-		NPages: 10,
+		PPV:            data,
+		NPages:         10,
 		PriorBandwidth: 100.,
 	}
 	// The parameter is log bandwidth
@@ -113,7 +113,7 @@ func main() {
 	for iter = 0; iter != NITER; iter++ {
 		xprev := x[0]
 		ll, _ = opt.Step(m, x)
-		if math.Abs(xprev - x[0]) < EPS * math.Abs(xprev + x[0]) {
+		if math.Abs(xprev-x[0]) < EPS*math.Abs(xprev+x[0]) {
 			break
 		}
 	}

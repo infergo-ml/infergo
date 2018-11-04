@@ -188,6 +188,54 @@ func TestDesugar(t *testing.T) {
 		original, desugared string
 	}{
 		//====================================================
+		{`package define
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	a, c, e := 0., 'c', 1
+	println(c, e)
+	return a
+}`,
+			//----------------------------------------------------
+			`package define
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	var a float64
+	var c rune
+	var	e int
+	a, c, e = 0., 'c', 1
+	println(c, e)
+	return a
+}`,
+		},
+		//====================================================
+		{`package qualified
+import "go/ast"
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	id := &ast.Ident{}
+	println(id)
+	return 0.
+}`,
+			//----------------------------------------------------
+			`package qualified
+import "go/ast"
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	var id *ast.Ident
+	id = &ast.Ident{}
+	println(id)
+	return 0.
+}`,
+		},
+		//====================================================
 		{`package vardecl
 
 type Model float64

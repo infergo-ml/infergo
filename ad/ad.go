@@ -433,9 +433,9 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 // generate variable declarations.
 func (m *model) typeAst(t types.Type) ast.Expr {
 	tast, err := parser.ParseExpr(types.TypeString(t,
-	    // We must qualify the package by name to yield
+		// We must qualify the package by name to yield
 		// a syntactically correct type ast.
-		func (pkg *types.Package) string {
+		func(pkg *types.Package) string {
 			return pkg.Name()
 		}))
 	if err != nil {
@@ -444,7 +444,6 @@ func (m *model) typeAst(t types.Type) ast.Expr {
 	}
 	return tast
 }
-
 
 // rewrite rewrites the method using tape-writing calls.
 func (m *model) rewrite(method *ast.FuncDecl) (err error) {
@@ -477,13 +476,13 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				t, basic := m.info.TypeOf(n).(*types.Basic)
 				if !basic ||
 					!(t.Kind() == types.Float64 ||
-				  	t.Kind() == types.UntypedFloat) {
+						t.Kind() == types.UntypedFloat) {
 					return false
 				}
 			case *ast.CompositeLit:
 				pos := m.fset.Position(n.Pos())
 				log.Printf("WARNING: %v:%v:%v: composite literals "+
-				"are not differentiated yet; see "+
+					"are not differentiated yet; see "+
 					"https://bitbucket.org/dtolpin/infergo/issues/1.",
 					pos.Filename, pos.Line, pos.Column)
 				return false

@@ -15,12 +15,12 @@ import (
 // Command line arguments
 
 var (
-	RATE  float64 = 0.01
-	DECAY float64 = 0.9998
+	RATE     float64 = 0.01
+	DECAY    float64 = 0.9998
 	MOMENTUM float64 = 0.5
-	NITER int     = 10000
-	LOGVTAU float64 = 1.
-	LOGVETA float64 = 1.
+	NITER    int     = 10000
+	LOGVTAU  float64 = 1.
+	LOGVETA  float64 = 1.
 )
 
 func init() {
@@ -52,9 +52,9 @@ func main() {
 
 	// Define the problem
 	m := &Model{
-		J:     8,
-		Y:     []float64{28, 8, -3, 7, -1, 1, 18, 12},
-		Sigma: []float64{15, 10, 16, 11, 9, 11, 10, 18},
+		J:       8,
+		Y:       []float64{28, 8, -3, 7, -1, 1, 18, 12},
+		Sigma:   []float64{15, 10, 16, 11, 9, 11, 10, 18},
 		LogVtau: LOGVTAU,
 		LogVeta: LOGVETA,
 	}
@@ -90,7 +90,7 @@ func main() {
 	}
 	fmt.Printf("\n\ttheta(Y)=")
 	for i, eta := range eta {
-		fmt.Printf("%.4g(%.4g±%.4g) ", mu + tau*eta, m.Y[i], m.Sigma[i])
+		fmt.Printf("%.4g(%.4g±%.4g) ", mu+tau*eta, m.Y[i], m.Sigma[i])
 	}
 	fmt.Printf("\n")
 	ll := m.Observe(x)

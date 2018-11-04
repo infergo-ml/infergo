@@ -17,7 +17,7 @@ type Grad struct {
 	lastUpdate []float64
 }
 
-// Step implements the Optimizer interface. 
+// Step implements the Optimizer interface.
 func (opt *Grad) Step(m model.Model, x []float64) (ll float64, grad []float64) {
 	ll, grad = m.Observe(x), ad.Gradient()
 	if opt.lastUpdate == nil {

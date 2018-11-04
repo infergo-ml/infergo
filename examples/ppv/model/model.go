@@ -9,8 +9,8 @@ import (
 
 // data are the observations
 type Model struct {
-	PPV  []int
-	NPages int
+	PPV            []int
+	NPages         int
 	PriorBandwidth float64
 }
 
@@ -25,14 +25,14 @@ func (m *Model) Observe(x []float64) float64 {
 		beliefs[j][1] = 2. * (1 - churn_probability)
 	}
 
-    // put a prior on the bandwidth
+	// put a prior on the bandwidth
 	target := Expon.Pdf(bandwidth, 1./m.PriorBandwidth)
 
 	for _, ppv := range m.PPV {
 		for j := 0; j != m.NPages; j++ {
-			churned := j == ppv - 1
+			churned := j == ppv-1
 
-            // observe the ppv and update the belief
+			// observe the ppv and update the belief
 			evidence := beliefs[j][0] + beliefs[j][1]
 			if churned {
 				target += math.Log(beliefs[j][0] / evidence)
@@ -43,16 +43,16 @@ func (m *Model) Observe(x []float64) float64 {
 			}
 
 			// discount the beliefs based on the bandwidth
-			if evidence >= bandwidth  {
+			if evidence >= bandwidth {
 				discount := bandwidth / evidence
 				beliefs[j][0] *= discount
 				beliefs[j][1] *= discount
 			}
 
-            if churned {
-                break
+			if churned {
+				break
 			}
-        }
-    }
+		}
+	}
 	return target
 }

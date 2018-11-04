@@ -28,10 +28,10 @@ import (
 )
 
 type Model struct {
-	J     int       // number of schools
-	Y     []float64 // estimated treatment effects
-	Sigma []float64 // s.e. of effect estimates
-	LogVtau, LogVeta float64 // log variances of tau and eta priors
+	J                int       // number of schools
+	Y                []float64 // estimated treatment effects
+	Sigma            []float64 // s.e. of effect estimates
+	LogVtau, LogVeta float64   // log variances of tau and eta priors
 }
 
 func (m *Model) Observe(x []float64) float64 {
@@ -45,7 +45,7 @@ func (m *Model) Observe(x []float64) float64 {
 	eta := x[2:]
 
 	for i, y := range m.Y {
-		ll += Normal.Pdf(eta[i], 0, m.LogVeta) 
+		ll += Normal.Pdf(eta[i], 0, m.LogVeta)
 		theta := mu + tau*eta[i]
 		logVtheta := math.Log(m.Sigma[i] * m.Sigma[i])
 		ll += Normal.Pdf(y, theta, logVtheta)

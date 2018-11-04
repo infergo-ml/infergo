@@ -2,8 +2,8 @@
 package model
 
 import (
-	"bitbucket.org/dtolpin/infergo/mathx"
 	. "bitbucket.org/dtolpin/infergo/dist/ad"
+	"bitbucket.org/dtolpin/infergo/mathx"
 	"math"
 )
 
