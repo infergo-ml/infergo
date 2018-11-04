@@ -52,7 +52,7 @@ func main() {
 	for i := 2; i != len(x); i++ {
 		x[i] = 0.
 	}
-	// Compute fmt-likelihood of the starting point,
+	// Compute log-likelihood of the starting point,
 	// for comparison.
 	ll0 := m.Observe(x)
 	ad.Pop()
