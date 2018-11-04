@@ -32,3 +32,8 @@ gmm:
 .PHONY: schools
 schools: 
 	(cd examples/schools && make)
+
+#  pages per visit
+.PHONY: ppv
+ppv: 
+	(cd examples/ppv && make)
