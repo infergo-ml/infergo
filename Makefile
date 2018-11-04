@@ -1,8 +1,12 @@
 all: build
 
-PACKAGES=ad model infer mathx cmd/deriv
+PACKAGES=ad model infer mathx dist/ad cmd/deriv
 
-test:
+
+dist/ad/dist.go: dist/dist.go
+	deriv dist
+
+test: dist/ad/dist.go
 	for package in $(PACKAGES); do go test ./$$package; done
 
 build: test

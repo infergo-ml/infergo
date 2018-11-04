@@ -354,7 +354,7 @@ func TestRewrite(t *testing.T) {
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-	return 0
+	return 0.5
 }
 
 func (m Model) Count() int {
@@ -373,7 +373,7 @@ func (m Model) Observe(x []float64) float64 {
 	} else {
 		ad.Setup(x)
 	}
-	return ad.Return(ad.Value(0))
+	return ad.Return(ad.Value(0.5))
 }
 
 func (m Model) Count() int {
@@ -514,7 +514,8 @@ type Model float64
 
 func (m Model) Observe(x []float64) float64 {
 	y := +x[0]
-	y = -x[1]
+	y = -0.5
+	y = -x[0]
 	return y
 }`,
 			//----------------------------------------------------
@@ -532,7 +533,8 @@ func (m Model) Observe(x []float64) float64 {
 	}
 	var y float64
 	ad.Assignment(&y, &x[0])
-	ad.Assignment(&y, ad.Arithmetic(ad.OpNeg, &x[1]))
+	ad.Assignment(&y, ad.Arithmetic(ad.OpNeg, ad.Value(0.5)))
+	ad.Assignment(&y, ad.Arithmetic(ad.OpNeg, &x[0]))
 	return ad.Return(&y)
 }`,
 		},

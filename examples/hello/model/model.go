@@ -2,7 +2,10 @@
 // observations
 package model
 
-import "math"
+import (
+	dist "bitbucket.org/dtolpin/infergo/dist/ad"
+	"math"
+)
 
 // data are the observations
 type Model struct {
@@ -16,8 +19,7 @@ func (m *Model) Observe(x []float64) float64 {
 	vari := math.Exp(logv)
 	ll := 0.
 	for i := 0; i != len(m.Data); i++ {
-		d := m.Data[i] - mean
-		ll -= d*d/vari + logv
+		ll += Normal{m.Data[i]}.PDf(mean, logv)
 	}
 	return ll
 }

@@ -462,15 +462,21 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				)()
 			}
 			switch n := n.(type) {
+			case *ast.BasicLit:
+				t, basic := m.info.TypeOf(n).(*types.Basic)
+				if !basic ||
+					!(t.Kind() == types.Float64 ||
+				  	t.Kind() == types.UntypedFloat) {
+					return false
+				}
 			case *ast.CompositeLit:
 				pos := m.fset.Position(n.Pos())
 				log.Printf("WARNING: %v:%v:%v: composite literals "+
-					"are not differentiated yet; see "+
+				"are not differentiated yet; see "+
 					"https://bitbucket.org/dtolpin/infergo/issues/1.",
 					pos.Filename, pos.Line, pos.Column)
 				return false
-			case *ast.BasicLit,
-				*ast.IndexExpr, *ast.SelectorExpr,
+			case *ast.IndexExpr, *ast.SelectorExpr,
 				*ast.StarExpr, *ast.UnaryExpr, *ast.BinaryExpr:
 				// Expressions must be of type float64
 				e, _ := n.(ast.Expr)
