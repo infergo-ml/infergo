@@ -1,4 +1,4 @@
-// Learning the parameters of the Normal distribution from
+// Inferring parameters of the Normal distribution from
 // observations
 package model
 

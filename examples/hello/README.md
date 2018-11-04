@@ -1,3 +1,3 @@
 # Probabilistic 'hello world'
 
-Inferring the parameters of the Normal distribution.
+Inferring parameters of the Normal distribution.
