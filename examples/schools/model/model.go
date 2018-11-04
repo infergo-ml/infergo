@@ -38,8 +38,7 @@ func (m *Model) Observe(x []float64) float64 {
 	// mu, logtau, eta[J]
 	mu := x[0]
 	// Normal(0, vartau)
-	ll -= x[1]*x[1]/math.Exp(m.LogVtau) + 
-		m.LogVtau // Normal(0, vartau)
+	ll -= x[1]*x[1]/math.Exp(m.LogVtau) + m.LogVtau
 	tau := math.Exp(x[1])
 	eta := x[2:]
 
