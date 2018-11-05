@@ -1,15 +1,15 @@
 package model
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	. "bitbucket.org/dtolpin/infergo/dist/ad"
+	"bitbucket.org/dtolpin/infergo/ad"
 	"math"
 )
 
 type Model struct {
-	PPV            []int
-	NPages         int
-	PriorBandwidth float64
+	PPV		[]int
+	NPages		int
+	PriorBandwidth	float64
 }
 
 func (m *Model) Observe(x []float64) float64 {

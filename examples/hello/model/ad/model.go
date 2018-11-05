@@ -1,8 +1,8 @@
 package model
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	. "bitbucket.org/dtolpin/infergo/dist/ad"
+	"bitbucket.org/dtolpin/infergo/ad"
 )
 
 type Model struct {
