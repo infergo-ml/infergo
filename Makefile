@@ -1,7 +1,9 @@
 all: build
 
 PACKAGES=ad model infer mathx dist/ad cmd/deriv
+EXAMPLES=hello gmm schools ppv
 
+examples: build $(EXAMPLES)
 
 dist/ad/dist.go: dist/dist.go
 	deriv dist
@@ -19,25 +21,32 @@ GOFILES=ad/ad.go ad/elementals.go ad/tape.go \
 install: all test
 	for package in $(PACKAGES); do go install ./$$package; done
 
+
+clean-examples:
+	for x in $(EXAMPLES); do (cd examples/$$x && make clean); done
+
+clean: clean-examples
+	rm -f deriv
+
 # Examples
 #
-# Probabilistic Hello Wolrd: Inferring parameters of normal 
+# Probabilistic Hello Wolrd: Inferring parameters of normal
 # distribution
 .PHONY: hello
-hello: 
+hello:
 	(cd examples/hello && make)
 
 # Gaussian mixture model
 .PHONY: gmm
-gmm: 
+gmm:
 	(cd examples/gmm && make)
 
 #  8 schools
 .PHONY: schools
-schools: 
+schools:
 	(cd examples/schools && make)
 
 #  pages per visit
 .PHONY: ppv
-ppv: 
+ppv:
 	(cd examples/ppv && make)
