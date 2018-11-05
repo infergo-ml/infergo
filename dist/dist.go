@@ -2,16 +2,23 @@
 package dist
 
 import (
+    "bitbucket.org/dtolpin/infergo/model"
 	"math"
 )
 
+// Dist is the interface of a distribution
+type Dist interface {
+    model.Model
+    Logp(x ...float64) float64
+}
+
 // Normal distribution
-type normal struct{}
+type NormalDist struct{}
 
-var Normal normal
+var Normal NormalDist
 
-func (dist normal) Observe(x []float64) float64 {
-	return dist.Pdf(x[0], x[1], x[2])
+func (dist NormalDist) Observe(x []float64) float64 {
+	return dist.Logp(x...)
 }
 
 var log2pi float64
@@ -20,21 +27,23 @@ func init() {
 	log2pi = math.Log(2. * math.Pi)
 }
 
-func (_ normal) Pdf(x, mu, logv float64) float64 {
-	d := x - mu
+func (_ NormalDist) Logp(x ...float64) float64 {
+    y, mu, logv := x[0], x[1], x[2]
+	d := y - mu
 	vari := math.Exp(logv)
 	return -0.5 * (d*d/vari + logv + log2pi)
 }
 
 // Exponential distribution
-type expon struct{}
+type ExponDist struct{}
 
-var Expon expon
+var Expon ExponDist
 
-func (dist expon) Observe(x []float64) float64 {
-	return dist.Pdf(x[0], x[1])
+func (dist ExponDist) Observe(x []float64) float64 {
+	return dist.Logp(x...)
 }
 
-func (_ expon) Pdf(x, lambda float64) float64 {
-	return math.Log(lambda) - lambda*x
+func (_ ExponDist) Logp(x ...float64) float64 {
+    y, lambda := x[0], x[1]
+	return math.Log(lambda) - lambda*y
 }

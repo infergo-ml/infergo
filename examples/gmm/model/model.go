@@ -31,7 +31,7 @@ func (m *Model) Observe(x []float64) float64 {
 	for i := 0; i != len(m.Data); i++ {
 		var l float64
 		for j := 0; j != m.NComp; j++ {
-			lj := Normal.Pdf(m.Data[i], mean[j], logv[j])
+			lj := Normal.Logp(m.Data[i], mean[j], logv[j])
 			if j == 0 {
 				l = lj
 			} else {

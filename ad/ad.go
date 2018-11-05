@@ -438,7 +438,7 @@ func (m *model) typeAst(t types.Type, p token.Pos) ast.Expr {
 			file := m.pkg.Files[pos.Filename]
 			for _, is := range file.Imports {
 				// Remove quotes from the literal value.
-				path := is.Path.Value[1:len(is.Path.Value)-1]
+				path := is.Path.Value[1 : len(is.Path.Value)-1]
 				// Traverse the list of import to find the
 				// name of the file.
 				if pkg.Path() == path {
