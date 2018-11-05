@@ -311,7 +311,7 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 								t := m.info.TypeOf(spec.Names[i])
 								typedSpec := &ast.ValueSpec{
 									Names: spec.Names[i : i+1],
-									Type:  m.typeAst(t),
+									Type:  m.typeAst(t, n.Pos()),
 								}
 								// We override the first
 								// specification, and then append the
@@ -357,7 +357,7 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 						t := m.info.TypeOf(n.Lhs[i])
 						spec := &ast.ValueSpec{
 							Names: []*ast.Ident{ident},
-							Type:  m.typeAst(t),
+							Type:  m.typeAst(t, n.Pos()),
 						}
 						c.InsertBefore(&ast.DeclStmt{
 							Decl: &ast.GenDecl{
@@ -431,16 +431,38 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 
 // typeAst returns the AST for the given type. Used to
 // generate variable declarations.
-func (m *model) typeAst(t types.Type) ast.Expr {
+func (m *model) typeAst(t types.Type, p token.Pos) ast.Expr {
 	tast, err := parser.ParseExpr(types.TypeString(t,
 		// We must qualify the package by name to yield
 		// a syntactically correct type ast.
 		func(pkg *types.Package) string {
-			return pkg.Name()
+			pos := m.fset.Position(p)
+			file := m.pkg.Files[pos.Filename]
+			for _, is := range file.Imports {
+				// Remove quotes from the literal value.
+				path := is.Path.Value[1:len(is.Path.Value)-1]
+				// Traverse the list of import to find the
+				// name of the file.
+				if pkg.Path() == path {
+					switch {
+					case is.Name == nil:
+						return pkg.Name()
+					case is.Name.Name == ".":
+						return ""
+					case is.Name.Name != "_":
+						return is.Name.Name
+					}
+				}
+			}
+			// An object may have a type which does not have a
+			// name in the current file. We let the programmer
+			// fix this by adding the import.
+			panic(fmt.Sprintf("cannot find name for package %v",
+				pkg.Path()))
 		}))
 	if err != nil {
-		panic(fmt.Sprintf(
-			"cannot parse type %v: %v", t, err))
+		panic(fmt.Sprintf("cannot parse type %v: %v",
+			t, err))
 	}
 	return tast
 }

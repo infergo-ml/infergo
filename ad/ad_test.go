@@ -214,24 +214,29 @@ func (m Model) Observe(x []float64) float64 {
 		//====================================================
 		{`package qualified
 import "go/ast"
+import tok "go/token"
 
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
 	id := &ast.Ident{}
-	println(id)
+	pos := &tok.Position{}
+	println(id, pos)
 	return 0.
 }`,
 			//----------------------------------------------------
 			`package qualified
 import "go/ast"
+import tok "go/token"
 
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
 	var id *ast.Ident
 	id = &ast.Ident{}
-	println(id)
+	var pos *tok.Position
+	pos = &tok.Position{}
+	println(id, pos)
 	return 0.
 }`,
 		},
