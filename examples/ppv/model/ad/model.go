@@ -32,8 +32,8 @@ func (m *Model) Observe(x []float64) float64 {
 	}
 	var target float64
 	ad.Assignment(&target, ad.Call(func(_vararg []float64) {
-		Expon.Pdf(0, 0)
-	}, 2, &bandwidth, ad.Arithmetic(ad.OpDiv, ad.Value(1.), &m.PriorBandwidth)))
+		Expon.Logp(_vararg...)
+	}, 0, &bandwidth, ad.Arithmetic(ad.OpDiv, ad.Value(1.), &m.PriorBandwidth)))
 
 	for _, ppv := range m.PPV {
 		for j := 0; j != m.NPages; j = j + 1 {

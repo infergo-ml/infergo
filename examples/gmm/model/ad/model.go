@@ -40,8 +40,8 @@ func (m *Model) Observe(x []float64) float64 {
 		for j := 0; j != m.NComp; j = j + 1 {
 			var lj float64
 			ad.Assignment(&lj, ad.Call(func(_vararg []float64) {
-				Normal.Pdf(0, 0, 0)
-			}, 3, &m.Data[i], &mean[j], &logv[j]))
+				Normal.Logp(_vararg...)
+			}, 0, &m.Data[i], &mean[j], &logv[j]))
 			if j == 0 {
 				ad.Assignment(&l, &lj)
 			} else {
