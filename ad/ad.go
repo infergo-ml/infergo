@@ -17,25 +17,23 @@ package ad
 //   4. Non-dummy identifiers starting with '_' are reserved.
 //
 // Functions are considered elementals (and must have a
-// registered derivative):
-//   a) if they are defined in a different package, and
-//   b) their signature is of kind
-//                  func (float64, ...float64) float64
-//      that is, at least one float64 argument and float64
-//      return value. For example, function
-//                  func (float64, float64, float64) float64
-//      is considered elemental, while functions
-//                  func ([]float64) float64
-//                  func (int, float64) float64
-//      are not.
+// registered derivative) if their signature is of kind
+//         func (float64, ...float64) float64
+// that is, at least one float64 argument and float64
+// return value. For example, function
+//         func (float64, float64, float64) float64
+// is considered elemental, while functions
+//         func ([]float64) float64
+//         func (int, float64) float64
+// are not.
 //
 // Derivatives do not propagate through a function that is not
 // an elemental or a call to a model method. If a derivative is
 // not registered for an elemental, calling the elemental in a
 // differentiated context will cause a run-time error.
 //
-// The differentiated model is put into subpackage 'ad'
-// of the model's package.
+// The differentiated model is put into subpackage 'ad' of the
+// model's package, with the same name as the original package.
 
 import (
 	"bufio"
