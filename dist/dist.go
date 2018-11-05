@@ -1,4 +1,8 @@
 // Package dist contains differentiatable distribution models.
+// The package is automatically differentiated by deriv during
+// build. In models, package
+//         "bitbucket.org/dtolpin/infergo/dist/ad"
+// should be imported instead for normal use.
 package dist
 
 import (
