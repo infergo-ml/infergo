@@ -18,7 +18,7 @@ var (
 	NCOMP int     = 2
 	RATE  float64 = 0.01
 	DECAY float64 = 0.998
-	GAMMA float64 = 0.5
+	GAMMA float64 = 0.9
 	NITER int     = 1000
 )
 
@@ -31,7 +31,7 @@ func init() {
 	flag.IntVar(&NCOMP, "ncomp", NCOMP, "number of components")
 	flag.Float64Var(&RATE, "rate", RATE, "learning rate")
 	flag.Float64Var(&DECAY, "decay", DECAY, "rate decay")
-	flag.Float64Var(&GAMMA, "gamma", GAMMA, "gradient momentum factor")
+	flag.Float64Var(&GAMMA, "gamma", GAMMA, "momentum factor")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	log.SetFlags(0)
 }
@@ -105,7 +105,7 @@ func main() {
 	// Print the result.
 	log.Printf("Components:\n")
 	for j := 0; j != m.NComp; j++ {
-		log.Printf("\t%d: 𝜇=%.4g, 𝜎²=%.4g\n",
-			j, x[2*j], math.Exp(x[2*j+1]))
+		log.Printf("\t%d: mean=%.4g, stddev=%.4g\n",
+			j, x[2*j], math.Exp(0.5 * x[2*j+1]))
 	}
 }

@@ -87,7 +87,6 @@ func TestAdam(t *testing.T) {
 	opt := &Adam{
 		Rate:  0.1,
 	}
-	opt.SetDefaults()
 	m := &constGrad{
 		grad: []float64{1., 2.},
 	}

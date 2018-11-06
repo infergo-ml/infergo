@@ -17,6 +17,7 @@ import (
 
 var (
 	RATE      float64 = 0.01
+	GAMMA     float64 = 0.9
 	NITER     int     = 1000
 	LOGVTAU   float64 = 1.
 	LOGVETA   float64 = 1.
@@ -30,6 +31,7 @@ func init() {
 		flag.PrintDefaults()
 	}
 	flag.Float64Var(&RATE, "rate", RATE, "learning rate")
+	flag.Float64Var(&GAMMA, "gamma", GAMMA, "momentum factor")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	flag.Float64Var(&LOGVTAU, "logvtau", LOGVTAU,
 		"log variance of tau prior")
@@ -79,17 +81,13 @@ func main() {
 			Decay: math.Pow(0.1, 1./float64(NITER)),
 		}
 		if optimizer == "momentum" {
-			opt.(*infer.Momentum).SetDefaults()
+			opt.(*infer.Momentum).Gamma = GAMMA
 		}
 	case "adam":
-		opt = &infer.Adam{
-			Rate: RATE,
-		}
-		opt.(*infer.Adam).SetDefaults()
+		opt = &infer.Adam{Rate: RATE}
 	default:
 		fmt.Printf("unknown optimizer: %q", OPTIMIZER)
 		os.Exit(1)
-
 	}
 	for iter := 0; iter != NITER; iter++ {
 		opt.Step(m, x)
@@ -109,5 +107,5 @@ func main() {
 	fmt.Printf("\n")
 	ll := m.Observe(x)
 	ad.Pop()
-	fmt.Printf("Log-likelihood: %.4g ⇒ %.4g\n", ll0, ll)
+	fmt.Printf("Log-likelihood: %.4g => %.4g\n", ll0, ll)
 }

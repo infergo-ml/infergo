@@ -26,14 +26,6 @@ type Momentum struct {
 	u     []float64 // last update
 }
 
-// SetDefaults sets default Gamma for the Momentum optimizer.
-func (opt *Momentum) SetDefaults() {
-	if opt.Gamma == 0. {
-		opt.Gamma = 0.9
-	}
-}
-
-
 // Step implements the Optimizer interface.
 func (opt *Momentum) Step(
 	m model.Model,
@@ -69,20 +61,6 @@ type Adam struct {
 	b2t   float64   // Beta2^t
 }
 
-// SetDefaults sets default parameter values
-// for the Adam optimizer.
-func (opt *Adam) SetDefaults() {
-	if opt.Beta1 == 0. {
-		opt.Beta1 = 0.9
-	}
-	if opt.Beta2 == 0. {
-		opt.Beta2 = 0.999
-	}
-	if opt.Eps == 0. {
-		opt.Eps = 1E-8
-	}
-}
-
 // Step implements the Optimizer interface.
 func (opt *Adam) Step(
 	m model.Model,
@@ -93,7 +71,8 @@ func (opt *Adam) Step(
 ) {
 	ll, grad = m.Observe(x), ad.Gradient()
 	if opt.u == nil {
-		// momenta are initalized to zeros.
+		opt.setDefaults()
+		// The momenta are initalized to zeros.
 		opt.u = make([]float64, len(x))
 		opt.v = make([]float64, len(x))
 		opt.b1t = opt.Beta1
@@ -116,5 +95,21 @@ func (opt *Adam) Step(
 	// Update momentum factors for the next step.
 	opt.b1t *= opt.Beta1
 	opt.b2t *= opt.Beta2
+
 	return ll, grad
 }
+
+// setDefaults sets default parameter values
+// for the Adam optimizer unless initialized.
+func (opt *Adam) setDefaults() {
+	if opt.Beta1 == 0. {
+		opt.Beta1 = 0.9
+	}
+	if opt.Beta2 == 0. {
+		opt.Beta2 = 0.999
+	}
+	if opt.Eps == 0. {
+		opt.Eps = 1E-8
+	}
+}
+

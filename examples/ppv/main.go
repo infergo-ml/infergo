@@ -18,8 +18,8 @@ import (
 
 var (
 	RATE  float64 = 0.01
-	DECAY float64 = 0.997
-	GAMMA float64 = 0.5
+	DECAY float64 = 0.998
+	GAMMA float64 = 0.9
 	NITER int     = 1000
 	EPS   float64 = 1E-6
 )
