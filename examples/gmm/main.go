@@ -106,6 +106,6 @@ func main() {
 	log.Printf("Components:\n")
 	for j := 0; j != m.NComp; j++ {
 		log.Printf("\t%d: mean=%.4g, stddev=%.4g\n",
-			j, x[2*j], math.Exp(0.5 * x[2*j+1]))
+			j, x[2*j], math.Exp(0.5*x[2*j+1]))
 	}
 }

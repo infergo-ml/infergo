@@ -85,7 +85,7 @@ func TestMomentum(t *testing.T) {
 
 func TestAdam(t *testing.T) {
 	opt := &Adam{
-		Rate:  0.1,
+		Rate: 0.1,
 	}
 	m := &constGrad{
 		grad: []float64{1., 2.},
