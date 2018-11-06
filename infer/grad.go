@@ -112,4 +112,3 @@ func (opt *Adam) setDefaults() {
 		opt.Eps = 1E-8
 	}
 }
-
