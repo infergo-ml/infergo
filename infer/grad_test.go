@@ -6,7 +6,6 @@ import (
 	"bitbucket.org/dtolpin/infergo/ad"
 	"math"
 	"testing"
-	"fmt"
 )
 
 // A model that returns the constGrad gradient,
