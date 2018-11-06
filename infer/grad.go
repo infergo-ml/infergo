@@ -70,6 +70,7 @@ func (opt *Adam) Step(
 	grad []float64,
 ) {
 	ll, grad = m.Observe(x), ad.Gradient()
+
 	if opt.u == nil {
 		opt.setDefaults()
 		// The momenta are initalized to zeros.
@@ -78,6 +79,7 @@ func (opt *Adam) Step(
 		opt.b1t = opt.Beta1
 		opt.b2t = opt.Beta2
 	}
+
 	for i := 0; i != len(x); i++ {
 		// Compute the new momenta.
 		u := opt.Beta1*opt.u[i] + (1.-opt.Beta1)*grad[i]
@@ -92,6 +94,7 @@ func (opt *Adam) Step(
 		// Update the parameters.
 		x[i] += opt.Rate / (math.Sqrt(v) + opt.Eps) * u
 	}
+
 	// Update momentum factors for the next step.
 	opt.b1t *= opt.Beta1
 	opt.b2t *= opt.Beta2
