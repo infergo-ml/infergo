@@ -18,8 +18,8 @@ var (
 	MEAN  float64 = 0.
 	LOGV  float64 = 0.
 	RATE  float64 = 0.01
-	DECAY float64 = 0.995
-	NITER int     = 100
+	DECAY float64 = 0.998
+	NITER int     = 1000
 )
 
 func init() {

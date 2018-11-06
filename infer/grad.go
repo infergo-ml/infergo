@@ -26,6 +26,14 @@ type Momentum struct {
 	u     []float64 // last update
 }
 
+// SetDefaults sets default Gamma for the Momentum optimizer.
+func (opt *Momentum) SetDefaults() {
+	if opt.Gamma == 0. {
+		opt.Gamma = 0.9
+	}
+}
+
+
 // Step implements the Optimizer interface.
 func (opt *Momentum) Step(
 	m model.Model,
@@ -103,11 +111,10 @@ func (opt *Adam) Step(
 		v /= (1. - opt.b2t)
 
 		// Update the parameters.
-		x[i] += opt.Rate / ((math.Sqrt(v) + opt.Eps) * u)
-
-		// Update momentum factors for the next step.
-		opt.b1t *= opt.Beta1
-		opt.b2t *= opt.Beta2
+		x[i] += opt.Rate / (math.Sqrt(v) + opt.Eps) * u
 	}
+	// Update momentum factors for the next step.
+	opt.b1t *= opt.Beta1
+	opt.b2t *= opt.Beta2
 	return ll, grad
 }

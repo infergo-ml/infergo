@@ -17,9 +17,9 @@ import (
 var (
 	NCOMP int     = 2
 	RATE  float64 = 0.01
-	DECAY float64 = 0.995
+	DECAY float64 = 0.998
 	GAMMA float64 = 0.5
-	NITER int     = 100
+	NITER int     = 1000
 )
 
 func init() {

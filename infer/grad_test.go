@@ -6,6 +6,7 @@ import (
 	"bitbucket.org/dtolpin/infergo/ad"
 	"math"
 	"testing"
+	"fmt"
 )
 
 // A model that returns the constGrad gradient,
@@ -42,7 +43,7 @@ func TestModel(t *testing.T) {
 	}
 }
 
-func TestGrad(t *testing.T) {
+func TestMomentum(t *testing.T) {
 	opt := &Momentum{
 		Rate:  0.1,
 		Decay: 0.5,
@@ -77,6 +78,36 @@ func TestGrad(t *testing.T) {
 	for i := 0; i != len(x); i++ {
 		if math.Abs(xNext[i]-x[i]) > 1E-6 {
 			t.Errorf("wrong third update (momentum): "+
+				"got x[%d] = %.6g, want %.6g",
+				i, x[i], xNext[i])
+		}
+	}
+}
+
+func TestAdam(t *testing.T) {
+	opt := &Adam{
+		Rate:  0.1,
+	}
+	opt.SetDefaults()
+	m := &constGrad{
+		grad: []float64{1., 2.},
+	}
+	x := []float64{0., 0.}
+	xNext := []float64{0.1, 0.1}
+	ll, grad := opt.Step(m, x)
+	fmt.Printf("%v %v %v\n", ll, grad, x)
+	fmt.Printf("x[0] = %v\nx[1]= %v\n", x[0], x[1])
+	for i := 0; i != len(x); i++ {
+		if math.Abs(xNext[i]-x[i]) > 1E-6 {
+			t.Errorf("wrong first update: got x[%d] = %.6g, "+
+				"want %.6g", i, x[i], xNext[i])
+		}
+	}
+	opt.Step(m, x)
+	xNext = []float64{0.2, 0.2}
+	for i := 0; i != len(x); i++ {
+		if math.Abs(xNext[i]-x[i]) > 1E-6 {
+			t.Errorf("wrong second update (decay): "+
 				"got x[%d] = %.6g, want %.6g",
 				i, x[i], xNext[i])
 		}

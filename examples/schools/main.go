@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -16,9 +17,10 @@ import (
 
 var (
 	RATE    float64 = 0.01
-	NITER   int     = 10000
+	NITER   int     = 1000
 	LOGVTAU float64 = 1.
 	LOGVETA float64 = 1.
+	OPTIMIZER string = "Adam"
 )
 
 func init() {
@@ -33,6 +35,8 @@ func init() {
 		"log variance of tau prior")
 	flag.Float64Var(&LOGVETA, "logveta", LOGVETA,
 		"log variance of eta priors")
+	flag.StringVar(&OPTIMIZER, "optimizer", OPTIMIZER,
+		"optimizer (Gradient, Momentum or Adam)")
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
@@ -66,11 +70,27 @@ func main() {
 	ll0 := m.Observe(x)
 	ad.Pop()
 
-	// Run the optimizer
-	opt := &infer.Adam{
-		Rate: RATE,
+	// Create and run the optimizer
+	var opt infer.Grad
+	switch optimizer := strings.ToLower(OPTIMIZER); optimizer {
+	case "gradient", "momentum":
+		opt = &infer.Momentum {
+			Rate: RATE,
+			Decay: math.Pow(0.1, 1. / float64(NITER)),
+		}
+		if optimizer == "momentum" {
+			opt.(*infer.Momentum).SetDefaults()
+		}
+	case "adam":
+		opt = &infer.Adam{
+			Rate: RATE,
+		}
+		opt.(*infer.Adam).SetDefaults()
+	default:
+		fmt.Printf("unknown optimizer: %q", OPTIMIZER)
+		os.Exit(1)
+
 	}
-	opt.SetDefaults()
 	for iter := 0; iter != NITER; iter++ {
 		opt.Step(m, x)
 	}
