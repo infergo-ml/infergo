@@ -8,31 +8,37 @@ import (
 	"io"
 	"log"
 	"math"
+    "math/rand"
 	"os"
 	"strconv"
+    "time"
 )
 
 // Command line arguments
 
 var (
-	MEAN  float64 = 0.
-	LOGV  float64 = 0.
 	RATE  float64 = 0.01
 	DECAY float64 = 0.998
+    GAMMA float64 = 0.9
 	NITER int     = 1000
+    NSTEPS int    = 10
+    STEP  float64 = 0.1
 )
 
+
 func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
 	flag.Usage = func() {
 		log.Printf(`Inferring parameters of the normal distribution:
 		hello [OPTIONS] [data.csv]` + "\n")
 		flag.PrintDefaults()
 	}
-	flag.Float64Var(&MEAN, "mean", MEAN, "initial mean")
-	flag.Float64Var(&LOGV, "logv", LOGV, "initial log var")
 	flag.Float64Var(&RATE, "rate", RATE, "learning rate")
 	flag.Float64Var(&DECAY, "decay", DECAY, "rate decay")
+    flag.Float64Var(&GAMMA, "gamma", GAMMA, "momentum factor")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
+	flag.IntVar(&NSTEPS, "nsteps", NSTEPS, "number of leapfrog steps")
+	flag.Float64Var(&STEP, "step", STEP, "leapfrog step size")
 	log.SetFlags(0)
 }
 
@@ -86,7 +92,8 @@ func main() {
 	sampleLogv := math.Log(
 		s2/float64(len(m.Data)) - sampleMean*sampleMean)
 
-	x := []float64{MEAN, LOGV}
+    // First estimate the maximum likelihood values.
+	x := []float64{rand.NormFloat64(), rand.NormFloat64()}
 	ll := m.Observe(x)
 	printState := func(when string) {
 		log.Printf(`
@@ -107,11 +114,38 @@ func main() {
 	opt := &infer.Momentum{
 		Rate:  RATE,
 		Decay: DECAY,
+        Gamma: GAMMA,
 	}
 	for iter := 0; iter != NITER; iter++ {
 		opt.Step(m, x)
 	}
 
 	ll = m.Observe(x)
-	printState("Finally")
+    printState("Maximum likelihood:")
+
+    // Now let's infer the posterior with HMC.
+    x = []float64{rand.NormFloat64(), rand.NormFloat64()}
+    hmc := &infer.HMC {
+        L: NSTEPS,
+        Eps: STEP,
+    }
+	samples := make(chan []float64)
+	hmc.Sample(m, x, samples)
+	mean, logv := 0., 0.
+
+	// Burn
+	for i := 0; i != NITER; i++ {
+		<-samples
+	}
+
+	// Collect after burn-in
+	for i := 0; i != NITER; i++ {
+        x = <-samples
+		mean += x[0]
+        logv += x[1]
+	}
+    hmc.Stop()
+    x[0], x[1] = mean/float64(NITER), logv/float64(NITER)
+    ll = m.Observe(x)
+    printState("Posterior means:")
 }
