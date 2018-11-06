@@ -18,11 +18,12 @@ package ad
 //
 // Functions are considered elementals (and must have a
 // registered derivative) if their signature is of kind
-//         func (float64, ...float64) float64
-// that is, at least one float64 argument and float64
-// return value. For example, function
+//         func (float64, float64*) float64
+// that is, one or more non-variadic float64 argument and
+// float64 return value. For example, function
 //         func (float64, float64, float64) float64
 // is considered elemental, while functions
+//         func (...float64) float64
 //         func ([]float64) float64
 //         func (int, float64) float64
 // are not.
