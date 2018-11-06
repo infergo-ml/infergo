@@ -1,8 +1,8 @@
 package dist
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	"math"
+	"bitbucket.org/dtolpin/infergo/ad"
 )
 
 type normal struct{}
