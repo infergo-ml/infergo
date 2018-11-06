@@ -16,11 +16,11 @@ import (
 // Command line arguments
 
 var (
-	RATE    float64 = 0.01
-	NITER   int     = 1000
-	LOGVTAU float64 = 1.
-	LOGVETA float64 = 1.
-	OPTIMIZER string = "Adam"
+	RATE      float64 = 0.01
+	NITER     int     = 1000
+	LOGVTAU   float64 = 1.
+	LOGVETA   float64 = 1.
+	OPTIMIZER string  = "Adam"
 )
 
 func init() {
@@ -74,9 +74,9 @@ func main() {
 	var opt infer.Grad
 	switch optimizer := strings.ToLower(OPTIMIZER); optimizer {
 	case "gradient", "momentum":
-		opt = &infer.Momentum {
-			Rate: RATE,
-			Decay: math.Pow(0.1, 1. / float64(NITER)),
+		opt = &infer.Momentum{
+			Rate:  RATE,
+			Decay: math.Pow(0.1, 1./float64(NITER)),
 		}
 		if optimizer == "momentum" {
 			opt.(*infer.Momentum).SetDefaults()
