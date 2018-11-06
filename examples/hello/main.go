@@ -121,7 +121,7 @@ func main() {
 	}
 
 	ll = m.Observe(x)
-    printState("Maximum likelihood:")
+    printState("Maximum likelihood")
 
     // Now let's infer the posterior with HMC.
     x = []float64{rand.NormFloat64(), rand.NormFloat64()}
@@ -147,5 +147,5 @@ func main() {
     hmc.Stop()
     x[0], x[1] = mean/float64(NITER), logv/float64(NITER)
     ll = m.Observe(x)
-    printState("Posterior means:")
+    printState("Posterior means")
 }

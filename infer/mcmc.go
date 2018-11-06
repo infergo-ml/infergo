@@ -77,9 +77,9 @@ func leapfrog(
 
 // Vanilla Hamiltonian Monte Carlo Sampler.
 type HMC struct {
+    sampler
 	L   int     // number of leapfrog steps
 	Eps float64 // leapfrog step size
-    sampler
 }
 
 func (hmc *HMC) Sample(
