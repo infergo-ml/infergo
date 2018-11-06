@@ -15,12 +15,10 @@ import (
 // Command line arguments
 
 var (
-	RATE     float64 = 0.01
-	DECAY    float64 = 0.9998
-	MOMENTUM float64 = 0.5
-	NITER    int     = 10000
-	LOGVTAU  float64 = 1.
-	LOGVETA  float64 = 1.
+	RATE    float64 = 0.01
+	NITER   int     = 10000
+	LOGVTAU float64 = 1.
+	LOGVETA float64 = 1.
 )
 
 func init() {
@@ -30,9 +28,6 @@ func init() {
 		flag.PrintDefaults()
 	}
 	flag.Float64Var(&RATE, "rate", RATE, "learning rate")
-	flag.Float64Var(&DECAY, "decay", DECAY, "rate decay")
-	flag.Float64Var(&MOMENTUM, "momentum", MOMENTUM,
-		"gradient momentum")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	flag.Float64Var(&LOGVTAU, "logvtau", LOGVTAU,
 		"log variance of tau prior")
@@ -72,11 +67,10 @@ func main() {
 	ad.Pop()
 
 	// Run the optimizer
-	opt := &infer.Grad{
-		Rate:     RATE,
-		Decay:    DECAY,
-		Momentum: MOMENTUM,
+	opt := &infer.Adam{
+		Rate: RATE,
 	}
+	opt.SetDefaults()
 	for iter := 0; iter != NITER; iter++ {
 		opt.Step(m, x)
 	}

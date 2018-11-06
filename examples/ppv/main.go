@@ -17,11 +17,11 @@ import (
 // Command line arguments
 
 var (
-	RATE     float64 = 0.01
-	DECAY    float64 = 0.997
-	MOMENTUM float64 = 0.5
-	NITER    int     = 1000
-	EPS      float64 = 1E-6
+	RATE  float64 = 0.01
+	DECAY float64 = 0.997
+	GAMMA float64 = 0.5
+	NITER int     = 1000
+	EPS   float64 = 1E-6
 )
 
 func init() {
@@ -32,7 +32,7 @@ func init() {
 	}
 	flag.Float64Var(&RATE, "rate", RATE, "learning rate")
 	flag.Float64Var(&DECAY, "decay", DECAY, "rate decay")
-	flag.Float64Var(&MOMENTUM, "momentum", MOMENTUM, "gradient momentum")
+	flag.Float64Var(&GAMMA, "gamma", GAMMA, "gradient momentum factor")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	flag.Float64Var(&EPS, "eps", EPS, "target accuracy")
 	log.SetFlags(0)
@@ -103,10 +103,10 @@ func main() {
 	ad.Pop()
 
 	// Run the optimizer
-	opt := &infer.Grad{
-		Rate:     RATE,
-		Decay:    DECAY,
-		Momentum: MOMENTUM,
+	opt := &infer.Momentum{
+		Rate:  RATE,
+		Decay: DECAY,
+		Gamma: GAMMA,
 	}
 	var ll float64
 	var iter int

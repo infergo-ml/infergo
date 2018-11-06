@@ -43,7 +43,7 @@ func TestModel(t *testing.T) {
 }
 
 func TestGrad(t *testing.T) {
-	opt := &Grad{
+	opt := &Momentum{
 		Rate:  0.1,
 		Decay: 0.5,
 	}
@@ -71,8 +71,8 @@ func TestGrad(t *testing.T) {
 		}
 	}
 	// Update with momentum
-	opt.Momentum = 0.25
-	xNext = []float64{0.18125, 0.3625}
+	opt.Gamma = 0.25
+	xNext = []float64{0.1875, 0.375}
 	opt.Step(m, x)
 	for i := 0; i != len(x); i++ {
 		if math.Abs(xNext[i]-x[i]) > 1E-6 {

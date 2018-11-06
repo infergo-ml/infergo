@@ -104,7 +104,7 @@ func main() {
 	printState("Initially")
 
 	// Run the optimizer
-	opt := &infer.Grad{
+	opt := &infer.Momentum{
 		Rate:  RATE,
 		Decay: DECAY,
 	}
