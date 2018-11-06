@@ -107,5 +107,5 @@ func main() {
 	fmt.Printf("\n")
 	ll := m.Observe(x)
 	ad.Pop()
-	fmt.Printf("Log-likelihood: %.4g => %.4g\n", ll0, ll)
+	fmt.Printf("Log-likelihood: %.4g ⇒ %.4g\n", ll0, ll)
 }
