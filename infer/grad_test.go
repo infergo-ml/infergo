@@ -93,7 +93,7 @@ func TestAdam(t *testing.T) {
 	}
 	x := []float64{0., 0.}
 	xNext := []float64{0.1, 0.1}
-	ll, grad := opt.Step(m, x)
+	opt.Step(m, x)
 	for i := 0; i != len(x); i++ {
 		if math.Abs(xNext[i]-x[i]) > 1E-6 {
 			t.Errorf("wrong first update: got x[%d] = %.6g, "+
