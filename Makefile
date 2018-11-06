@@ -1,6 +1,6 @@
 all: build
 
-PACKAGES=ad model infer mathx dist/ad cmd/deriv
+PACKAGES=ad model infer mathx dist dist/ad cmd/deriv
 EXAMPLES=hello gmm schools ppv
 
 examples: build $(EXAMPLES)
