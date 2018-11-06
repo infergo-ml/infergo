@@ -90,13 +90,13 @@ func (hmc *HMC) Sample(
 	hmc.samples = samples // Stop needs access to samples
 	go func() {
 		backup := make([]float64, len(x))
+		r := make([]float64, len(x))
 		for iter := 0; ; iter++ {
 			if hmc.stop {
 				close(samples)
 				break
 			}
 			// sample the next r
-			r := make([]float64, len(x))
 			for i := 0; i != len(x); i++ {
 				r[i] = rand.NormFloat64()
 			}
