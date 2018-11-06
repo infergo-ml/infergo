@@ -95,8 +95,6 @@ func TestAdam(t *testing.T) {
 	x := []float64{0., 0.}
 	xNext := []float64{0.1, 0.1}
 	ll, grad := opt.Step(m, x)
-	fmt.Printf("%v %v %v\n", ll, grad, x)
-	fmt.Printf("x[0] = %v\nx[1]= %v\n", x[0], x[1])
 	for i := 0; i != len(x); i++ {
 		if math.Abs(xNext[i]-x[i]) > 1E-6 {
 			t.Errorf("wrong first update: got x[%d] = %.6g, "+
