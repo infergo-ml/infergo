@@ -99,8 +99,8 @@ func (opt *Adam) Step(
 	return ll, grad
 }
 
-// setDefaults sets default parameter values
-// for the Adam optimizer unless initialized.
+// setDefaults sets default parameter values for the Adam
+// optimizer unless initialized.
 func (opt *Adam) setDefaults() {
 	if opt.Beta1 == 0. {
 		opt.Beta1 = 0.9
