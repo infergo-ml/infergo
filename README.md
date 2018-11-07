@@ -51,7 +51,7 @@ m := &Model{[]float64{
 mean, logv := 0., 0.
 x := []float64{mean, logv}
 	
-// Optimizing
+// Optimiziation
 opt := &infer.GD{
     Rate:  -RATE,
     Decay: DECAY,
@@ -59,7 +59,17 @@ opt := &infer.GD{
 for iter := 0; iter != NITER; iter++ {
     opt.Step(m, x)
 }
-
-// Results
 mean, logv := x[0], x[1]
+
+// Posterior
+hmc := &infer.HMC{
+	L:   NSTEPS,
+	Eps: STEP,
+}
+samples := make(chan []float64)
+hmc.Sample(m, x, samples)
+for i := 0; i != NITER; i++ {
+	x = <-samples
+}
+hmc.Stop()
 ```
