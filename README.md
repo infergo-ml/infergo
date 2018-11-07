@@ -53,7 +53,7 @@ x := []float64{mean, logv}
 	
 // Optimiziation
 opt := &infer.GD{
-    Rate:  -RATE,
+    Rate:  RATE,
     Decay: DECAY,
 }
 for iter := 0; iter != NITER; iter++ {
