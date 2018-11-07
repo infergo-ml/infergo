@@ -29,18 +29,26 @@ type sampler struct {
 // Helper functions
 
 // Stop stops a sampler gracefully, using the samples channel
-// for synchronization. A part of the MCMC interface.
-// samplers.
+// for synchronization. Stop must be called before further calls
+// to differentiated code. A part of the MCMC interface. 
 func (s *sampler) Stop() {
 	s.stop = true
+	// The differentiated code is not thread-safe, hence
+	// we must exhaust samples before returning from Stop,
+	// so that an Observe called afterwards does not overlap
+	// with an Observe called in the sampler.
 	for {
 		select {
 		case _, ok := <-s.samples:
 			if !ok { // channel closed, safe to leave
 				return
 			}
+			// Discard the sample and continue.
 		default:
-			time.Sleep(1)
+			// No data but the channel is open, the sampler is
+			// computing a sample. Wait for the computation to
+			// complete.
+			time.Sleep(1000) // one millisecond
 		}
 	}
 }
@@ -96,12 +104,12 @@ func (hmc *HMC) Sample(
 				close(samples)
 				break
 			}
-			// sample the next r
+			// Sample the next r.
 			for i := 0; i != len(x); i++ {
 				r[i] = rand.NormFloat64()
 			}
 
-			// Back up the current value of x
+			// Back up the current value of x.
 			copy(backup, x)
 
 			l0, grad := m.Observe(x), ad.Gradient()
@@ -118,7 +126,7 @@ func (hmc *HMC) Sample(
 				copy(x, backup)
 			}
 
-			// write a sample to the channel
+			// Write a sample to the channel.
 			sample := make([]float64, len(x))
 			copy(sample, x)
 			samples <- sample
