@@ -10,10 +10,10 @@ MIT license (see [LICENSE](LICENSE))
 
 \[[more examples](https://bitbucket.org/dtolpin/infergo/src/master/examples)\]
 
-### Model
-
 Learning parameters of the Normal distribution from
-observations:
+observations.
+
+### Model
 
 ```Go
 type Model struct {
