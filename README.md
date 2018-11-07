@@ -42,7 +42,7 @@ mean, logv := 0., 0.
 x := []float64{mean, logv}
 	
 // Optimiziation
-opt := &infer.GD{
+opt := &infer.Momentum{
     Rate:  0.01,
     Decay: 0.998,
 }
