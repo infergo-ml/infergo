@@ -24,9 +24,8 @@ func TestEnergy(t *testing.T) {
 	}
 }
 
-// constGrad is defined in infer/infer_test.go
-
 func TestLeapfrog(t *testing.T) {
+	// constGrad is defined in infer/infer_test.go
 	m := &constGrad{
 		grad: []float64{0.5, 1.5},
 	}
