@@ -212,6 +212,31 @@ func (m Model) Observe(x []float64) float64 {
 }`,
 		},
 		//====================================================
+		{`package definesome
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	err := "success"
+	a, err := 0, "failure"
+	println(a, err)
+	return 1.
+}`,
+			//----------------------------------------------------
+			`package definesome
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	var err string
+	err = "success"
+	var a int
+	a, err = 0, "failure"
+	println(a, err)
+	return 1.
+}`,
+		},
+		//====================================================
 		{`package qualified
 import "go/ast"
 import tok "go/token"

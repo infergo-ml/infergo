@@ -283,7 +283,7 @@ func (nuts *NUTS) buildTree(
 	}
 }
 
-// uTurn returns true iff there is a u turn.
+// uTurn returns true iff there is a u-turn.
 func uTurn(xl, rl, xr, rr []float64) bool {
 	// Dot products of changes and moments to
 	// stop on U-turns.

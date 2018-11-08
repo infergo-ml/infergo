@@ -351,6 +351,13 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 					// Declaration.
 					for i := 0; i != len(n.Lhs); i++ {
 						ident := n.Lhs[i].(*ast.Ident)
+
+						obj := m.info.ObjectOf(ident)
+						if ident.Pos() != obj.Pos() {
+							// Declared earlier
+							continue
+						}
+
 						// The shortest way from go/types to go/ast
 						// is to stringify and reparse.
 						t := m.info.TypeOf(n.Lhs[i])
