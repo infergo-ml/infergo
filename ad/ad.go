@@ -655,7 +655,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					asgn = callExpr("ParallelAssignment",
 						append(n.Lhs, n.Rhs...)...)
 				}
-				stmt := &ast.ExprStmt{asgn}
+				stmt := &ast.ExprStmt{X: asgn}
 				c.Replace(stmt)
 				ontape = false
 			case *ast.CallExpr:
@@ -747,7 +747,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 		foreign = m.setupStmt(method)
 	} else {
 		foreign = &ast.ExprStmt{
-			&ast.CallExpr{
+			X: &ast.CallExpr{
 				Fun: &ast.Ident{Name: "panic"},
 				Args: []ast.Expr{
 					&ast.BasicLit{
@@ -785,9 +785,7 @@ func (m *model) setupStmt(method *ast.FuncDecl) ast.Stmt {
 	} else {
 		arg = param.Names[0]
 	}
-	setup := &ast.ExprStmt{
-		callExpr("Setup", arg),
-	}
+	setup := &ast.ExprStmt{X: callExpr("Setup", arg)}
 	return setup
 }
 
@@ -833,9 +831,7 @@ func (m *model) enterStmt(method *ast.FuncDecl) ast.Stmt {
 			ifield = 0
 		}
 	}
-	enter := &ast.ExprStmt{
-		callExpr("Enter", params...),
-	}
+	enter := &ast.ExprStmt{X: callExpr("Enter", params...)}
 	return enter
 }
 
