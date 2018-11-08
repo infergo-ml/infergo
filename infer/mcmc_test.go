@@ -191,6 +191,14 @@ func inferMeanStddev(
 // Test MCMC samplers for basic convergence. Empirical mean and
 // stddev should be around the inferred mean and stddev.
 func TestSamplers(t *testing.T) {
+    nattempts := 3
+    niter := 100
+    prec := 1E-2
+    if testing.Short() {
+        // just kicking tyres
+        niter = 10
+        prec = 1E-1
+    }
 	for _, c := range []struct {
 		sampler          func() MCMC
 		nattempts, niter int
@@ -203,8 +211,8 @@ func TestSamplers(t *testing.T) {
 					Eps: 0.05,
 				}
 			},
-			3, 100,
-			1E-2,
+			nattempts, niter,
+			prec,
 		},
 		{
 			func() MCMC {
@@ -212,8 +220,8 @@ func TestSamplers(t *testing.T) {
 					Eps: 0.05,
 				}
 			},
-			3, 100,
-			1E-2,
+			nattempts, niter,
+			prec,
 		},
 	} {
 		if !repeatedly(c.niter,
