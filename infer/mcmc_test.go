@@ -227,3 +227,41 @@ func TestSamplers(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkHmcL10Eps01(b *testing.B) {
+    for i := 0; i != b.N; i++ {
+        inferMeanStddev(
+            &HMC {
+                L: 10,
+                Eps: 0.1,
+            }, 100)
+    }
+}
+
+func BenchmarkHmcL20Eps005(b *testing.B) {
+    for i := 0; i != b.N; i++ {
+        inferMeanStddev(
+            &HMC {
+                L: 20,
+                Eps: 0.05,
+            }, 100)
+    }
+}
+
+func BenchmarkNutsEps01(b *testing.B) {
+    for i := 0; i != b.N; i++ {
+        inferMeanStddev(
+            &NUTS {
+                Eps: 0.1,
+            }, 100)
+    }
+}
+
+func BenchmarkNutsEps005(b *testing.B) {
+    for i := 0; i != b.N; i++ {
+        inferMeanStddev(
+            &NUTS {
+                Eps: 0.05,
+            }, 100)
+    }
+}
