@@ -22,8 +22,8 @@ type MCMC interface {
 
 // sampler is the structure for embedding into concrete samplers.
 type sampler struct {
-	stop       bool
-	samples    chan []float64
+	stop    bool
+	samples chan []float64
 	// Statistics
 	NAcc, NRej int // the number of accepted and rejected samples
 }
@@ -139,14 +139,13 @@ func (hmc *HMC) Sample(
 	}()
 }
 
-
 // No U-Turn Sampler (https://arxiv.org/abs/1111.4246).
 type NUTS struct {
 	sampler
 	// Parameters
-	Eps float64   // step size
+	Eps   float64 // step size
 	Delta float64 // lower bound on energy for doubling
-    // Statistics
+	// Statistics
 	Depth float64 // Integration depth
 }
 
@@ -187,7 +186,7 @@ func (nuts *NUTS) Sample(
 				// Build left or right subtree
 				var (
 					nelemSub float64
-					stop bool
+					stop     bool
 				)
 				if rand.Float64() < 0.5 {
 					dir := -1.
@@ -246,13 +245,13 @@ func (nuts *NUTS) buildTree(
 		if energy(l, r) >= logu {
 			nelem = 1.
 		}
-		if energy(l, r) + nuts.Delta < logu {
+		if energy(l, r)+nuts.Delta < logu {
 			stop = true
 		}
 		return x, r, x, r, x, nelem, stop
 	} else {
 		xl, rl, xr, rr, x, nelem, stop =
-			nuts.buildTree(m, gradp, x, r, logu, dir, depth - 1)
+			nuts.buildTree(m, gradp, x, r, logu, dir, depth-1)
 		if !stop {
 			// We build a subtree and need a separate memory
 			// for x and r.
@@ -264,13 +263,13 @@ func (nuts *NUTS) buildTree(
 				copy(rSub, rl)
 				xl, rl, _, _, xSub, nelemSub, stop =
 					nuts.buildTree(m, gradp,
-						xSub, rSub, logu, dir, depth - 1)
+						xSub, rSub, logu, dir, depth-1)
 			} else {
 				copy(xSub, xr)
 				copy(rSub, rr)
 				_, _, xr, rr, xSub, nelemSub, stop =
 					nuts.buildTree(m, gradp,
-						xSub, rSub, logu, dir, depth - 1)
+						xSub, rSub, logu, dir, depth-1)
 			}
 			nelem += nelemSub
 			stop = stop || uTurn(xl, rl, xr, rr)
@@ -290,8 +289,8 @@ func uTurn(xl, rl, xr, rr []float64) bool {
 	// stop on U-turns.
 	dxrl, dxrr := 0., 0.
 	for i := 0; i != len(xl); i++ {
-		dxrl += (xr[i] - xl[i])*rl[i]
-		dxrr += (xr[i] - xl[i])*rr[i]
+		dxrl += (xr[i] - xl[i]) * rl[i]
+		dxrr += (xr[i] - xl[i]) * rr[i]
 	}
 	return dxrl < 0 || dxrr < 0
 }
