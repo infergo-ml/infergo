@@ -22,9 +22,10 @@ type MCMC interface {
 
 // sampler is the structure for embedding into concrete samplers.
 type sampler struct {
-	NAcc, NRej int // the number of accepted and rejected samples
 	stop       bool
 	samples    chan []float64
+	// Statistics
+	NAcc, NRej int // the number of accepted and rejected samples
 }
 
 // Helper functions
@@ -69,8 +70,7 @@ func energy(l float64, r []float64) float64 {
 func leapfrog(
 	m model.Model,
 	gradp *[]float64,
-	x []float64,
-	r []float64,
+	x, r []float64,
 	eps float64,
 ) (l float64) {
 	for i := 0; i != len(x); i++ {
@@ -87,6 +87,7 @@ func leapfrog(
 // Vanilla Hamiltonian Monte Carlo Sampler.
 type HMC struct {
 	sampler
+	// Parameters
 	L   int     // number of leapfrog steps
 	Eps float64 // leapfrog step size
 }
@@ -100,7 +101,7 @@ func (hmc *HMC) Sample(
 	go func() {
 		backup := make([]float64, len(x))
 		r := make([]float64, len(x))
-		for iter := 0; ; iter++ {
+		for {
 			if hmc.stop {
 				close(samples)
 				break
@@ -136,4 +137,161 @@ func (hmc *HMC) Sample(
 			samples <- sample
 		}
 	}()
+}
+
+
+// No U-Turn Sampler (https://arxiv.org/abs/1111.4246).
+type NUTS struct {
+	sampler
+	// Parameters
+	Eps float64   // step size
+	Delta float64 // lower bound on energy for doubling
+    // Statistics
+	Depth float64 // Integration depth
+}
+
+func (nuts *NUTS) Sample(
+	m model.Model,
+	x []float64,
+	samples chan []float64,
+) {
+	nuts.samples = samples // Stop needs access to samples
+	go func() {
+		backup := make([]float64, len(x))
+		r := make([]float64, len(x))
+		for {
+			if nuts.stop {
+				close(samples)
+				break
+			}
+			// Sample the next r.
+			for i := 0; i != len(x); i++ {
+				r[i] = rand.NormFloat64()
+			}
+
+			// Back up the current value of x.
+			copy(backup, x)
+
+			// Compute the energy
+			l, grad := m.Observe(x), ad.Gradient()
+			e := energy(l, r)
+
+			// Sample the slice variable
+			logu := math.Log((1. - rand.Float64())) + e
+
+			// Initialize the tree
+			xl, rl, xr, rr, depth, nelem := x, r, x, r, 0, 1.
+			// Integrate forward
+			accepted := false
+			for {
+				// Build left or right subtree
+				var (
+					nelemSub float64
+					stop bool
+				)
+				if rand.Float64() < 0.5 {
+					dir := -1.
+					xl, rl, _, _, x, nelemSub, stop =
+						nuts.buildTree(m, &grad, x, r, logu, dir, depth)
+				} else {
+					dir := 1.
+					_, _, xr, rr, x, nelemSub, stop =
+						nuts.buildTree(m, &grad, x, r, logu, dir, depth)
+				}
+				if stop || uTurn(xl, rl, xr, rr) {
+					break
+				}
+
+				// Accept or reject
+				if nelemSub/nelem > rand.Float64() {
+					accepted = true
+				} else {
+					// Rejected, restore x from backup.
+					copy(x, backup)
+				}
+
+				nelem += nelemSub
+				depth++
+			}
+			// Collect statistics
+			nuts.Depth = 0.99*nuts.Depth + 0.01*float64(depth)
+			if accepted {
+				nuts.NAcc++
+			} else {
+				nuts.NRej++
+			}
+
+			// Write a sample to the channel.
+			sample := make([]float64, len(x))
+			copy(sample, x)
+			samples <- sample
+		}
+	}()
+}
+
+func (nuts *NUTS) buildTree(
+	m model.Model,
+	gradp *[]float64,
+	x, r []float64,
+	logu float64,
+	dir float64,
+	depth int,
+) (
+	xl, rl, xr, rr, x_ []float64,
+	nelem float64,
+	stop bool,
+) {
+	if depth == 0 {
+		l := leapfrog(m, gradp, x, r, dir*nuts.Eps)
+		if energy(l, r) >= logu {
+			nelem = 1.
+		}
+		if energy(l, r) + nuts.Delta < logu {
+			stop = true
+		}
+		return x, r, x, r, x, nelem, stop
+	} else {
+		xl, rl, xr, rr, x, nelem, stop =
+			nuts.buildTree(m, gradp, x, r, logu, dir, depth - 1)
+		if !stop {
+			// We build a subtree and need a separate memory
+			// for x and r.
+			xSub := make([]float64, len(x))
+			rSub := make([]float64, len(r))
+			var nelemSub float64
+			if dir == -1. {
+				copy(xSub, xl)
+				copy(rSub, rl)
+				xl, rl, _, _, xSub, nelemSub, stop =
+					nuts.buildTree(m, gradp,
+						xSub, rSub, logu, dir, depth - 1)
+			} else {
+				copy(xSub, xr)
+				copy(rSub, rr)
+				_, _, xr, rr, xSub, nelemSub, stop =
+					nuts.buildTree(m, gradp,
+						xSub, rSub, logu, dir, depth - 1)
+			}
+			nelem += nelemSub
+			stop = stop || uTurn(xl, rl, xr, rr)
+
+			// Select uniformly from built nodes.
+			if nelemSub/nelem > rand.Float64() {
+				x = xSub
+			}
+		}
+		return xl, rl, xr, rr, x, nelem, stop
+	}
+}
+
+// uTurn returns true iff there is a u turn.
+func uTurn(xl, rl, xr, rr []float64) bool {
+	// Dot products of changes and moments to
+	// stop on U-turns.
+	dxrl, dxrr := 0., 0.
+	for i := 0; i != len(xl); i++ {
+		dxrl += (xr[i] - xl[i])*rl[i]
+		dxrr += (xr[i] - xl[i])*rr[i]
+	}
+	return dxrl < 0 || dxrr < 0
 }
