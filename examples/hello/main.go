@@ -97,9 +97,9 @@ func main() {
 	printState := func(when string) {
 		log.Printf(`
 %s:
-    mean: %.6g(≈%.6g)
-    logv: %.6g(≈%.6g)
-    ll: %.6g
+	mean: %.6g(≈%.6g)
+	logv: %.6g(≈%.6g)
+	ll: %.6g
 `,
 			when,
 			x[0], sampleMean,
@@ -147,7 +147,11 @@ func main() {
 	x[0], x[1] = mean/float64(NITER), logv/float64(NITER)
 	ll = m.Observe(x)
 	printState("Posterior means")
-	log.Printf("HMC: %d accepted, %d rejected, rate %.4g:",
+	log.Printf(`HMC:
+	accepted: %d
+	rejected: %d
+	rate: %.4g
+`,
 		hmc.NAcc, hmc.NRej,
-		float64(hmc.NAcc)/float64(hmc.NAcc + hmc.NRej))
+		float64(hmc.NAcc)/float64(hmc.NAcc+hmc.NRej))
 }

@@ -23,8 +23,8 @@ type MCMC interface {
 // sampler is the structure for embedding into concrete samplers.
 type sampler struct {
 	NAcc, NRej int // the number of accepted and rejected samples
-	stop    bool
-	samples chan []float64
+	stop       bool
+	samples    chan []float64
 }
 
 // Helper functions
