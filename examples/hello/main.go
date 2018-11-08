@@ -147,4 +147,7 @@ func main() {
 	x[0], x[1] = mean/float64(NITER), logv/float64(NITER)
 	ll = m.Observe(x)
 	printState("Posterior means")
+	log.Printf("HMC: %d accepted, %d rejected, rate %.4g:",
+		hmc.NAcc, hmc.NRej,
+		float64(hmc.NAcc)/float64(hmc.NAcc + hmc.NRej))
 }

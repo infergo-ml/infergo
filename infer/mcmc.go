@@ -22,6 +22,7 @@ type MCMC interface {
 
 // sampler is the structure for embedding into concrete samplers.
 type sampler struct {
+	NAcc, NRej int // the number of accepted and rejected samples
 	stop    bool
 	samples chan []float64
 }
@@ -30,7 +31,7 @@ type sampler struct {
 
 // Stop stops a sampler gracefully, using the samples channel
 // for synchronization. Stop must be called before further calls
-// to differentiated code. A part of the MCMC interface. 
+// to differentiated code. A part of the MCMC interface.
 func (s *sampler) Stop() {
 	s.stop = true
 	// The differentiated code is not thread-safe, hence
@@ -121,9 +122,12 @@ func (hmc *HMC) Sample(
 			e := energy(l, r) // final energy
 
 			// Accept with MH probability.
-			if e-e0 < math.Log(1.-rand.Float64()) {
+			if e-e0 >= math.Log(1.-rand.Float64()) {
+				hmc.NAcc++
+			} else {
 				// Rejected, restore x from backup.
 				copy(x, backup)
+				hmc.NRej++
 			}
 
 			// Write a sample to the channel.
