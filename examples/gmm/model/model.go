@@ -13,6 +13,7 @@ type Model struct {
 }
 
 func (m *Model) Observe(x []float64) float64 {
+	ll := 0.0
 	mean := make([]float64, m.NComp)
 	logv := make([]float64, m.NComp)
 
@@ -24,7 +25,6 @@ func (m *Model) Observe(x []float64) float64 {
 
 	// Compute log likelihood of mixture
 	// given the data
-	ll := 0.0
 	for i := 0; i != len(m.Data); i++ {
 		var l float64
 		for j := 0; j != m.NComp; j++ {

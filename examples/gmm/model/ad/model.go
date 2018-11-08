@@ -17,6 +17,8 @@ func (m *Model) Observe(x []float64) float64 {
 	} else {
 		ad.Setup(x)
 	}
+	var ll float64
+	ad.Assignment(&ll, ad.Value(0.0))
 	var mean []float64
 
 	mean = make([]float64, m.NComp)
@@ -28,8 +30,7 @@ func (m *Model) Observe(x []float64) float64 {
 		ad.Assignment(&mean[j], &x[2*j])
 		ad.Assignment(&logv[j], &x[2*j+1])
 	}
-	var ll float64
-	ad.Assignment(&ll, ad.Value(0.0))
+
 	for i := 0; i != len(m.Data); i = i + 1 {
 		var l float64
 		for j := 0; j != m.NComp; j = j + 1 {

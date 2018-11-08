@@ -5,11 +5,14 @@ import (
 	"bitbucket.org/dtolpin/infergo/infer"
 	"encoding/csv"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"math"
+	"math/rand"
 	"os"
 	"strconv"
+	"time"
 )
 
 // Command line arguments
@@ -22,9 +25,11 @@ var (
 	STEP  float64 = 0.1
 	DELTA float64 = 1E3
 	NITER int     = 1000
+	NBURN int     = 100
 )
 
 func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
 	flag.Usage = func() {
 		log.Printf(`Gaussian mixture model:
 		gmm [OPTIONS]` + "\n")
@@ -37,6 +42,7 @@ func init() {
 	flag.Float64Var(&STEP, "step", STEP, "NUTS step (NUTS)")
 	flag.Float64Var(&DELTA, "delta", DELTA, "lower bound on energy (NUTS)")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
+	flag.IntVar(&NBURN, "nburn", NBURN, "number of burned iterations")
 	log.SetFlags(0)
 }
 
@@ -121,7 +127,7 @@ func main() {
 	samples := make(chan []float64)
 	nuts.Sample(m, x, samples)
 	// Burn
-	for i := 0; i != NITER; i++ {
+	for i := 0; i != NBURN; i++ {
 		<-samples
 	}
 
@@ -134,6 +140,7 @@ func main() {
 		if len(x) == 0 {
 			break
 		}
+		fmt.Printf("%6d\r", i)
 		for j := 0; j != m.NComp; j++ {
 			mean[j] += x[2*j]
 			stddev[j] += math.Exp(0.5 * x[2*j+1])

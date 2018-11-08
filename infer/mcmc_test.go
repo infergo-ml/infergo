@@ -191,14 +191,14 @@ func inferMeanStddev(
 // Test MCMC samplers for basic convergence. Empirical mean and
 // stddev should be around the inferred mean and stddev.
 func TestSamplers(t *testing.T) {
-    nattempts := 3
-    niter := 100
-    prec := 1E-2
-    if testing.Short() {
-        // just kicking tyres
-        niter = 10
-        prec = 1E-1
-    }
+	nattempts := 3
+	niter := 100
+	prec := 1E-2
+	if testing.Short() {
+		// just kicking tyres
+		niter = 10
+		prec = 1E-1
+	}
 	for _, c := range []struct {
 		sampler          func() MCMC
 		nattempts, niter int
@@ -237,39 +237,39 @@ func TestSamplers(t *testing.T) {
 }
 
 func BenchmarkHmcL10Eps01(b *testing.B) {
-    for i := 0; i != b.N; i++ {
-        inferMeanStddev(
-            &HMC {
-                L: 10,
-                Eps: 0.1,
-            }, 100)
-    }
+	for i := 0; i != b.N; i++ {
+		inferMeanStddev(
+			&HMC{
+				L:   10,
+				Eps: 0.1,
+			}, 100)
+	}
 }
 
 func BenchmarkHmcL20Eps005(b *testing.B) {
-    for i := 0; i != b.N; i++ {
-        inferMeanStddev(
-            &HMC {
-                L: 20,
-                Eps: 0.05,
-            }, 100)
-    }
+	for i := 0; i != b.N; i++ {
+		inferMeanStddev(
+			&HMC{
+				L:   20,
+				Eps: 0.05,
+			}, 100)
+	}
 }
 
 func BenchmarkNutsEps01(b *testing.B) {
-    for i := 0; i != b.N; i++ {
-        inferMeanStddev(
-            &NUTS {
-                Eps: 0.1,
-            }, 100)
-    }
+	for i := 0; i != b.N; i++ {
+		inferMeanStddev(
+			&NUTS{
+				Eps: 0.1,
+			}, 100)
+	}
 }
 
 func BenchmarkNutsEps005(b *testing.B) {
-    for i := 0; i != b.N; i++ {
-        inferMeanStddev(
-            &NUTS {
-                Eps: 0.05,
-            }, 100)
-    }
+	for i := 0; i != b.N; i++ {
+		inferMeanStddev(
+			&NUTS{
+				Eps: 0.05,
+			}, 100)
+	}
 }

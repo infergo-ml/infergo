@@ -21,7 +21,8 @@ type MCMC interface {
 	Stop()
 }
 
-// sampler is the structure for embedding into concrete samplers.
+// sampler is the structure for embedding into concrete
+// samplers.
 type sampler struct {
 	stop    bool
 	samples chan []float64
@@ -213,11 +214,13 @@ func (nuts *NUTS) Sample(
 				if rand.Float64() < 0.5 { // choose direction
 					dir := -1.
 					xl, rl, _, _, x, nelemSub, stop =
-						nuts.buildTree(m, &grad, x, r, logu, dir, depth)
+						nuts.buildTree(m, &grad,
+							x, r, logu, dir, depth)
 				} else {
 					dir := 1.
 					_, _, xr, rr, x, nelemSub, stop =
-						nuts.buildTree(m, &grad, x, r, logu, dir, depth)
+						nuts.buildTree(m, &grad,
+							x, r, logu, dir, depth)
 				}
 
 				// Accept or reject

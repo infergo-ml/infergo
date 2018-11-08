@@ -9,6 +9,9 @@ dist/ad/dist.go: dist/dist.go
 	deriv dist
 
 test: dist/ad/dist.go
+	for package in $(PACKAGES); do go test -short ./$$package; done
+
+fulltest: test
 	for package in $(PACKAGES); do go test ./$$package; done
 
 build: test
