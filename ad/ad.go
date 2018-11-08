@@ -354,12 +354,11 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 
 						obj := m.info.ObjectOf(ident)
 						if ident.Pos() != obj.Pos() {
-							// Declared earlier
+							// Declared earlier.
 							continue
 						}
 
-						// The shortest way from go/types to go/ast
-						// is to stringify and reparse.
+						// Add declaration.
 						t := m.info.TypeOf(n.Lhs[i])
 						spec := &ast.ValueSpec{
 							Names: []*ast.Ident{ident},

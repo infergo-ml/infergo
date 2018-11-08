@@ -5,6 +5,7 @@ package infer
 import (
 	"bitbucket.org/dtolpin/infergo/ad"
 	"bitbucket.org/dtolpin/infergo/model"
+	"log"
 	"math"
 	"math/rand"
 	"time"
@@ -78,6 +79,9 @@ func leapfrog(
 		x[i] += eps * r[i]
 	}
 	l, *gradp = m.Observe(x), ad.Gradient()
+	if math.IsNaN(l) {
+		panic("energy diverged")
+	}
 	for i := 0; i != len(x); i++ {
 		r[i] += 0.5 * eps * (*gradp)[i]
 	}
@@ -99,11 +103,19 @@ func (hmc *HMC) Sample(
 ) {
 	hmc.samples = samples // Stop needs access to samples
 	go func() {
+		// Close samples on exit
+		defer close(samples)
+		// Intercept errors deep inside the algorithm
+		// and report them.
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("ERROR: HMC: %v", r)
+			}
+		}()
 		backup := make([]float64, len(x))
 		r := make([]float64, len(x))
 		for {
 			if hmc.stop {
-				close(samples)
 				break
 			}
 			// Sample the next r.
@@ -155,12 +167,22 @@ func (nuts *NUTS) Sample(
 	samples chan []float64,
 ) {
 	nuts.samples = samples // Stop needs access to samples
+	nuts.setDefaults()
 	go func() {
+		// Close samples on exit
+		defer close(samples)
+		// Intercept errors deep inside the algorithm
+		// and report them.
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("ERROR: NUTS: %v", r)
+			}
+		}()
+
 		backup := make([]float64, len(x))
 		r := make([]float64, len(x))
 		for {
 			if nuts.stop {
-				close(samples)
 				break
 			}
 			// Sample the next r.
@@ -280,6 +302,12 @@ func (nuts *NUTS) buildTree(
 			}
 		}
 		return xl, rl, xr, rr, x, nelem, stop
+	}
+}
+
+func (nuts *NUTS) setDefaults() {
+	if nuts.Delta == 0 {
+		nuts.Delta = 1E3
 	}
 }
 

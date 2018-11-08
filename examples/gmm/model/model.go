@@ -4,7 +4,6 @@ package model
 import (
 	. "bitbucket.org/dtolpin/infergo/dist/ad"
 	"bitbucket.org/dtolpin/infergo/mathx"
-	"math"
 )
 
 // data are the observations
@@ -16,13 +15,11 @@ type Model struct {
 func (m *Model) Observe(x []float64) float64 {
 	mean := make([]float64, m.NComp)
 	logv := make([]float64, m.NComp)
-	vari := make([]float64, m.NComp)
 
 	// Fetch component parameters
 	for j := 0; j != m.NComp; j++ {
 		mean[j] = x[2*j]
 		logv[j] = x[2*j+1]
-		vari[j] = math.Exp(logv[j])
 	}
 
 	// Compute log likelihood of mixture

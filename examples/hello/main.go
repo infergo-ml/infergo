@@ -123,7 +123,6 @@ func main() {
 	printState("Maximum likelihood")
 
 	// Now let's infer the posterior with HMC.
-	x = []float64{rand.NormFloat64(), rand.NormFloat64()}
 	hmc := &infer.HMC{
 		L:   NSTEPS,
 		Eps: STEP,
@@ -138,13 +137,18 @@ func main() {
 	}
 
 	// Collect after burn-in
+	n := 0.
 	for i := 0; i != NITER; i++ {
-		x = <-samples
+		x := <-samples
+		if len(x) == 0 {
+			break
+		}
 		mean += x[0]
 		logv += x[1]
+		n++
 	}
 	hmc.Stop()
-	x[0], x[1] = mean/float64(NITER), logv/float64(NITER)
+	x[0], x[1] = mean/n, logv/n
 	ll = m.Observe(x)
 	printState("Posterior means")
 	log.Printf(`HMC:

@@ -4,7 +4,6 @@ import (
 	. "bitbucket.org/dtolpin/infergo/dist/ad"
 	"bitbucket.org/dtolpin/infergo/ad"
 	"bitbucket.org/dtolpin/infergo/mathx"
-	"math"
 )
 
 type Model struct {
@@ -24,14 +23,10 @@ func (m *Model) Observe(x []float64) float64 {
 	var logv []float64
 
 	logv = make([]float64, m.NComp)
-	var vari []float64
-
-	vari = make([]float64, m.NComp)
 
 	for j := 0; j != m.NComp; j = j + 1 {
 		ad.Assignment(&mean[j], &x[2*j])
 		ad.Assignment(&logv[j], &x[2*j+1])
-		ad.Assignment(&vari[j], ad.Elemental(math.Exp, &logv[j]))
 	}
 	var ll float64
 	ad.Assignment(&ll, ad.Value(0.0))

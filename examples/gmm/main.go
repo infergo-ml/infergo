@@ -19,6 +19,8 @@ var (
 	RATE  float64 = 0.01
 	DECAY float64 = 0.998
 	GAMMA float64 = 0.9
+	STEP   float64 = 0.1
+	DELTA float64 = 1E3
 	NITER int     = 1000
 )
 
@@ -29,9 +31,11 @@ func init() {
 		flag.PrintDefaults()
 	}
 	flag.IntVar(&NCOMP, "ncomp", NCOMP, "number of components")
-	flag.Float64Var(&RATE, "rate", RATE, "learning rate")
-	flag.Float64Var(&DECAY, "decay", DECAY, "rate decay")
-	flag.Float64Var(&GAMMA, "gamma", GAMMA, "momentum factor")
+	flag.Float64Var(&RATE, "rate", RATE, "learning rate (Gradient, Momentum")
+	flag.Float64Var(&DECAY, "decay", DECAY, "rate decay (Gradient, Momentum)")
+	flag.Float64Var(&GAMMA, "gamma", GAMMA, "momentum factor (Momentum)")
+	flag.Float64Var(&STEP, "step", STEP, "NUTS step (NUTS)")
+	flag.Float64Var(&DELTA, "delta", DELTA, "lower bound on energy (NUTS)")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	log.SetFlags(0)
 }
@@ -103,9 +107,57 @@ func main() {
 	}
 
 	// Print the result.
-	log.Printf("Components:\n")
+	log.Printf("MLE components:\n")
 	for j := 0; j != m.NComp; j++ {
 		log.Printf("\t%d: mean=%.4g, stddev=%.4g\n",
 			j, x[2*j], math.Exp(0.5*x[2*j+1]))
 	}
+
+	// Now let's infer the posterior with NUTS.
+	nuts := &infer.NUTS{
+		Eps: STEP,
+		Delta: DELTA,
+	}
+	samples := make(chan []float64)
+	nuts.Sample(m, x, samples)
+	// Burn
+	for i := 0; i != NITER; i++ {
+		<-samples
+	}
+
+	// Collect after burn-in
+	mean := make([]float64, m.NComp)
+	stddev := make([]float64, m.NComp)
+	n := 0.
+	for i := 0; i != NITER; i++ {
+		x := <-samples
+		if len(x) == 0 {
+			break
+		}
+		for j := 0; j != m.NComp; j++ {
+			mean[j] += x[2*j]
+			stddev[j] += math.Exp(0.5*x[2*j + 1])
+		}
+		n++
+	}
+	for j := 0; j != m.NComp; j++ {
+		mean[j] /= n
+		stddev[j] /= n
+	}
+	nuts.Stop()
+	log.Printf("Mean components:\n")
+	for j := 0; j != m.NComp; j++ {
+		log.Printf("\t%d: mean=%.4g, stddev=%.4g\n",
+			j, x[2*j], math.Exp(0.5*x[2*j+1]))
+	}
+
+	log.Printf(`NUTS:
+	accepted: %d
+	rejected: %d
+	rate: %.4g
+	depth: %.2g
+`,
+		nuts.NAcc, nuts.NRej,
+		float64(nuts.NAcc)/float64(nuts.NAcc+nuts.NRej),
+		nuts.Depth)
 }

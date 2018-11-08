@@ -8,6 +8,8 @@ import (
 	"testing"
 )
 
+// Unit tests for helpers
+
 func TestEnergy(t *testing.T) {
 	for _, c := range []struct {
 		l float64
@@ -47,3 +49,43 @@ func TestLeapfrog(t *testing.T) {
 		}
 	}
 }
+
+func TestUTurn(t *testing.T) {
+	for _, c := range []struct {
+		xl, rl, xr, rr []float64
+		uturn bool
+	} {
+		{
+			[]float64{-1., 0}, []float64{0., 1.,},
+			[]float64{1., 0.}, []float64{1., 0.},
+			false,
+		},
+		{
+			[]float64{-1., 0}, []float64{0., 1.,},
+			[]float64{-1., 0.}, []float64{1., 0.},
+			false,
+		},
+		{
+			[]float64{1., 0}, []float64{0., 1.,},
+			[]float64{0., 1.}, []float64{1., 0.},
+			true,
+		},
+		{
+			[]float64{1., 0}, []float64{0., 1.,},
+			[]float64{0., 1.}, []float64{-1., 0.},
+			false,
+		},
+	} {
+		if c.uturn {
+			if !uTurn(c.xl, c.rl, c.xr, c.rr) {
+				t.Errorf("missed uturn: %+v", c)
+			}
+		} else {
+			if uTurn(c.xl, c.rl, c.xr, c.rr) {
+				t.Errorf("false uturn: %+v", c)
+			}
+		}
+	}
+}
+
+
