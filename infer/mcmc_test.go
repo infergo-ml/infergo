@@ -53,25 +53,25 @@ func TestLeapfrog(t *testing.T) {
 func TestUTurn(t *testing.T) {
 	for _, c := range []struct {
 		xl, rl, xr, rr []float64
-		uturn bool
-	} {
+		uturn          bool
+	}{
 		{
-			[]float64{-1., 0}, []float64{0., 1.,},
+			[]float64{-1., 0}, []float64{0., 1.},
 			[]float64{1., 0.}, []float64{1., 0.},
 			false,
 		},
 		{
-			[]float64{-1., 0}, []float64{0., 1.,},
+			[]float64{-1., 0}, []float64{0., 1.},
 			[]float64{-1., 0.}, []float64{1., 0.},
 			false,
 		},
 		{
-			[]float64{1., 0}, []float64{0., 1.,},
+			[]float64{1., 0}, []float64{0., 1.},
 			[]float64{0., 1.}, []float64{1., 0.},
 			true,
 		},
 		{
-			[]float64{1., 0}, []float64{0., 1.,},
+			[]float64{1., 0}, []float64{0., 1.},
 			[]float64{0., 1.}, []float64{-1., 0.},
 			false,
 		},
@@ -87,5 +87,3 @@ func TestUTurn(t *testing.T) {
 		}
 	}
 }
-
-

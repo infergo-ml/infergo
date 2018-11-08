@@ -19,7 +19,7 @@ var (
 	RATE  float64 = 0.01
 	DECAY float64 = 0.998
 	GAMMA float64 = 0.9
-	STEP   float64 = 0.1
+	STEP  float64 = 0.1
 	DELTA float64 = 1E3
 	NITER int     = 1000
 )
@@ -115,7 +115,7 @@ func main() {
 
 	// Now let's infer the posterior with NUTS.
 	nuts := &infer.NUTS{
-		Eps: STEP,
+		Eps:   STEP,
 		Delta: DELTA,
 	}
 	samples := make(chan []float64)
@@ -136,7 +136,7 @@ func main() {
 		}
 		for j := 0; j != m.NComp; j++ {
 			mean[j] += x[2*j]
-			stddev[j] += math.Exp(0.5*x[2*j + 1])
+			stddev[j] += math.Exp(0.5 * x[2*j+1])
 		}
 		n++
 	}

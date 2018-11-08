@@ -210,7 +210,7 @@ func (nuts *NUTS) Sample(
 					nelemSub float64
 					stop     bool
 				)
-				if rand.Float64() < 0.5 {
+				if rand.Float64() < 0.5 { // choose direction
 					dir := -1.
 					xl, rl, _, _, x, nelemSub, stop =
 						nuts.buildTree(m, &grad, x, r, logu, dir, depth)
@@ -218,9 +218,6 @@ func (nuts *NUTS) Sample(
 					dir := 1.
 					_, _, xr, rr, x, nelemSub, stop =
 						nuts.buildTree(m, &grad, x, r, logu, dir, depth)
-				}
-				if stop || uTurn(xl, rl, xr, rr) {
-					break
 				}
 
 				// Accept or reject
@@ -231,11 +228,17 @@ func (nuts *NUTS) Sample(
 					copy(x, backup)
 				}
 
+				if stop || uTurn(xl, rl, xr, rr) {
+					break
+				}
+
 				nelem += nelemSub
 				depth++
 			}
 			// Collect statistics
-			nuts.Depth = 0.99*nuts.Depth + 0.01*float64(depth)
+			const depthDecay = 0.99
+			nuts.Depth = depthDecay*nuts.Depth +
+				(1.-depthDecay)*float64(depth)
 			if accepted {
 				nuts.NAcc++
 			} else {
@@ -267,7 +270,7 @@ func (nuts *NUTS) buildTree(
 		if energy(l, r) >= logu {
 			nelem = 1.
 		}
-		if energy(l, r)+nuts.Delta < logu {
+		if energy(l, r)+nuts.Delta <= logu {
 			stop = true
 		}
 		return x, r, x, r, x, nelem, stop
@@ -296,7 +299,7 @@ func (nuts *NUTS) buildTree(
 			nelem += nelemSub
 			stop = stop || uTurn(xl, rl, xr, rr)
 
-			// Select uniformly from built nodes.
+			// Select uniformly from nodes.
 			if nelemSub/nelem > rand.Float64() {
 				x = xSub
 			}
@@ -305,6 +308,8 @@ func (nuts *NUTS) buildTree(
 	}
 }
 
+// setDefaults sets the default value for auxiliary parameters
+// of NUTS.
 func (nuts *NUTS) setDefaults() {
 	if nuts.Delta == 0 {
 		nuts.Delta = 1E3
