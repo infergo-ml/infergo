@@ -158,8 +158,8 @@ type NUTS struct {
 	// Parameters
 	Eps   float64 // step size
 	Delta float64 // lower bound on energy for doubling
-	// Statistics
-	Depth float64 // Integration depth
+	// Depths channel for tuning
+	Depths chan int
 }
 
 func (nuts *NUTS) Sample(
@@ -182,7 +182,6 @@ func (nuts *NUTS) Sample(
 
 		backup := make([]float64, len(x))
 		r := make([]float64, len(x))
-		cumDepthDecay := 1. // for depth stat correction
 		for {
 			if nuts.stop {
 				break
@@ -241,16 +240,14 @@ func (nuts *NUTS) Sample(
 			}
 
 			// Collect statistics
-			const depthDecay = 0.99
-			nuts.Depth = depthDecay*nuts.Depth*(1.-cumDepthDecay) +
-				(1.-depthDecay)*float64(depth)
-			cumDepthDecay *= depthDecay
-			nuts.Depth /= (1. - cumDepthDecay)
 			if accepted {
 				nuts.NAcc++
 			} else {
 				nuts.NRej++
 			}
+            if nuts.Depths != nil {
+                nuts.Depths <- depth
+            }
 
 			// Write a sample to the channel.
 			sample := make([]float64, len(x))
