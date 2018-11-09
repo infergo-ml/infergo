@@ -182,6 +182,7 @@ func (nuts *NUTS) Sample(
 
 		backup := make([]float64, len(x))
 		r := make([]float64, len(x))
+        cumDepthDecay := 1. // for depth stat correction
 		for {
 			if nuts.stop {
 				break
@@ -238,10 +239,13 @@ func (nuts *NUTS) Sample(
 				nelem += nelemSub
 				depth++
 			}
+
 			// Collect statistics
-			const depthDecay = 0.99
-			nuts.Depth = depthDecay*nuts.Depth +
-				(1.-depthDecay)*float64(depth)
+            const depthDecay = 0.99
+			nuts.Depth = depthDecay*nuts.Depth*(1. - cumDepthDecay) +
+                (1.-depthDecay)*float64(depth)
+            cumDepthDecay *= depthDecay
+            nuts.Depth /= (1. - cumDepthDecay)
 			if accepted {
 				nuts.NAcc++
 			} else {
