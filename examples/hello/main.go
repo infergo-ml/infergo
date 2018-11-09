@@ -111,7 +111,7 @@ func main() {
 
 	// Run the optimizer
 	opt := &infer.Momentum{
-		Rate:  RATE/float64(len(m.Data)),
+		Rate:  RATE / float64(len(m.Data)),
 		Decay: DECAY,
 		Gamma: GAMMA,
 	}
@@ -125,7 +125,7 @@ func main() {
 	// Now let's infer the posterior with HMC.
 	hmc := &infer.HMC{
 		L:   NSTEPS,
-		Eps: STEP/math.Sqrt(float64(len(m.Data))),
+		Eps: STEP / math.Sqrt(float64(len(m.Data))),
 	}
 	samples := make(chan []float64)
 	hmc.Sample(m, x, samples)

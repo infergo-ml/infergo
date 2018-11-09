@@ -104,7 +104,7 @@ func main() {
 
 	// Run the optimizer
 	opt := &infer.Momentum{
-        Rate:  RATE/math.Sqrt(float64(len(m.Data))),
+		Rate:  RATE / math.Sqrt(float64(len(m.Data))),
 		Decay: DECAY,
 		Gamma: GAMMA,
 	}
@@ -121,7 +121,7 @@ func main() {
 
 	// Now let's infer the posterior with NUTS.
 	nuts := &infer.NUTS{
-		Eps:   STEP/math.Sqrt(float64(len(m.Data))),
+		Eps:   STEP / math.Sqrt(float64(len(m.Data))),
 		Delta: DELTA,
 	}
 	samples := make(chan []float64)
