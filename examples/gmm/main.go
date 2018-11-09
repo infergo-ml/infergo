@@ -162,9 +162,7 @@ func main() {
 	accepted: %d
 	rejected: %d
 	rate: %.4g
-	depth: %.2g
 `,
 		nuts.NAcc, nuts.NRej,
-		float64(nuts.NAcc)/float64(nuts.NAcc+nuts.NRej),
-		nuts.Depth)
+		float64(nuts.NAcc)/float64(nuts.NAcc+nuts.NRej))
 }
