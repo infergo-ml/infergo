@@ -17,12 +17,12 @@ import (
 // Command line arguments
 
 var (
-	RATE   float64 = 0.01
-	DECAY  float64 = 0.998
+	RATE   float64 = 0.1
+	DECAY  float64 = 0.98
 	GAMMA  float64 = 0.9
-	NITER  int     = 1000
+	NITER  int     = 100
 	NSTEPS int     = 10
-	STEP   float64 = 0.1
+	STEP   float64 = 0.5
 )
 
 func init() {
@@ -111,7 +111,7 @@ func main() {
 
 	// Run the optimizer
 	opt := &infer.Momentum{
-		Rate:  RATE,
+		Rate:  RATE/float64(len(m.Data)),
 		Decay: DECAY,
 		Gamma: GAMMA,
 	}
@@ -125,7 +125,7 @@ func main() {
 	// Now let's infer the posterior with HMC.
 	hmc := &infer.HMC{
 		L:   NSTEPS,
-		Eps: STEP,
+		Eps: STEP/math.Sqrt(float64(len(m.Data))),
 	}
 	samples := make(chan []float64)
 	hmc.Sample(m, x, samples)

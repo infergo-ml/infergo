@@ -19,12 +19,12 @@ import (
 
 var (
 	NCOMP int     = 2
-	RATE  float64 = 0.01
-	DECAY float64 = 0.998
+	RATE  float64 = 0.1
+	DECAY float64 = 0.98
 	GAMMA float64 = 0.9
-	STEP  float64 = 0.1
+	STEP  float64 = 0.5
 	DELTA float64 = 1E3
-	NITER int     = 1000
+	NITER int     = 100
 	NBURN int     = 100
 )
 
@@ -104,7 +104,7 @@ func main() {
 
 	// Run the optimizer
 	opt := &infer.Momentum{
-		Rate:  RATE,
+        Rate:  RATE/math.Sqrt(float64(len(m.Data))),
 		Decay: DECAY,
 		Gamma: GAMMA,
 	}
@@ -121,7 +121,7 @@ func main() {
 
 	// Now let's infer the posterior with NUTS.
 	nuts := &infer.NUTS{
-		Eps:   STEP,
+		Eps:   STEP/math.Sqrt(float64(len(m.Data))),
 		Delta: DELTA,
 	}
 	samples := make(chan []float64)
