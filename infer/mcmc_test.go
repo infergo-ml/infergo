@@ -57,44 +57,6 @@ func TestLeapfrog(t *testing.T) {
 	}
 }
 
-func TestUTurn(t *testing.T) {
-	for _, c := range []struct {
-		xl, rl, xr, rr []float64
-		uturn          bool
-	}{
-		{
-			[]float64{-1., 0}, []float64{0., 1.},
-			[]float64{1., 0.}, []float64{1., 0.},
-			false,
-		},
-		{
-			[]float64{-1., 0}, []float64{0., 1.},
-			[]float64{-1., 0.}, []float64{1., 0.},
-			false,
-		},
-		{
-			[]float64{1., 0}, []float64{0., 1.},
-			[]float64{0., 1.}, []float64{1., 0.},
-			true,
-		},
-		{
-			[]float64{1., 0}, []float64{0., 1.},
-			[]float64{0., 1.}, []float64{-1., 0.},
-			false,
-		},
-	} {
-		if c.uturn {
-			if !uTurn(c.xl, c.rl, c.xr, c.rr) {
-				t.Errorf("missed uturn: %+v", c)
-			}
-		} else {
-			if uTurn(c.xl, c.rl, c.xr, c.rr) {
-				t.Errorf("false uturn: %+v", c)
-			}
-		}
-	}
-}
-
 // Testing samplers
 
 // A model for testing. The model infers parameters
@@ -138,9 +100,9 @@ func init() {
 	testStddev = math.Sqrt(s2/n - testMean*testMean)
 }
 
-// repeatedly runs the thunk n times and returns true if the
-// test returned true at least once, false otherwise. Used for
-// statistical testing of stochastic algorithms.
+// repeatedly runs the test function n times and returns true if
+// the test returned true at least once, false otherwise. Used
+// for statistical testing of stochastic algorithms.
 func repeatedly(
 	nattempts int,
 	test func() bool,
@@ -188,8 +150,46 @@ func inferMeanStddev(
 	return mean, stddev
 }
 
-// Test MCMC samplers for basic convergence. Empirical mean and
-// stddev should be around the inferred mean and stddev.
+func TestUTurn(t *testing.T) {
+	for _, c := range []struct {
+		xl, rl, xr, rr []float64
+		uturn          bool
+	}{
+		{
+			[]float64{-1., 0}, []float64{0., 1.},
+			[]float64{1., 0.}, []float64{1., 0.},
+			false,
+		},
+		{
+			[]float64{-1., 0}, []float64{0., 1.},
+			[]float64{-1., 0.}, []float64{1., 0.},
+			false,
+		},
+		{
+			[]float64{1., 0}, []float64{0., 1.},
+			[]float64{0., 1.}, []float64{1., 0.},
+			true,
+		},
+		{
+			[]float64{1., 0}, []float64{0., 1.},
+			[]float64{0., 1.}, []float64{-1., 0.},
+			false,
+		},
+	} {
+		if c.uturn {
+			if !uTurn(c.xl, c.rl, c.xr, c.rr) {
+				t.Errorf("missed uturn: %+v", c)
+			}
+		} else {
+			if uTurn(c.xl, c.rl, c.xr, c.rr) {
+				t.Errorf("false uturn: %+v", c)
+			}
+		}
+	}
+}
+
+// Basic convergence of MCMC samplers. Empirical mean and stddev
+// should be around the inferred mean and stddev.
 func TestSamplers(t *testing.T) {
 	nattempts := 3
 	niter := 100
@@ -236,7 +236,7 @@ func TestSamplers(t *testing.T) {
 	}
 }
 
-func TestDepth(t *testing.T) {
+func TestNUTSDepth(t *testing.T) {
 	nuts := &NUTS{}
 	for _, c := range []struct {
 		depths    []int
