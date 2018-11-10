@@ -236,6 +236,31 @@ func TestSamplers(t *testing.T) {
 	}
 }
 
+func TestDepth(t *testing.T) {
+	nuts := &NUTS{}
+	for _, c := range []struct {
+		depths    []int
+		meanDepth float64
+	}{
+		{[]int{}, 0.},
+		{[]int{0}, 0.},
+		{[]int{1}, 1.},
+		{[]int{2, 2}, 2.},
+		{[]int{2, 1}, 1.5},
+		{[]int{0, 1, 2}, 1.},
+	} {
+		nuts.Depth = nil
+		for _, depth := range c.depths {
+			nuts.updateDepth(depth)
+		}
+		if meanDepth := nuts.MeanDepth(); meanDepth != c.meanDepth {
+			t.Errorf("wrong average depth for %v: "+
+				"got %.4f, want %.4g",
+				c.depths, meanDepth, c.meanDepth)
+		}
+	}
+}
+
 func BenchmarkHmcL10Eps01(b *testing.B) {
 	for i := 0; i != b.N; i++ {
 		inferMeanStddev(

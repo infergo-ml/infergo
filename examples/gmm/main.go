@@ -5,7 +5,6 @@ import (
 	"bitbucket.org/dtolpin/infergo/infer"
 	"encoding/csv"
 	"flag"
-	"fmt"
 	"io"
 	"log"
 	"math"
@@ -140,7 +139,6 @@ func main() {
 		if len(x) == 0 {
 			break
 		}
-		fmt.Printf("%6d\r", i)
 		for j := 0; j != m.NComp; j++ {
 			mean[j] += x[2*j]
 			stddev[j] += math.Exp(0.5 * x[2*j+1])
@@ -162,7 +160,9 @@ func main() {
 	accepted: %d
 	rejected: %d
 	rate: %.4g
+	mean depth: %.4g
 `,
 		nuts.NAcc, nuts.NRej,
-		float64(nuts.NAcc)/float64(nuts.NAcc+nuts.NRej))
+		float64(nuts.NAcc)/float64(nuts.NAcc+nuts.NRej),
+		nuts.MeanDepth())
 }

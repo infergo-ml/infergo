@@ -158,8 +158,12 @@ type NUTS struct {
 	// Parameters
 	Eps   float64 // step size
 	Delta float64 // lower bound on energy for doubling
-	// Depths channel for tuning
-	Depths chan int
+	// Statistics
+	Depth [][2]float64 // depth belief
+	// Depth belief is encoded as a vector of beta-bernoulli
+	// distributions. If the depth is greater than the element's
+	// index i, Depth[i][0] is incremented; for index depth,
+	// Depth[depth][1] is incremented.
 }
 
 func (nuts *NUTS) Sample(
@@ -245,9 +249,7 @@ func (nuts *NUTS) Sample(
 			} else {
 				nuts.NRej++
 			}
-            if nuts.Depths != nil {
-                nuts.Depths <- depth
-            }
+			nuts.updateDepth(depth)
 
 			// Write a sample to the channel.
 			sample := make([]float64, len(x))
@@ -318,6 +320,30 @@ func (nuts *NUTS) setDefaults() {
 	if nuts.Delta == 0 {
 		nuts.Delta = 1E3
 	}
+}
+
+// updateDepth updates depth beliefs.
+func (nuts *NUTS) updateDepth(depth int) {
+	if len(nuts.Depth) <= depth {
+		nuts.Depth = append(nuts.Depth,
+			make([][2]float64, depth-len(nuts.Depth)+1)...)
+	}
+	for i := 0; i != depth; i++ {
+		nuts.Depth[i][0]++
+	}
+	nuts.Depth[depth][1]++
+}
+
+// MeanDepth returns the average observed depth.
+func (nuts *NUTS) MeanDepth() float64 {
+	meanDepth := 0.
+	p := 1.
+	for i := 0; i != len(nuts.Depth); i++ {
+		alpha, beta := nuts.Depth[i][0], nuts.Depth[i][1]
+		p *= alpha / (alpha + beta)
+		meanDepth += p
+	}
+	return meanDepth
 }
 
 // uTurn returns true iff there is a u-turn.
