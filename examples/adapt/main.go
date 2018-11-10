@@ -1,5 +1,4 @@
 package main
-
 import (
 	. "bitbucket.org/dtolpin/infergo/examples/gmm/model/ad"
 	"bitbucket.org/dtolpin/infergo/infer"
@@ -18,13 +17,13 @@ import (
 
 var (
 	NCOMP int     = 2
-	RATE  float64 = 0.1
-	DECAY float64 = 0.98
-	GAMMA float64 = 0.9
-	STEP  float64 = 0.5
+	STEP  float64 = 0.1
 	DELTA float64 = 1E3
 	NITER int     = 100
 	NBURN int     = 100
+    NADPT int     = 10
+    DEPTH float64 = 3.
+    ETA   float64 = 0.1
 )
 
 func init() {
@@ -35,17 +34,14 @@ func init() {
 		flag.PrintDefaults()
 	}
 	flag.IntVar(&NCOMP, "ncomp", NCOMP, "number of components")
-	flag.Float64Var(&RATE, "rate", RATE,
-        "learning rate (Gradient, Momentum")
-	flag.Float64Var(&DECAY, "decay", DECAY, 
-        "rate decay (Gradient, Momentum)")
-	flag.Float64Var(&GAMMA, "gamma", GAMMA,
-        "momentum factor (Momentum)")
-	flag.Float64Var(&STEP, "step", STEP, "NUTS step (NUTS)")
-	flag.Float64Var(&DELTA, "delta", DELTA,
-        "lower bound on energy (NUTS)")
+	flag.Float64Var(&STEP, "step", STEP, "NUTS step")
+	flag.Float64Var(&DELTA, "delta", DELTA, "lower bound on energy")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	flag.IntVar(&NBURN, "nburn", NBURN, "number of burned iterations")
+	flag.IntVar(&NADPT, "nadpt", NADPT,
+        "number of steps between adaptions")
+    flag.Float64Var(&DEPTH, "depth", DEPTH, "optimum NUTS depth")
+    flag.Float64Var(&ETA, "eta", ETA, "adaption rate")
 	log.SetFlags(0)
 }
 
@@ -105,36 +101,40 @@ func main() {
 		}
 	}
 
-	// Run the optimizer
-	opt := &infer.Momentum{
-		Rate:  RATE / math.Sqrt(float64(len(m.Data))),
-		Decay: DECAY,
-		Gamma: GAMMA,
-	}
-	for iter := 0; iter != NITER; iter++ {
-		opt.Step(m, x)
-	}
-
-	// Print the result.
-	log.Printf("MLE components:\n")
-	for j := 0; j != m.NComp; j++ {
-		log.Printf("\t%d: mean=%.4g, stddev=%.4g\n",
-			j, x[2*j], math.Exp(0.5*x[2*j+1]))
-	}
-
-	// Now let's infer the posterior with NUTS.
+	// Let's infer the posterior with NUTS.
 	nuts := &infer.NUTS{
 		Eps:   STEP / math.Sqrt(float64(len(m.Data))),
 		Delta: DELTA,
 	}
 	samples := make(chan []float64)
 	nuts.Sample(m, x, samples)
-	// Burn
-	for i := 0; i != NBURN; i++ {
-        if len(<-samples) == 0 {
+    da := &infer.DualAveraging {
+        Eta: ETA,
+    }
+    // Adapt toward optimum tree depth
+    for i := 0; i != NBURN; i++ {
+        x := <-samples
+        if(len(x) == 0) {
             break
         }
-	}
+        if (i + 1) % NADPT == 0 {
+            depth := nuts.MeanDepth()
+            grad := (DEPTH - depth)/DEPTH
+            if math.Abs(grad) < 0.1 {
+                break
+            }
+            Eps := nuts.Eps
+            nuts.Eps = da.Step(float64(i + 1), Eps, grad)
+            log.Printf("Adapting: " + 
+                "depth: %.4g, step: %.4g => %.4g",
+                depth, Eps, nuts.Eps)
+            if i + NADPT < NBURN {
+                nuts.Depth = nil // forget the depth
+            }
+        }
+    }
+    log.Printf("Adapted: %.4g, step: %.4g",
+        nuts.MeanDepth(), nuts.Eps)
 
 	// Collect after burn-in
 	mean := make([]float64, m.NComp)
@@ -156,7 +156,7 @@ func main() {
 		stddev[j] /= n
 	}
 	nuts.Stop()
-	log.Printf("Mean components:\n")
+	log.Printf("Components:\n")
 	for j := 0; j != m.NComp; j++ {
 		log.Printf("\t%d: mean=%.4g, stddev=%.4g\n",
 			j, x[2*j], math.Exp(0.5*x[2*j+1]))
