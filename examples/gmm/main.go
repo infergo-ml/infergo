@@ -36,14 +36,14 @@ func init() {
 	}
 	flag.IntVar(&NCOMP, "ncomp", NCOMP, "number of components")
 	flag.Float64Var(&RATE, "rate", RATE,
-        "learning rate (Gradient, Momentum")
-	flag.Float64Var(&DECAY, "decay", DECAY, 
-        "rate decay (Gradient, Momentum)")
+		"learning rate (Gradient, Momentum")
+	flag.Float64Var(&DECAY, "decay", DECAY,
+		"rate decay (Gradient, Momentum)")
 	flag.Float64Var(&GAMMA, "gamma", GAMMA,
-        "momentum factor (Momentum)")
+		"momentum factor (Momentum)")
 	flag.Float64Var(&STEP, "step", STEP, "NUTS step (NUTS)")
 	flag.Float64Var(&DELTA, "delta", DELTA,
-        "lower bound on energy (NUTS)")
+		"lower bound on energy (NUTS)")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	flag.IntVar(&NBURN, "nburn", NBURN, "number of burned iterations")
 	log.SetFlags(0)
@@ -131,9 +131,9 @@ func main() {
 	nuts.Sample(m, x, samples)
 	// Burn
 	for i := 0; i != NBURN; i++ {
-        if len(<-samples) == 0 {
-            break
-        }
+		if len(<-samples) == 0 {
+			break
+		}
 	}
 
 	// Collect after burn-in
