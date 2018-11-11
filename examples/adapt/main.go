@@ -3,7 +3,6 @@ package main
 import (
 	. "bitbucket.org/dtolpin/infergo/examples/gmm/model/ad"
 	"bitbucket.org/dtolpin/infergo/infer"
-    "bitbucket.org/dtolpin/infergo/mathx"
 	"encoding/csv"
 	"flag"
 	"io"
@@ -25,7 +24,8 @@ var (
 	NBURN int     = 100
 	NADPT int     = 10
 	DEPTH float64 = 3.
-	RATE   float64 = 0.1
+	RATE  float64 = 0.1
+	DECAY float64 = 0.99
 )
 
 func init() {
@@ -44,6 +44,7 @@ func init() {
 		"number of steps between adaptions")
 	flag.Float64Var(&DEPTH, "depth", DEPTH, "optimum NUTS depth")
 	flag.Float64Var(&RATE, "rate", RATE, "adaption rate")
+	flag.Float64Var(&DECAY, "decay", DECAY, "adaption decay")
 	log.SetFlags(0)
 }
 
@@ -116,15 +117,13 @@ func main() {
 			break
 		}
 		if (i+1)%NADPT == 0 {
-			depth := nuts.MeanDepth()
-			grad := mathx.Sigm((depth - DEPTH) / DEPTH) - 0.5
-			if math.Abs(grad) < 0.01 {
-				break
-			}
 			Eps := nuts.Eps
-			nuts.Eps += RATE * grad
-			log.Printf("Adapting: "+
-				"depth: %.4g, step: %.4g => %.4g",
+			depth := nuts.MeanDepth()
+			// Step is roughly inverse proportional to depth,
+			// use it.
+			nuts.Eps *= (1 - RATE) + RATE*depth/DEPTH
+			RATE *= DECAY
+			log.Printf("Adapting: depth: %.4g, step: %.4g => %.4g",
 				depth, Eps, nuts.Eps)
 			if i+NADPT < NBURN {
 				nuts.Depth = nil // forget the depth

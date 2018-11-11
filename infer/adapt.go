@@ -1,6 +1,5 @@
 package infer
 
-import (
-)
+import ()
 
 // Adaptation
