@@ -10,7 +10,7 @@ type DualAveraging struct {
 	Rate float64
 }
 
-// Nesterov's primal-dual, oversimplified.
+// Nesterov's primal-dual averaging, oversimplified.
 // chi = -gradSum/math.Sqrt(t)
 // eta = Rate/t
 // x = eta*chi + (1-eta)*x
