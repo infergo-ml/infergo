@@ -3,6 +3,7 @@ package main
 import (
 	. "bitbucket.org/dtolpin/infergo/examples/gmm/model/ad"
 	"bitbucket.org/dtolpin/infergo/infer"
+    "bitbucket.org/dtolpin/infergo/mathx"
 	"encoding/csv"
 	"flag"
 	"io"
@@ -24,7 +25,7 @@ var (
 	NBURN int     = 100
 	NADPT int     = 10
 	DEPTH float64 = 3.
-	ETA   float64 = 0.1
+	RATE   float64 = 0.1
 )
 
 func init() {
@@ -42,7 +43,7 @@ func init() {
 	flag.IntVar(&NADPT, "nadpt", NADPT,
 		"number of steps between adaptions")
 	flag.Float64Var(&DEPTH, "depth", DEPTH, "optimum NUTS depth")
-	flag.Float64Var(&ETA, "eta", ETA, "adaption rate")
+	flag.Float64Var(&RATE, "rate", RATE, "adaption rate")
 	log.SetFlags(0)
 }
 
@@ -109,9 +110,6 @@ func main() {
 	}
 	samples := make(chan []float64)
 	nuts.Sample(m, x, samples)
-	da := &infer.DualAveraging{
-		Eta: ETA,
-	}
 	// Adapt toward optimum tree depth
 	for i := 0; i != NBURN; i++ {
 		if len(<-samples) == 0 {
@@ -119,12 +117,12 @@ func main() {
 		}
 		if (i+1)%NADPT == 0 {
 			depth := nuts.MeanDepth()
-			grad := (DEPTH - depth) / DEPTH
-			if math.Abs(grad) < 0.1 {
+			grad := mathx.Sigm((depth - DEPTH) / DEPTH) - 0.5
+			if math.Abs(grad) < 0.01 {
 				break
 			}
 			Eps := nuts.Eps
-			nuts.Eps = da.Step(float64(i+1), Eps, grad)
+			nuts.Eps += RATE * grad
 			log.Printf("Adapting: "+
 				"depth: %.4g, step: %.4g => %.4g",
 				depth, Eps, nuts.Eps)
