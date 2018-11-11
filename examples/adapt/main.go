@@ -20,7 +20,7 @@ var (
 	NCOMP = 2
 	STEP  = 0.1
 	NITER = 100
-	NBURN = 100
+	NBURN = 0
 	NADPT = 10
 	DEPTH = 3.
 )
@@ -43,6 +43,9 @@ func init() {
 
 func main() {
 	flag.Parse()
+	if NBURN == 0 {
+		NBURN = NITER
+	}
 
 	if flag.NArg() > 1 {
 		log.Fatalf("unexpected positional arguments: %v",
@@ -94,6 +97,9 @@ func main() {
 		for j := 0; j != m.NComp; j++ {
 			x[2*j] = -2. + 4./float64(m.NComp-1)*float64(j)
 			x[2*j+1] = 1.
+		}
+		for k := 0; k != len(x); k++ {
+			x[k] += 0.1 * rand.NormFloat64()
 		}
 	}
 
@@ -160,7 +166,7 @@ func main() {
 	log.Printf("Components:\n")
 	for j := 0; j != m.NComp; j++ {
 		log.Printf("\t%d: mean=%.4g, stddev=%.4g\n",
-			j, x[2*j], math.Exp(0.5*x[2*j+1]))
+			j, mean[j], stddev[j])
 	}
 
 	log.Printf(`NUTS:
