@@ -121,7 +121,7 @@ func main() {
 				nuts.Eps *= depth/DEPTH
 			} else {
 				grad := (DEPTH - depth)/DEPTH
-				if grad < 0.1 {
+				if math.Abs(grad) < 0.1 {
 					break
 				}
 				gradSum += grad
