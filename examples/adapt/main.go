@@ -86,7 +86,7 @@ func main() {
 		}
 	}
 
-	// Define the problem
+	// Define the problem.
 	m := &Model{Data: data, NComp: NCOMP}
 	x := make([]float64, 2*m.NComp)
 
@@ -100,9 +100,10 @@ func main() {
 			x[2*j] = -2. + 4./float64(m.NComp-1)*float64(j)
 			x[2*j+1] = 1.
 		}
-		for k := 0; k != len(x); k++ {
-			x[k] += 0.1 * rand.NormFloat64()
-		}
+	}
+	// Add some noise for a real-life experience.
+	for k := 0; k != len(x); k++ {
+		x[k] += 0.1 * rand.NormFloat64()
 	}
 
 	// Let's infer the posterior with NUTS.
