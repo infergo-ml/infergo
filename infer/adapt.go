@@ -26,8 +26,8 @@ func (da *DualAveraging) Step(t, x, gradSum float64) float64 {
 // Parameters of adaptation to the target depth
 type DepthAdapter struct {
 	DualAveraging
-	Depth float64
-	NAdpt int
+	Depth   float64
+	NAdpt   int
 	MinGrad float64
 }
 
