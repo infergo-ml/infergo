@@ -111,7 +111,8 @@ func main() {
 	}
 	samples := make(chan []float64)
 	nuts.Sample(m, x, samples)
-	// Adapt toward optimum tree depth
+
+	// Adapt toward optimum tree depth.
 	for i := 0; i != NBURN; i++ {
 		if len(<-samples) == 0 {
 			break
@@ -119,8 +120,7 @@ func main() {
 		if (i+1)%NADPT == 0 {
 			Eps := nuts.Eps
 			depth := nuts.MeanDepth()
-			// Step is roughly inverse proportional to depth,
-			// use it.
+			// Step is roughly inverse proportional to depth.
 			nuts.Eps *= (1 - RATE) + RATE*depth/DEPTH
 			RATE *= DECAY
 			log.Printf("Adapting: depth: %.4g, step: %.4g => %.4g",
