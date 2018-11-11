@@ -23,7 +23,7 @@ var (
 	NBURN = 0
 	NADPT = 10
 	DEPTH = 3.
-	RATE = 0.01
+	RATE  = 0.01
 )
 
 func init() {
