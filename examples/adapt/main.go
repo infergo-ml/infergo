@@ -42,7 +42,7 @@ func init() {
 	flag.IntVar(&NBURN, "nburn", NBURN, "number of burned iterations")
 	flag.IntVar(&NADPT, "nadpt", NADPT,
 		"number of steps between adaptions")
-	flag.Float64Var(&DEPTH, "depth", DEPTH, "optimum NUTS depth")
+	flag.Float64Var(&DEPTH, "depth", DEPTH, "optimum NUTS tree depth")
 	flag.Float64Var(&RATE, "rate", RATE, "adaption rate")
 	flag.Float64Var(&DECAY, "decay", DECAY, "adaption decay")
 	log.SetFlags(0)
