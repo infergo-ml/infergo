@@ -111,7 +111,7 @@ func main() {
 	nuts.Sample(m, x, samples)
 
 	// Adapt toward optimum tree depth.
-	da := &infer.DualAveraging {Rate: 0.01}
+	da := &infer.DualAveraging{Rate: 0.01}
 	gradSum := 0.
 	for i := 0; i != NBURN; i++ {
 		if len(<-samples) == 0 {
@@ -124,9 +124,9 @@ func main() {
 			if t == 0. {
 				// Guess initial value.
 				// Step is roughly inverse proportional to depth.
-				nuts.Eps *= depth/DEPTH
+				nuts.Eps *= depth / DEPTH
 			} else {
-				grad := (DEPTH - depth)/DEPTH
+				grad := (DEPTH - depth) / DEPTH
 				if math.Abs(grad) < 0.1 {
 					break
 				}

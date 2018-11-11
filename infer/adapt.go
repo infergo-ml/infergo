@@ -15,7 +15,7 @@ type DualAveraging struct {
 // eta = Rate/t
 // x = eta*chi + (1-eta)*x
 func (da *DualAveraging) Step(t, x, gradSum float64) float64 {
-	chi := -gradSum/math.Sqrt(t)
-	eta := da.Rate/t
+	chi := -gradSum / math.Sqrt(t)
+	eta := da.Rate / t
 	return eta*chi + (1-eta)*x
 }
