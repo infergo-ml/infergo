@@ -16,12 +16,12 @@ import (
 // Command line arguments
 
 var (
-	RATE      float64 = 0.01
-	GAMMA     float64 = 0.9
-	NITER     int     = 1000
-	LOGVTAU   float64 = 1.
-	LOGVETA   float64 = 1.
-	OPTIMIZER string  = "Adam"
+	RATE      = 0.01
+	GAMMA     = 0.9
+	NITER     = 1000
+	LOGVTAU   = 1.
+	LOGVETA   = 1.
+	OPTIMIZER = "Adam"
 )
 
 func init() {

@@ -17,12 +17,12 @@ import (
 // Command line arguments
 
 var (
-	RATE   float64 = 0.1
-	DECAY  float64 = 0.98
-	GAMMA  float64 = 0.9
-	NITER  int     = 100
-	NSTEPS int     = 10
-	STEP   float64 = 0.5
+	RATE   = 0.1
+	DECAY  = 0.998
+	GAMMA  = 0.9
+	NITER  = 1000
+	NSTEPS = 10
+	STEP   = 0.5
 )
 
 func init() {

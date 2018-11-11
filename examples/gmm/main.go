@@ -22,9 +22,8 @@ var (
 	DECAY float64 = 0.98
 	GAMMA float64 = 0.9
 	STEP  float64 = 0.5
-	DELTA float64 = 1E3
+	NBURN int     = 0
 	NITER int     = 100
-	NBURN int     = 100
 )
 
 func init() {
@@ -35,22 +34,24 @@ func init() {
 		flag.PrintDefaults()
 	}
 	flag.IntVar(&NCOMP, "ncomp", NCOMP, "number of components")
-	flag.Float64Var(&RATE, "rate", RATE,
-		"learning rate (Gradient, Momentum")
-	flag.Float64Var(&DECAY, "decay", DECAY,
-		"rate decay (Gradient, Momentum)")
-	flag.Float64Var(&GAMMA, "gamma", GAMMA,
-		"momentum factor (Momentum)")
-	flag.Float64Var(&STEP, "step", STEP, "NUTS step (NUTS)")
-	flag.Float64Var(&DELTA, "delta", DELTA,
-		"lower bound on energy (NUTS)")
+	flag.Float64Var(
+		&RATE, "rate", RATE, "learning rate (Gradient, Momentum")
+	flag.Float64Var(
+		&DECAY, "decay", DECAY, "rate decay (Gradient, Momentum)")
+	flag.Float64Var(
+		&GAMMA, "gamma", GAMMA, "momentum factor (Momentum)")
+	flag.Float64Var(
+		&STEP, "step", STEP, "NUTS step (NUTS)")
+	flag.IntVar(&NBURN, "nburn", NBURN, "number of burn-in iterations")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
-	flag.IntVar(&NBURN, "nburn", NBURN, "number of burned iterations")
 	log.SetFlags(0)
 }
 
 func main() {
 	flag.Parse()
+	if NBURN == 0 {
+		NBURN = NITER
+	}
 
 	if flag.NArg() > 1 {
 		log.Fatalf("unexpected positional arguments: %v",
@@ -124,8 +125,7 @@ func main() {
 
 	// Now let's infer the posterior with NUTS.
 	nuts := &infer.NUTS{
-		Eps:   STEP / math.Sqrt(float64(len(m.Data))),
-		Delta: DELTA,
+		Eps: STEP / math.Sqrt(float64(len(m.Data))),
 	}
 	samples := make(chan []float64)
 	nuts.Sample(m, x, samples)
@@ -166,7 +166,7 @@ func main() {
 	accepted: %d
 	rejected: %d
 	rate: %.4g
-	mean depth: %.4g
+	depth: %.4g
 `,
 		nuts.NAcc, nuts.NRej,
 		float64(nuts.NAcc)/float64(nuts.NAcc+nuts.NRej),

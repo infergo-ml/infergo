@@ -17,15 +17,14 @@ import (
 // Command line arguments
 
 var (
-	NCOMP int     = 2
-	STEP  float64 = 0.1
-	DELTA float64 = 1E3
-	NITER int     = 100
-	NBURN int     = 100
-	NADPT int     = 10
-	DEPTH float64 = 3.
-	RATE  float64 = 0.1
-	DECAY float64 = 0.99
+	NCOMP = 2
+	STEP  = 0.1
+	NITER = 100
+	NBURN = 100
+	NADPT = 10
+	DEPTH = 3.
+	RATE  = 0.1
+	DECAY = 0.99
 )
 
 func init() {
@@ -37,11 +36,9 @@ func init() {
 	}
 	flag.IntVar(&NCOMP, "ncomp", NCOMP, "number of components")
 	flag.Float64Var(&STEP, "step", STEP, "NUTS step")
-	flag.Float64Var(&DELTA, "delta", DELTA, "lower bound on energy")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	flag.IntVar(&NBURN, "nburn", NBURN, "number of burned iterations")
-	flag.IntVar(&NADPT, "nadpt", NADPT,
-		"number of steps between adaptions")
+	flag.IntVar(&NADPT, "nadpt", NADPT, "number of steps per adaptation")
 	flag.Float64Var(&DEPTH, "depth", DEPTH, "optimum NUTS tree depth")
 	flag.Float64Var(&RATE, "rate", RATE, "adaption rate")
 	flag.Float64Var(&DECAY, "decay", DECAY, "adaption decay")
@@ -106,8 +103,7 @@ func main() {
 
 	// Let's infer the posterior with NUTS.
 	nuts := &infer.NUTS{
-		Eps:   STEP / math.Sqrt(float64(len(m.Data))),
-		Delta: DELTA,
+		Eps: STEP / math.Sqrt(float64(len(m.Data))),
 	}
 	samples := make(chan []float64)
 	nuts.Sample(m, x, samples)

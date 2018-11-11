@@ -47,6 +47,11 @@ hello:
 gmm:
 	(cd examples/gmm && make)
 
+# NUTS Step adaptation 
+.PHONY: adapt
+adapt:
+	(cd examples/adapt && make)
+
 #  8 schools
 .PHONY: schools
 schools:

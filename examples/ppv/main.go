@@ -17,11 +17,15 @@ import (
 // Command line arguments
 
 var (
-	RATE  float64 = 0.01
-	DECAY float64 = 0.998
-	GAMMA float64 = 0.9
-	NITER int     = 1000
-	EPS   float64 = 1E-6
+	OPT   = true
+	POST  = true
+	RATE  = 0.01
+	DECAY = 0.998
+	GAMMA = 0.9
+	EPS   = 1E-6
+	STEP  = 0.1
+	NBURN = 0
+	NITER = 100
 )
 
 func init() {
@@ -30,16 +34,23 @@ func init() {
 		goppv [OPTIONS]` + "\n")
 		flag.PrintDefaults()
 	}
+	flag.BoolVar(&OPT, "opt", OPT, "optimize")
+	flag.BoolVar(&POST, "post", POST, "infer posterior")
 	flag.Float64Var(&RATE, "rate", RATE, "learning rate")
 	flag.Float64Var(&DECAY, "decay", DECAY, "rate decay")
 	flag.Float64Var(&GAMMA, "gamma", GAMMA, "gradient momentum factor")
-	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	flag.Float64Var(&EPS, "eps", EPS, "target accuracy")
+	flag.Float64Var(&STEP, "step", STEP, "NUTS step")
+	flag.IntVar(&NBURN, "nburn", NBURN, "number of burn-in iterations")
+	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	log.SetFlags(0)
 }
 
 func main() {
 	flag.Parse()
+	if NBURN == 0 {
+		NBURN = NITER
+	}
 
 	if flag.NArg() > 1 {
 		log.Printf("unexpected positional arguments: %v",
@@ -95,30 +106,74 @@ func main() {
 	// The parameter is log bandwidth
 	x := make([]float64, 1)
 
-	// Set a starting point
-	x[0] = math.Log(m.PriorBandwidth)
-	// Compute log-likelihood of the starting point,
-	// for comparison.
-	ll0 := m.Observe(x)
-	ad.Pop()
+	if OPT {
+		// Set a starting point
+		x[0] = math.Log(m.PriorBandwidth)
+		// Compute log-likelihood of the starting point,
+		// for comparison.
+		ll0 := m.Observe(x)
+		ad.Pop()
 
-	// Run the optimizer
-	opt := &infer.Momentum{
-		Rate:  RATE,
-		Decay: DECAY,
-		Gamma: GAMMA,
-	}
-	var ll float64
-	var iter int
-	for iter = 0; iter != NITER; iter++ {
-		xprev := x[0]
-		ll, _ = opt.Step(m, x)
-		if math.Abs(xprev-x[0]) < EPS*math.Abs(xprev+x[0]) {
-			break
+		// Run the optimizer
+		opt := &infer.Momentum{
+			Rate:  RATE,
+			Decay: DECAY,
+			Gamma: GAMMA,
 		}
+		var ll float64
+		var iter int
+		for iter = 0; iter != NITER; iter++ {
+			xprev := x[0]
+			ll, _ = opt.Step(m, x)
+			if math.Abs(xprev-x[0]) < EPS*math.Abs(xprev+x[0]) {
+				break
+			}
+		}
+
+		log.Printf("Iterations: %d", iter)
+		log.Printf("Best bandwidth: %.6g", math.Exp(x[0]))
+		log.Printf("Log-likelihood: %.4g ⇒ %.4g", ll0, ll)
+
 	}
 
-	log.Printf("Iterations: %d", iter)
-	log.Printf("Best bandwidth: %.6g", math.Exp(x[0]))
-	log.Printf("Log-likelihood: %.4g ⇒ %.4g", ll0, ll)
+	if POST {
+		// Now let's infer the posterior with NUTS.
+		nuts := &infer.NUTS{
+			Eps: STEP,
+		}
+		samples := make(chan []float64)
+		nuts.Sample(m, x, samples)
+		// Burn
+		for i := 0; i != NBURN; i++ {
+			<-samples
+		}
+
+		// Collect after burn-in
+		n := 0.
+		s := 0.
+		s2 := 0.
+		for i := 0; i != NITER; i++ {
+			x := <-samples
+			if len(x) == 0 {
+				break
+			}
+			n++
+			b := math.Exp(x[0])
+			s += b
+			s2 += b * b
+		}
+		nuts.Stop()
+		mean := s / n
+		stddev := math.Sqrt(s2/n - mean*mean)
+		log.Printf("Bandwidth: mean=%.6g, stddev=%.6g", mean, stddev)
+		log.Printf(`NUTS:
+		accepted: %d
+		rejected: %d
+		rate: %.4g
+		depth: %.4g
+		`,
+			nuts.NAcc, nuts.NRej,
+			float64(nuts.NAcc)/float64(nuts.NAcc+nuts.NRej),
+			nuts.MeanDepth())
+	}
 }
