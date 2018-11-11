@@ -23,6 +23,7 @@ var (
 	NBURN = 0
 	NADPT = 10
 	DEPTH = 3.
+	RATE = 0.01
 )
 
 func init() {
@@ -37,7 +38,8 @@ func init() {
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	flag.IntVar(&NBURN, "nburn", NBURN, "number of burned iterations")
 	flag.IntVar(&NADPT, "nadpt", NADPT, "number of steps per adaptation")
-	flag.Float64Var(&DEPTH, "depth", DEPTH, "optimum NUTS tree depth")
+	flag.Float64Var(&DEPTH, "depth", DEPTH, "target NUTS tree depth")
+	flag.Float64Var(&RATE, "rate", RATE, "adaptation rate")
 	log.SetFlags(0)
 }
 
@@ -111,37 +113,12 @@ func main() {
 	nuts.Sample(m, x, samples)
 
 	// Adapt toward optimum tree depth.
-	da := &infer.DualAveraging{Rate: 0.01}
-	gradSum := 0.
-	for i := 0; i != NBURN; i++ {
-		if len(<-samples) == 0 {
-			break
-		}
-		if (i+1)%NADPT == 0 {
-			t := float64(i / NADPT)
-			Eps := nuts.Eps
-			depth := nuts.MeanDepth()
-			if t == 0. {
-				// Guess initial value.
-				// Step is roughly inverse proportional to depth.
-				nuts.Eps *= depth / DEPTH
-			} else {
-				grad := (DEPTH - depth) / DEPTH
-				if math.Abs(grad) < 0.1 {
-					break
-				}
-				gradSum += grad
-				nuts.Eps = da.Step(t, nuts.Eps, gradSum)
-			}
-			log.Printf("Adapting: depth: %.4g, step: %.4g => %.4g",
-				depth, Eps, nuts.Eps)
-			if i+NADPT < NBURN {
-				nuts.Depth = nil // forget the depth
-			}
-		}
+	da := &infer.DepthAdapter{
+		DualAveraging: infer.DualAveraging{Rate: RATE},
+		// Depth: DEPTH,
+		// NAdpt: NADPT,
 	}
-	log.Printf("Adapted: %.4g, step: %.4g",
-		nuts.MeanDepth(), nuts.Eps)
+	da.Adapt(nuts, samples, NBURN)
 
 	// Collect after burn-in
 	mean := make([]float64, m.NComp)
