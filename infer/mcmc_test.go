@@ -192,7 +192,7 @@ func TestUTurn(t *testing.T) {
 // should be around the inferred mean and stddev.
 func TestSamplers(t *testing.T) {
 	nattempts := 10
-	niter := 100
+	niter := 200
 	prec := 1E-2
 	if testing.Short() {
 		// just kicking tyres

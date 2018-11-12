@@ -340,7 +340,7 @@ func Enter(px ...*float64) {
 // called only once per call to an automatically differentiated
 // function.
 func Gradient() []float64 {
-	partials := partials(backward())
+	partials := backward()
 	Pop()
 	return partials
 }
@@ -359,7 +359,7 @@ func Pop() {
 
 // backward runs the backward pass on the tape and returns the
 // adjoints.
-func backward() map[*float64]float64 {
+func backward() []float64 {
 	c := &tape.cstack[len(tape.cstack)-1]
 	// allocate enough place for all adjoints at once
 	adjoints := make(map[*float64]float64, len(tape.places)-c.p)
@@ -444,16 +444,12 @@ func backward() map[*float64]float64 {
 			panic(fmt.Sprintf("bad type %v", r.typ))
 		}
 	}
-	return adjoints
-}
 
-// partials collects the partial derivatives from the adjoints;
-// places 1 to c.n are parameters.
-func partials(adjoints map[*float64]float64) []float64 {
-	c := &tape.cstack[len(tape.cstack)-1]
+	// Collect the partials; places 1 to c.n are parameters.
 	partials := make([]float64, c.n)
 	for i := 0; i != c.n; i++ {
 		partials[i] = adjoints[tape.places[c.p+i+1]]
 	}
+
 	return partials
 }
