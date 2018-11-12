@@ -382,9 +382,10 @@ func backward() []float64 {
 				*tape.places[r.p] = tape.values[r.v]
 				// Save the adjoint.
 				a := adjoints[tape.places[r.p]]
-				// Update the adjoint: the adjoint of the left-hand
-				// side is zero (because it is overwritten) except
-				// if the right-hand side is the same location.
+				// Update the adjoint: the adjoint of the
+				// left-hand side is zero (because the place is
+				// overwritten) except if the right-hand side is
+				// the same place.
 				adjoints[tape.places[r.p]] = 0.
 				adjoints[tape.places[r.p+1]] += a
 			} else {
@@ -398,9 +399,10 @@ func backward() []float64 {
 				for i := 0; i != r.op; i++ {
 					a[i] = adjoints[tape.places[r.p+i]]
 				}
-				// Update the adjoints: the adjoint of the left-hand
-				// side is zero (because it is overwritten) except
-				// if the right-hand side is the same location.
+				// Update the adjoints: the adjoints of the
+				// left-hand side are zero (because the places
+				// are overwritten) except if the right-hand
+				// side is the same place.
 				for i := 0; i != r.op; i++ {
 					adjoints[tape.places[r.p+i]] = 0.
 				}
