@@ -191,7 +191,7 @@ func TestUTurn(t *testing.T) {
 // Basic convergence of MCMC samplers. Empirical mean and stddev
 // should be around the inferred mean and stddev.
 func TestSamplers(t *testing.T) {
-	nattempts := 5
+	nattempts := 10
 	niter := 100
 	prec := 1E-2
 	if testing.Short() {
