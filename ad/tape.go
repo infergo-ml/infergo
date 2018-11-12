@@ -438,8 +438,8 @@ func backward() []float64 {
 			a := adjoints[tape.places[r.p]]
 			e := &tape.elementals[r.op]
 			d := e.g(*tape.places[r.p],
-				// Parameters must be copied to tape.values during
-				// the forward pass.
+				// Parameters must be copied to tape.values
+				// during the forward pass.
 				tape.values[r.v:r.v+e.n]...)
 			for i := 0; i != e.n; i++ {
 				adjoints[tape.places[r.p+1+i]] += a * d[i]
