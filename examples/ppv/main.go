@@ -26,6 +26,8 @@ var (
 	STEP  = 0.1
 	NBURN = 0
 	NITER = 100
+	NADPT = 10
+	DEPTH = 3.
 )
 
 func init() {
@@ -43,6 +45,8 @@ func init() {
 	flag.Float64Var(&STEP, "step", STEP, "NUTS step")
 	flag.IntVar(&NBURN, "nburn", NBURN, "number of burn-in iterations")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
+	flag.IntVar(&NADPT, "nadpt", NADPT, "number of steps per adaptation")
+	flag.Float64Var(&DEPTH, "depth", DEPTH, "target NUTS tree depth")
 	log.SetFlags(0)
 }
 
@@ -143,10 +147,13 @@ func main() {
 		}
 		samples := make(chan []float64)
 		nuts.Sample(m, x, samples)
-		// Burn
-		for i := 0; i != NBURN; i++ {
-			<-samples
+		// Adapt toward optimum tree depth.
+		da := &infer.DepthAdapter{
+			DualAveraging: infer.DualAveraging{Rate: RATE},
+			Depth: DEPTH,
+			NAdpt: NADPT,
 		}
+		da.Adapt(nuts, samples, NBURN)
 
 		// Collect after burn-in
 		n := 0.
