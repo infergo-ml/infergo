@@ -358,10 +358,12 @@ func Pop() {
 }
 
 // backward runs the backward pass on the tape and returns the
-// adjoints.
+// partial derivatives of the log-likelihood with respect to
+// the parameters of Observe.
 func backward() []float64 {
 	c := &tape.cstack[len(tape.cstack)-1]
-	// allocate enough place for all adjoints at once
+	// allocate enough place for all adjoints at once, avoids
+	// reallocation of map storage, which is slow.
 	adjoints := make(map[*float64]float64, len(tape.places)-c.p)
 	// Set the adjoint of the result to 1.
 	adjoints[tape.places[c.p]] = 1.
