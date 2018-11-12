@@ -12,11 +12,11 @@ var tape oneGlobalTape
 
 // A tape is a list of records and the memory
 type oneGlobalTape struct {
-	records    []record             // recorded instructions
-	places     []*float64           // variable places
-	values     []float64            // stored values
-	elementals []elemental          // gradients of elementals
-	cstack     []counters           // counter stack (see below)
+	records    []record    // recorded instructions
+	places     []*float64  // variable places
+	values     []float64   // stored values
+	elementals []elemental // gradients of elementals
+	cstack     []counters  // counter stack (see below)
 }
 
 func init() {
@@ -126,7 +126,7 @@ func Value(v float64) *float64 {
 // Return returns the result of the differentiated function.
 func Return(px *float64) float64 {
 	// The returned value goes into the first place.
-	c := &tape.cstack[len(tape.cstack) -1]
+	c := &tape.cstack[len(tape.cstack)-1]
 	tape.places[c.p] = px
 	return *px
 }
@@ -302,7 +302,7 @@ func Call(
 	// value is in the first place. Otherwise, the function
 	// is called as an expression statement, for side effects,
 	// and the return value is ignored.
-	c := &tape.cstack[len(tape.cstack) -1]
+	c := &tape.cstack[len(tape.cstack)-1]
 	return tape.places[c.p]
 }
 

@@ -150,8 +150,8 @@ func main() {
 		// Adapt toward optimum tree depth.
 		da := &infer.DepthAdapter{
 			DualAveraging: infer.DualAveraging{Rate: RATE},
-			Depth: DEPTH,
-			NAdpt: NADPT,
+			Depth:         DEPTH,
+			NAdpt:         NADPT,
 		}
 		da.Adapt(nuts, samples, NBURN)
 

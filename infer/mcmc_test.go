@@ -200,7 +200,7 @@ func TestSamplers(t *testing.T) {
 		prec = 1E-1
 	}
 	for _, c := range []struct {
-		sampler          func() MCMC
+		sampler func() MCMC
 	}{
 		{
 			func() MCMC {
@@ -222,7 +222,7 @@ func TestSamplers(t *testing.T) {
 			func() bool {
 				mean, stddev := inferMeanStddev(c.sampler(), niter)
 				return math.Abs((mean-testMean)/
-						(mean+testMean)) <= prec &&
+					(mean+testMean)) <= prec &&
 					math.Abs((stddev-testStddev)/
 						(stddev+testStddev)) <= prec
 			},
