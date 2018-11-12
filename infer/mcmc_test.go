@@ -191,8 +191,8 @@ func TestUTurn(t *testing.T) {
 // Basic convergence of MCMC samplers. Empirical mean and stddev
 // should be around the inferred mean and stddev.
 func TestSamplers(t *testing.T) {
-	nattempts := 10
-	niter := 200
+	nattempts := 100
+	niter := 100
 	prec := 1E-2
 	if testing.Short() {
 		// just kicking tyres
@@ -201,8 +201,6 @@ func TestSamplers(t *testing.T) {
 	}
 	for _, c := range []struct {
 		sampler          func() MCMC
-		nattempts, niter int
-		prec             float64
 	}{
 		{
 			func() MCMC {
@@ -211,8 +209,6 @@ func TestSamplers(t *testing.T) {
 					Eps: 0.05,
 				}
 			},
-			nattempts, niter,
-			prec,
 		},
 		{
 			func() MCMC {
@@ -220,15 +216,15 @@ func TestSamplers(t *testing.T) {
 					Eps: 0.05,
 				}
 			},
-			nattempts, niter,
-			prec,
 		},
 	} {
-		if !repeatedly(c.niter,
+		if !repeatedly(nattempts,
 			func() bool {
-				mean, stddev := inferMeanStddev(c.sampler(), c.niter)
-				return math.Abs(mean-testMean) <= c.prec &&
-					math.Abs(stddev-testStddev) <= c.prec
+				mean, stddev := inferMeanStddev(c.sampler(), niter)
+				return math.Abs((mean-testMean)/
+						(mean+testMean)) <= prec &&
+					math.Abs((stddev-testStddev)/
+						(stddev+testStddev)) <= prec
 			},
 			true) {
 			t.Errorf("%T did not converge", c.sampler())
@@ -261,13 +257,15 @@ func TestNUTSDepth(t *testing.T) {
 	}
 }
 
+const BenchmarkNiter = 100
+
 func BenchmarkHmcL10Eps01(b *testing.B) {
 	for i := 0; i != b.N; i++ {
 		inferMeanStddev(
 			&HMC{
 				L:   10,
 				Eps: 0.1,
-			}, 100)
+			}, BenchmarkNiter)
 	}
 }
 
@@ -277,7 +275,7 @@ func BenchmarkHmcL20Eps005(b *testing.B) {
 			&HMC{
 				L:   20,
 				Eps: 0.05,
-			}, 100)
+			}, BenchmarkNiter)
 	}
 }
 
@@ -286,7 +284,7 @@ func BenchmarkNutsEps01(b *testing.B) {
 		inferMeanStddev(
 			&NUTS{
 				Eps: 0.1,
-			}, 100)
+			}, BenchmarkNiter)
 	}
 }
 
@@ -295,6 +293,6 @@ func BenchmarkNutsEps005(b *testing.B) {
 		inferMeanStddev(
 			&NUTS{
 				Eps: 0.05,
-			}, 100)
+			}, BenchmarkNiter)
 	}
 }
