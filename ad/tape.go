@@ -70,7 +70,7 @@ const (
 	typAssignment        // assignment statement
 	typArithmetic        // unary or binary
 	typElemental         // call to an elemental function
-	typCall              // last on the tape before a method call
+	typCall              // last on tape before a method call
 )
 
 // arithmetic operations
