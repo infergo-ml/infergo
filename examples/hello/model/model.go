@@ -15,7 +15,7 @@ type Model struct {
 func (m *Model) Observe(x []float64) float64 {
 	ll := 0.
 	for i := 0; i != len(m.Data); i++ {
-		ll += Normal.Logp(m.Data[i], x[0], x[1])
+		ll += Normal.Logp(x[0], x[1], m.Data[i])
 	}
 	return ll
 }
