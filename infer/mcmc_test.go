@@ -144,7 +144,7 @@ func inferMeanStddev(
 			break
 		}
 		mean += x[0]
-		stddev += math.Exp(0.5 * x[1])
+		stddev += math.Exp(x[1])
 		n++
 	}
 	sampler.Stop()
