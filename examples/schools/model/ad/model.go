@@ -1,16 +1,16 @@
 package model
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	. "bitbucket.org/dtolpin/infergo/dist/ad"
+	"bitbucket.org/dtolpin/infergo/ad"
 	"math"
 )
 
 type Model struct {
-	J                int
-	Y                []float64
-	Sigma            []float64
-	LogVtau, LogVeta float64
+	J			int
+	Y			[]float64
+	Sigma			[]float64
+	LogVtau, LogVeta	float64
 }
 
 func (m *Model) Observe(x []float64) float64 {
@@ -24,8 +24,8 @@ func (m *Model) Observe(x []float64) float64 {
 	var mu float64
 	ad.Assignment(&mu, &x[0])
 	ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Call(func(_vararg []float64) {
-		Normal.Logp(0, 0, 0)
-	}, 3, &x[1], ad.Value(0), &m.LogVtau)))
+		Normal.Logp(0, 0, _vararg...)
+	}, 2, ad.Value(0), &m.LogVtau, &x[1])))
 	var tau float64
 	ad.Assignment(&tau, ad.Elemental(math.Exp, &x[1]))
 	var eta []float64
@@ -34,15 +34,15 @@ func (m *Model) Observe(x []float64) float64 {
 
 	for i, y := range m.Y {
 		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Call(func(_vararg []float64) {
-			Normal.Logp(0, 0, 0)
-		}, 3, &eta[i], ad.Value(0), &m.LogVeta)))
+			Normal.Logp(0, 0, _vararg...)
+		}, 2, ad.Value(0), &m.LogVeta, &eta[i])))
 		var theta float64
 		ad.Assignment(&theta, ad.Arithmetic(ad.OpAdd, &mu, ad.Arithmetic(ad.OpMul, &tau, &eta[i])))
 		var logVtheta float64
 		ad.Assignment(&logVtheta, ad.Elemental(math.Log, ad.Arithmetic(ad.OpMul, &m.Sigma[i], &m.Sigma[i])))
 		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Call(func(_vararg []float64) {
-			Normal.Logp(0, 0, 0)
-		}, 3, &y, &theta, &logVtheta)))
+			Normal.Logp(0, 0, _vararg...)
+		}, 2, &theta, &logVtheta, &y)))
 	}
 	return ad.Return(&ll)
 }

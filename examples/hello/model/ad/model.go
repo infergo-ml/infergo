@@ -15,12 +15,7 @@ func (m *Model) Observe(x []float64) float64 {
 	} else {
 		ad.Setup(x)
 	}
-	var ll float64
-	ad.Assignment(&ll, ad.Value(0.))
-	for i := 0; i != len(m.Data); i = i + 1 {
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Call(func(_vararg []float64) {
-			Normal.Logp(0, 0, 0)
-		}, 3, &x[0], &x[1], &m.Data[i])))
-	}
-	return ad.Return(&ll)
+	return ad.Return(ad.Call(func(_vararg []float64) {
+		Normal.Logp(0, 0, m.Data...)
+	}, 2, &x[0], &x[1]))
 }

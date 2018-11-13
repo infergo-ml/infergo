@@ -1,15 +1,15 @@
 package model
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	. "bitbucket.org/dtolpin/infergo/dist/ad"
+	"bitbucket.org/dtolpin/infergo/ad"
 	"math"
 )
 
 type Model struct {
-	PPV            []int
-	NPages         int
-	PriorBandwidth float64
+	PPV		[]int
+	NPages		int
+	PriorBandwidth	float64
 }
 
 func (m *Model) Observe(x []float64) float64 {
@@ -32,8 +32,8 @@ func (m *Model) Observe(x []float64) float64 {
 	}
 	var target float64
 	ad.Assignment(&target, ad.Call(func(_vararg []float64) {
-		Expon.Logp(0, 0)
-	}, 2, &bandwidth, ad.Arithmetic(ad.OpDiv, ad.Value(1.), &m.PriorBandwidth)))
+		Expon.Logp(0, _vararg...)
+	}, 1, ad.Arithmetic(ad.OpDiv, ad.Value(1.), &m.PriorBandwidth), &bandwidth))
 
 	for _, ppv := range m.PPV {
 		for j := 0; j != m.NPages; j = j + 1 {

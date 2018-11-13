@@ -13,9 +13,5 @@ type Model struct {
 
 // x[0] is the mean, x[1] is the logvariance of the distribution
 func (m *Model) Observe(x []float64) float64 {
-	ll := 0.
-	for i := 0; i != len(m.Data); i++ {
-		ll += Normal.Logp(x[0], x[1], m.Data[i])
-	}
-	return ll
+	return Normal.Logp(x[0], x[1], m.Data...)
 }
