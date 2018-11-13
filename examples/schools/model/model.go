@@ -35,17 +35,15 @@ type Model struct {
 }
 
 func (m *Model) Observe(x []float64) float64 {
-	ll := 0.0
-
 	//  There are m.J + 2 parameters:
 	// mu, logtau, eta[J]
 	mu := x[0]
-	ll += Normal.Logp(0, m.LogVtau, x[1])
 	tau := math.Exp(x[1])
 	eta := x[2:]
 
+	ll := Normal.Logp(0, m.LogVtau, x[1])
+	ll += Normal.Logps(0, m.LogVeta, eta...)
 	for i, y := range m.Y {
-		ll += Normal.Logp(0, m.LogVeta, eta[i])
 		theta := mu + tau*eta[i]
 		logVtheta := math.Log(m.Sigma[i] * m.Sigma[i])
 		ll += Normal.Logp(theta, logVtheta, y)
