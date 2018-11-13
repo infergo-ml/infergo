@@ -41,20 +41,52 @@ func init() {
 		})
 }
 
+// LogGamma and digamma are borrowed from the source code of
+// WebPPL, https://github.com/probmods/webppl.
+// Copyright © 2014 WebPPL contributors
+
 // LogGamma function is used in the log-density of the
 // Gamma and Beta distributions.
 func LogGamma(x float64) float64 {
-	return 0.
+	x -= 1
+	tmp := x + 5.5
+	tmp -= (x + 0.5) * math.Log(tmp)
+	var ser = 1.000000000190015
+	for i := 0; i != len(gammaCof); i++ {
+		x += 1
+		ser += gammaCof[i] / x
+	}
+	return -tmp + math.Log(2.5066282746310005*ser)
 }
 
-// diGamma is the derivative of LogGamma.
-func diGamma(x float64) float64 {
-	return 0.
+var gammaCof = []float64{
+	76.18009172947146,
+	-86.50532032941677,
+	24.01409824083091,
+	-1.231739572450155,
+	0.1208650973866179e-2,
+	-0.5395239384953e-5,
+}
+
+// digamma is the derivative of LogGamma.
+func digamma(x float64) float64 {
+  if x < 6. {
+    return digamma(x + 1) - 1./x
+  }
+  return math.Log(x) -
+      1 / (2 * x) -
+      1 / (12 * math.Pow(x, 2)) +
+      1 / (120 * math.Pow(x, 4)) -
+      1 / (252 * math.Pow(x, 6)) +
+      1 / (240 * math.Pow(x, 8)) -
+      5 / (660 * math.Pow(x, 10)) +
+      691 / (32760 * math.Pow(x, 12)) -
+      1 / (12 * math.Pow(x, 14))
 }
 
 func init() {
 	ad.RegisterElemental(LogGamma,
 		func(_ float64, params ...float64) []float64 {
-			return []float64{diGamma(params[0])}
+			return []float64{digamma(params[0])}
 		})
 }

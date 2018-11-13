@@ -37,9 +37,8 @@ func TestSigmGrad(t *testing.T) {
 		y := Sigm(c.x)
 		g := grad(y, c.x)[0]
 		if math.Abs(g-c.g) > 1.0E-6 {
-			t.Errorf("Wrong gradient of Sigm: "+
-				"got Sigm(%.4g)=%.4g, want %.4g",
-				c.x, g, c.g)
+			t.Errorf("Wrong gradient of Sigm(%.4g): "+
+				"got %.4g, want %.4g", c.x, g, c.g)
 		}
 	}
 }
@@ -55,8 +54,8 @@ func TestLogSumExp(t *testing.T) {
 	} {
 		z := LogSumExp(c.x, c.y)
 		if math.Abs(z-c.z) > 1E-6 {
-			t.Errorf("Wrong LogSumExp(%.4g, %.4g): got %.4g, want %.4g",
-				c.x, c.y, z, c.z)
+			t.Errorf("Wrong LogSumExp(%.4g, %.4g): "+
+				"got %.4g, want %.4g", c.x, c.y, z, c.z)
 		}
 	}
 }
@@ -79,9 +78,8 @@ func TestLogSumExpGrad(t *testing.T) {
 		g := grad(z, c.x, c.y)
 		if math.Abs(g[0]-c.g[0]) > 1.0E-6 ||
 			math.Abs(g[1]-c.g[1]) > 1.0E-6 {
-			t.Errorf("Wrong gradient of LogSumExp: "+
-				"got LogSumExp(%.4g, %.4g)=(%.4g, %.4g), "+
-				"want (%.4g, %.4g)",
+			t.Errorf("Wrong gradient of LogSumExp(%.4g, %.4g): "+
+				"got (%.4g, %.4g), want (%.4g, %.4g)",
 				c.x, c.y, g[0], g[1], c.g[0], c.g[1])
 		}
 	}
@@ -123,9 +121,8 @@ func TestLogGammaGrad(t *testing.T) {
 		y := LogGamma(c.x)
 		g := grad(y, c.x)[0]
 		if math.Abs(g-c.g) > 1.0E-6 {
-			t.Errorf("Wrong gradient of LogGamma: "+
-				"got LogGamma(%.4g)=%.4g, want %.4g",
-				c.x, g, c.g)
+			t.Errorf("Wrong gradient of LogGamma(%.4g): "+
+				"got %.4g, want %.4g", c.x, g, c.g)
 		}
 	}
 }
