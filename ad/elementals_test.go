@@ -9,7 +9,7 @@ import (
 
 // Check that gradients of unary functions from math
 // are defined and correct.
-func TestMathBinary(t *testing.T) {
+func TestMathUnary(t *testing.T) {
 	for _, c := range []struct {
 		s  string
 		f  func(float64) float64
@@ -54,9 +54,8 @@ func TestMathBinary(t *testing.T) {
 			y := c.f(xg[0])
 			g := grad(y, xg[0])[0]
 			if math.Abs(g-xg[1]) > 1.0E-6 {
-				t.Errorf("Wrong gradient of %v: "+
-					"got %v(%.4g)=%.4g, want %.4g",
-					c.s, c.s, xg[0], g, xg[1])
+				t.Errorf("Wrong gradient of %v(%.4g): " +
+					"got %.4g, want %.4g", c.s, xg[0], g, xg[1])
 			}
 		}
 	}
@@ -64,7 +63,7 @@ func TestMathBinary(t *testing.T) {
 
 // Check that gradients of binary functions from math
 // are defined and correct.
-func TestMathUnary(t *testing.T) {
+func TestMathBinary(t *testing.T) {
 	for _, c := range []struct {
 		s  string
 		f  func(float64, float64) float64
@@ -88,9 +87,9 @@ func TestMathUnary(t *testing.T) {
 			y := c.f(xg[0], xg[1])
 			g := grad(y, xg[0], xg[1])[0]
 			if math.Abs(g-xg[2]) > 1.0E-6 {
-				t.Errorf("Wrong gradient of %v: "+
-					"got %v(%.4g, %.4g)=%.4g, want %.4g",
-					c.s, c.s, xg[0], xg[1], g, xg[2])
+				t.Errorf("Wrong gradient of %v(%.4g, %.4g): "+
+					"got %.4g, want %.4g",
+					c.s, xg[0], xg[1], g, xg[2])
 			}
 		}
 	}
