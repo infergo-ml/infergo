@@ -174,10 +174,10 @@ func main() {
 		stddev := math.Sqrt(s2/n - mean*mean)
 		log.Printf("Bandwidth: mean=%.6g, stddev=%.6g", mean, stddev)
 		log.Printf(`NUTS:
-		accepted: %d
-		rejected: %d
-		rate: %.4g
-		depth: %.4g
+	accepted: %d
+	rejected: %d
+	rate: %.4g
+	depth: %.4g
 		`,
 			nuts.NAcc, nuts.NRej,
 			float64(nuts.NAcc)/float64(nuts.NAcc+nuts.NRej),
