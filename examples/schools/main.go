@@ -19,8 +19,8 @@ var (
 	RATE      = 0.01
 	GAMMA     = 0.9
 	NITER     = 1000
-	LOGVTAU   = 1.
-	LOGVETA   = 1.
+	STAU      = 2.
+	SETA      = 2.
 	OPTIMIZER = "Adam"
 )
 
@@ -33,10 +33,8 @@ func init() {
 	flag.Float64Var(&RATE, "rate", RATE, "learning rate")
 	flag.Float64Var(&GAMMA, "gamma", GAMMA, "momentum factor")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
-	flag.Float64Var(&LOGVTAU, "logvtau", LOGVTAU,
-		"log variance of tau prior")
-	flag.Float64Var(&LOGVETA, "logveta", LOGVETA,
-		"log variance of eta priors")
+	flag.Float64Var(&STAU, "stau", STAU, "sigma of tau prior")
+	flag.Float64Var(&SETA, "seta", SETA, "sigma of eta priors")
 	flag.StringVar(&OPTIMIZER, "optimizer", OPTIMIZER,
 		"optimizer (Gradient, Momentum or Adam)")
 	rand.Seed(time.Now().UTC().UnixNano())
@@ -56,8 +54,8 @@ func main() {
 		J:       8,
 		Y:       []float64{28, 8, -3, 7, -1, 1, 18, 12},
 		Sigma:   []float64{15, 10, 16, 11, 9, 11, 10, 18},
-		LogVtau: LOGVTAU,
-		LogVeta: LOGVETA,
+		Stau: STAU,
+		Seta: SETA,
 	}
 	x := make([]float64, 2+m.J)
 

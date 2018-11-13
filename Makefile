@@ -1,6 +1,8 @@
 all: build
 
-PACKAGES=ad model infer mathx dist dist/ad cmd/deriv
+TESTPACKAGES=ad model infer mathx dist cmd/deriv
+PACKAGES=$(TESTPACKAGES) dist/ad
+
 EXAMPLES=hello gmm adapt schools ppv
 
 examples: build $(EXAMPLES)
@@ -9,10 +11,10 @@ dist/ad/dist.go: dist/dist.go
 	deriv dist
 
 test: dist/ad/dist.go
-	for package in $(PACKAGES); do go test -short ./$$package; done
+	for package in $(TESTPACKAGES); do go test -short ./$$package; done
 
 fulltest: test
-	for package in $(PACKAGES); do go test ./$$package; done
+	for package in $(TESTPACKAGES); do go test ./$$package; done
 
 build: test
 	for package in $(PACKAGES); do go build ./$$package; done
