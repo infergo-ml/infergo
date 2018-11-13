@@ -4,7 +4,7 @@ package model
 import (
 	. "bitbucket.org/dtolpin/infergo/dist/ad"
 	"bitbucket.org/dtolpin/infergo/mathx"
-    "math"
+	"math"
 )
 
 // data are the observations

@@ -6,7 +6,7 @@
 package dist
 
 import (
-    "bitbucket.org/dtolpin/infergo/mathx"
+	"bitbucket.org/dtolpin/infergo/mathx"
 	"math"
 )
 
@@ -35,16 +35,16 @@ func init() {
 
 // Logp computes the log pdf of a single observation.
 func (_ normal) Logp(mu, sigma float64, y float64) float64 {
-	vari := sigma*sigma
-    logv := math.Log(vari)
+	vari := sigma * sigma
+	logv := math.Log(vari)
 	d := y - mu
 	return -0.5 * (d*d/vari + logv + log2pi)
 }
 
 // Logp computes the log pdf of a vector of observations.
 func (_ normal) Logps(mu, sigma float64, y ...float64) float64 {
-	vari := sigma*sigma
-    logv := math.Log(vari)
+	vari := sigma * sigma
+	logv := math.Log(vari)
 	ll := 0.
 	for i := 0; i != len(y); i++ {
 		d := y[i] - mu
@@ -95,7 +95,7 @@ var Gamma gamma
 // Observe implements the Model interface. The parameter
 // vector is alpha, beta, observations.
 func (dist gamma) Observe(x []float64) float64 {
-    alpha, beta, y := x[0], x[1], x[2:]
+	alpha, beta, y := x[0], x[1], x[2:]
 	if len(y) == 1 {
 		return dist.Logp(alpha, beta, y[0])
 	} else {
@@ -105,17 +105,17 @@ func (dist gamma) Observe(x []float64) float64 {
 
 // Logp computes the log pdf of a single observation.
 func (_ gamma) Logp(alpha, beta float64, y float64) float64 {
-    return (alpha - 1) * math.Log(y) - beta * y -
-        mathx.LogGamma(alpha) + alpha * math.Log(beta)
+	return (alpha-1)*math.Log(y) - beta*y -
+		mathx.LogGamma(alpha) + alpha*math.Log(beta)
 }
 
 // Logp computes the log pdf of a vector of observations.
 func (_ gamma) Logps(alpha, beta float64, y ...float64) float64 {
 	ll := 0.
 	for i := 0; i != len(y); i++ {
-        ll += (alpha - 1) * math.Log(y[i]) - beta * y[i] -
-            mathx.LogGamma(alpha) + alpha * math.Log(beta)
-    }
+		ll += (alpha-1)*math.Log(y[i]) - beta*y[i] -
+			mathx.LogGamma(alpha) + alpha*math.Log(beta)
+	}
 	return ll
 }
 
@@ -128,7 +128,7 @@ var Beta beta
 // Observe implements the Model interface. The parameter
 // vector is alpha, beta, observations.
 func (dist beta) Observe(x []float64) float64 {
-    alpha, beta, y := x[0], x[1], x[2:]
+	alpha, beta, y := x[0], x[1], x[2:]
 	if len(y) == 1 {
 		return dist.Logp(alpha, beta, y[0])
 	} else {
@@ -138,20 +138,20 @@ func (dist beta) Observe(x []float64) float64 {
 
 // Logp computes the log pdf of a single observation.
 func (_ beta) Logp(alpha, beta float64, y float64) float64 {
-    return (alpha - 1) * math.Log(y) +
-        (beta - 1) * math.Log(1 - y) -
-        mathx.LogGamma(alpha) - mathx.LogGamma(beta) +
-        mathx.LogGamma(alpha + beta)
+	return (alpha-1)*math.Log(y) +
+		(beta-1)*math.Log(1-y) -
+		mathx.LogGamma(alpha) - mathx.LogGamma(beta) +
+		mathx.LogGamma(alpha+beta)
 }
 
 // Logp computes the log pdf of alpha vector of observations.
 func (_ beta) Logps(alpha, beta float64, y ...float64) float64 {
 	ll := 0.
 	for i := 0; i != len(y); i++ {
-        ll += (alpha - 1) * math.Log(y[i]) +
-            (beta - 1) * math.Log(1 - y[i]) -
-            mathx.LogGamma(alpha) - mathx.LogGamma(beta) +
-            mathx.LogGamma(alpha + beta)
-    }
+		ll += (alpha-1)*math.Log(y[i]) +
+			(beta-1)*math.Log(1-y[i]) -
+			mathx.LogGamma(alpha) - mathx.LogGamma(beta) +
+			mathx.LogGamma(alpha+beta)
+	}
 	return ll
 }

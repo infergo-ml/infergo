@@ -89,10 +89,10 @@ func main() {
 	}
 	sampleMean := s / float64(len(m.Data))
 	sampleStddev := math.Sqrt(
-        s2/float64(len(m.Data)) - sampleMean*sampleMean)
+		s2/float64(len(m.Data)) - sampleMean*sampleMean)
 
 	// First estimate the maximum likelihood values.
-	x := []float64{0.5*rand.NormFloat64(), 1 + 0.5*rand.NormFloat64()}
+	x := []float64{0.5 * rand.NormFloat64(), 1 + 0.5*rand.NormFloat64()}
 	ll := m.Observe(x)
 	printState := func(when string) {
 		log.Printf(`

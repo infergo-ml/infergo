@@ -10,8 +10,8 @@ import (
 func TestNormal(t *testing.T) {
 	for _, c := range []struct {
 		mu, sigma float64
-		y            []float64
-		ll           float64
+		y         []float64
+		ll        float64
 	}{
 		{0., 1., []float64{0.}, -0.9189385332046727},
 		{1., 2., []float64{2.}, -1.737085713764618},
@@ -76,10 +76,10 @@ func TestExpon(t *testing.T) {
 func TestGamma(t *testing.T) {
 	for _, c := range []struct {
 		alpha, beta float64
-		y      []float64
-		ll     float64
+		y           []float64
+		ll          float64
 	}{
-		{1., 1.,  []float64{1.}, -1},
+		{1., 1., []float64{1.}, -1},
 		{2., 2., []float64{2.}, -1.9205584583201638},
 		{1., 1., []float64{2., 3.}, -5},
 	} {
@@ -109,10 +109,10 @@ func TestGamma(t *testing.T) {
 func TestBeta(t *testing.T) {
 	for _, c := range []struct {
 		alpha, beta float64
-		y      []float64
-		ll     float64
+		y           []float64
+		ll          float64
 	}{
-		{1., 1.,  []float64{0.5}, 0},
+		{1., 1., []float64{0.5}, 0},
 		{2., 3., []float64{.25}, 0.523248143764548},
 		{3., 1., []float64{0.3, 0.6}, -1.2323722788476341},
 	} {

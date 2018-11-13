@@ -28,10 +28,10 @@ import (
 )
 
 type Model struct {
-	J                int // number of schools
+	J          int       // number of schools
 	Y          []float64 // estimated treatment effects
 	Sigma      []float64 // s.e. of effect estimates
-	Stau, Seta   float64 // log variances of tau and eta priors
+	Stau, Seta float64   // log variances of tau and eta priors
 }
 
 func (m *Model) Observe(x []float64) float64 {

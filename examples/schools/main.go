@@ -51,11 +51,11 @@ func main() {
 
 	// Define the problem
 	m := &Model{
-		J:       8,
-		Y:       []float64{28, 8, -3, 7, -1, 1, 18, 12},
-		Sigma:   []float64{15, 10, 16, 11, 9, 11, 10, 18},
-		Stau: STAU,
-		Seta: SETA,
+		J:     8,
+		Y:     []float64{28, 8, -3, 7, -1, 1, 18, 12},
+		Sigma: []float64{15, 10, 16, 11, 9, 11, 10, 18},
+		Stau:  STAU,
+		Seta:  SETA,
 	}
 	x := make([]float64, 2+m.J)
 

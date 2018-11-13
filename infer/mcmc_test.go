@@ -71,8 +71,8 @@ func (m *testModel) Observe(x []float64) float64 {
 	ad.Setup(x)
 	var ll float64
 	ad.Assignment(&ll, ad.Value(0.))
-    var stddev float64
-    ad.Assignment(&stddev, ad.Elemental(math.Exp, &x[1]))
+	var stddev float64
+	ad.Assignment(&stddev, ad.Elemental(math.Exp, &x[1]))
 	for i := 0; i != len(m.data); i++ {
 		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd,
 			&ll,
