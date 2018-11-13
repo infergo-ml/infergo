@@ -43,7 +43,7 @@ func TestMathBinary(t *testing.T) {
 		{
 			"tan",
 			math.Tan,
-			[][2]float64{{0., 1.}, {0.25*math.Pi, 2.}},
+			[][2]float64{{0., 1.}, {0.25 * math.Pi, 2.}},
 		},
 	} {
 		grad, ok := ElementalGradient(c.f)
@@ -76,7 +76,7 @@ func TestMathUnary(t *testing.T) {
 			[][3]float64{
 				{1., 0., 0.},
 				{math.E, 0., 1.},
-				{2., 2., 4.*math.Log(2.)},
+				{2., 2., 4. * math.Log(2.)},
 			},
 		},
 	} {

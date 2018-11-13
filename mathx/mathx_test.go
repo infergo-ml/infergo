@@ -86,3 +86,46 @@ func TestLogSumExpGrad(t *testing.T) {
 		}
 	}
 }
+
+func TestLogGamma(t *testing.T) {
+	for _, c := range []struct {
+		x, y float64
+	}{
+		{0.5, 0.5723649429247},
+		{1, 0},
+		{1.5, -0.1207822376352453},
+		{2, 0},
+		{3, 0.6931471805599453},
+	} {
+		y := LogGamma(c.x)
+		if math.Abs(y-c.y) > 1E-6 {
+			t.Errorf("Wrong LogGamma(%.4g): got %.4g, want %.4g",
+				c.x, y, c.y)
+		}
+	}
+}
+
+func TestLogGammaGrad(t *testing.T) {
+	grad, ok := ad.ElementalGradient(LogGamma)
+	if !ok {
+		t.Errorf("No gradient for LogGamma")
+	}
+	for _, c := range []struct {
+		x, g float64
+	}{
+		// computed with scipy.special.digamma
+		{0.5, -1.963510026021424},
+		{1, -0.5772156649015329},
+		{1.5, 0.03648997397857652},
+		{2, 0.4227843350984671},
+		{3, 0.9227843350984671},
+	} {
+		y := LogGamma(c.x)
+		g := grad(y, c.x)[0]
+		if math.Abs(g-c.g) > 1.0E-6 {
+			t.Errorf("Wrong gradient of LogGamma: "+
+				"got LogGamma(%.4g)=%.4g, want %.4g",
+				c.x, g, c.g)
+		}
+	}
+}
