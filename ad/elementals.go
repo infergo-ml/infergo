@@ -39,6 +39,8 @@ func init() {
 		func(value float64, _ ...float64) []float64 {
 			return []float64{0.5 / value}
 		})
+
+	// Exponential and logarithmic
 	RegisterElemental(math.Exp,
 		func(value float64, _ ...float64) []float64 {
 			return []float64{value}
@@ -47,6 +49,12 @@ func init() {
 		func(_ float64, params ...float64) []float64 {
 			return []float64{1. / params[0]}
 		})
+	RegisterElemental(math.Pow,
+		func(value float64, params ...float64) []float64 {
+			return []float64{value*math.Log(params[0])}
+		})
+
+	// Trigonometric
 	RegisterElemental(math.Sin,
 		func(_ float64, params ...float64) []float64 {
 			return []float64{math.Cos(params[0])}
@@ -54,5 +62,9 @@ func init() {
 	RegisterElemental(math.Cos,
 		func(_ float64, params ...float64) []float64 {
 			return []float64{-math.Sin(params[0])}
+		})
+	RegisterElemental(math.Tan,
+		func(value float64, _ ...float64) []float64 {
+			return []float64{1. + value*value}
 		})
 }
