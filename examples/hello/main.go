@@ -88,22 +88,22 @@ func main() {
 		s2 += x * x
 	}
 	sampleMean := s / float64(len(m.Data))
-	sampleLogv := math.Log(
-		s2/float64(len(m.Data)) - sampleMean*sampleMean)
+	sampleStddev := math.Sqrt(
+        s2/float64(len(m.Data)) - sampleMean*sampleMean)
 
 	// First estimate the maximum likelihood values.
-	x := []float64{rand.NormFloat64(), rand.NormFloat64()}
+	x := []float64{0.5*rand.NormFloat64(), 1 + 0.5*rand.NormFloat64()}
 	ll := m.Observe(x)
 	printState := func(when string) {
 		log.Printf(`
 %s:
-	mean: %.6g(≈%.6g)
-	logv: %.6g(≈%.6g)
-	ll: %.6g
+	mean:   %.6g(≈%.6g)
+	stddev: %.6g(≈%.6g)
+	ll:     %.6g
 `,
 			when,
 			x[0], sampleMean,
-			x[1], sampleLogv,
+			math.Exp(x[1]), sampleStddev,
 			ll)
 	}
 
@@ -129,7 +129,7 @@ func main() {
 	}
 	samples := make(chan []float64)
 	hmc.Sample(m, x, samples)
-	mean, logv := 0., 0.
+	mean, stddev := 0., 0.
 
 	// Burn
 	for i := 0; i != NITER; i++ {
@@ -144,11 +144,11 @@ func main() {
 			break
 		}
 		mean += x[0]
-		logv += x[1]
+		stddev += math.Exp(x[1])
 		n++
 	}
 	hmc.Stop()
-	x[0], x[1] = mean/n, logv/n
+	x[0], x[1] = mean/n, math.Log(stddev/n)
 	ll = m.Observe(x)
 	printState("Posterior means")
 	log.Printf(`HMC:

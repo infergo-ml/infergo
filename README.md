@@ -20,12 +20,9 @@ type Model struct {
     Data []float64
 }
 
+// x[0] is the mean, x[1] is the log stddev of the distribution
 func (m *Model) Observe(x []float64) float64 {
-    ll := 0.
-    for i := 0; i != len(m.Data); i++ {
-        ll += Normal.Logp(m.Data[i], x[0], x[1])
-    }
-    return ll
+	return Normal.Logps(x[0], math.Exp(x[1]), m.Data...)
 }
 ```
 
@@ -38,8 +35,8 @@ m := &Model{[]float64{
 	0.805, 1.443, 1.069, 1.426, 0.308}}
 
 // Parameters
-mean, logv := 0., 0.
-x := []float64{mean, logv}
+mean, logs := 0., 0.
+x := []float64{mean, logs}
 	
 // Optimiziation
 opt := &infer.Momentum{
@@ -49,7 +46,7 @@ opt := &infer.Momentum{
 for iter := 0; iter != 1000; iter++ {
     opt.Step(m, x)
 }
-mean, logv := x[0], x[1]
+mean, logs := x[0], x[1]
 
 // Posterior
 hmc := &infer.HMC{
