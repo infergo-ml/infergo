@@ -1,7 +1,6 @@
 package ad
 
 import (
-	"bitbucket.org/dtolpin/infergo/mathx"
 	"math"
 	"reflect"
 )
@@ -55,27 +54,5 @@ func init() {
 	RegisterElemental(math.Cos,
 		func(_ float64, params ...float64) []float64 {
 			return []float64{-math.Sin(params[0])}
-		})
-}
-
-func init() {
-	RegisterElemental(mathx.Sigm,
-		// dSigm / dx = Exp(-x) / (1 + Exp(-x))^2
-		//            = Sigm(x) * (1 - Sigm(x))
-		func(value float64, _ ...float64) []float64 {
-			return []float64{value * (1. - value)}
-		})
-}
-
-func init() {
-	// d lse(x, y) / dx = exp(x) / exp(x) + exp(y)
-	//                  = 1 / 1 + exp(y - x)
-	// d lse(x, y) / dy = exp(y) / exp(x) + exp(y)
-	//                  = exp(y - x) / 1 + exp(y - x)
-	RegisterElemental(mathx.LogSumExp,
-		func(_ float64, params ...float64) []float64 {
-			z := math.Exp(params[1] - params[0])
-			t := 1. / (1. + z)
-			return []float64{t, t * z}
 		})
 }
