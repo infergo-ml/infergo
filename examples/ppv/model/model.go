@@ -26,7 +26,7 @@ func (m *Model) Observe(x []float64) float64 {
 	}
 
 	// put a prior on the bandwidth
-	target := Expon.Logp(1./m.PriorBandwidth, bandwidth)
+	target := Expon.Logp(-math.Log(m.PriorBandwidth), bandwidth)
 
 	for _, ppv := range m.PPV {
 		for j := 0; j != m.NPages; j++ {
