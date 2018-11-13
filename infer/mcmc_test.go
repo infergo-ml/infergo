@@ -61,7 +61,9 @@ func TestLeapfrog(t *testing.T) {
 
 // A model for testing. The model infers parameters
 // of the Normal distribution given a data set. The
-// model parameters are mean and logvariance.
+// model parameters are mean and log stddev. The model
+// does not use Logps to test a more general code than
+// a single method call.
 type testModel struct {
 	data []float64
 }
