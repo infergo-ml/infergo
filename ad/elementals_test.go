@@ -54,7 +54,7 @@ func TestMathUnary(t *testing.T) {
 			y := c.f(xg[0])
 			g := grad(y, xg[0])[0]
 			if math.Abs(g-xg[1]) > 1.0E-6 {
-				t.Errorf("Wrong gradient of %v(%.4g): " +
+				t.Errorf("Wrong gradient of %v(%.4g): "+
 					"got %.4g, want %.4g", c.s, xg[0], g, xg[1])
 			}
 		}

@@ -74,7 +74,7 @@ func (m *testModel) Observe(x []float64) float64 {
 		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd,
 			&ll,
 			ad.Call(func(_vararg []float64) {
-				Normal.Logp(0, 0,  0)
+				Normal.Logp(0, 0, 0)
 			}, 3, &x[0], &x[1], &m.data[i])))
 	}
 	return ad.Return(&ll)

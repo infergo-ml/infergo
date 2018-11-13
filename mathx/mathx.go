@@ -70,18 +70,18 @@ var gammaCof = []float64{
 
 // digamma is the derivative of LogGamma.
 func digamma(x float64) float64 {
-  if x < 6. {
-    return digamma(x + 1) - 1./x
-  }
-  return math.Log(x) -
-      1 / (2 * x) -
-      1 / (12 * math.Pow(x, 2)) +
-      1 / (120 * math.Pow(x, 4)) -
-      1 / (252 * math.Pow(x, 6)) +
-      1 / (240 * math.Pow(x, 8)) -
-      5 / (660 * math.Pow(x, 10)) +
-      691 / (32760 * math.Pow(x, 12)) -
-      1 / (12 * math.Pow(x, 14))
+	if x < 6. {
+		return digamma(x+1) - 1./x
+	}
+	return math.Log(x) -
+		1/(2*x) -
+		1/(12*math.Pow(x, 2)) +
+		1/(120*math.Pow(x, 4)) -
+		1/(252*math.Pow(x, 6)) +
+		1/(240*math.Pow(x, 8)) -
+		5/(660*math.Pow(x, 10)) +
+		691/(32760*math.Pow(x, 12)) -
+		1/(12*math.Pow(x, 14))
 }
 
 func init() {
