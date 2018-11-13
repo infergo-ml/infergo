@@ -40,3 +40,21 @@ func init() {
 			return []float64{t, t * z}
 		})
 }
+
+// LogGamma function is used in the log-density of the
+// Gamma and Beta distributions.
+func LogGamma(x float64) float64 {
+	return 0.
+}
+
+// diGamma is the derivative of LogGamma.
+func diGamma(x float64) float64 {
+	return 0.
+}
+
+func init() {
+	ad.RegisterElemental(LogGamma,
+		func(_ float64, params ...float64) []float64 {
+			return []float64{diGamma(params[0])}
+		})
+}
