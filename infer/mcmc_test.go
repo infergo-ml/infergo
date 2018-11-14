@@ -129,7 +129,7 @@ func inferMeanStddev(
 	sampler MCMC, niter int,
 ) (mean, stddev float64) {
 	m := &testModel{testData}
-	x := []float64{0.1*rand.NormFloat64(), 0.1*rand.NormFloat64()}
+	x := []float64{0.1 * rand.NormFloat64(), 0.1 * rand.NormFloat64()}
 	samples := make(chan []float64)
 	sampler.Sample(m, x, samples)
 	// Burn

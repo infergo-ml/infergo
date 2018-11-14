@@ -1,15 +1,15 @@
 package model
 
 import (
-	. "bitbucket.org/dtolpin/infergo/dist/ad"
 	"bitbucket.org/dtolpin/infergo/ad"
+	. "bitbucket.org/dtolpin/infergo/dist/ad"
 	"bitbucket.org/dtolpin/infergo/mathx"
 	"math"
 )
 
 type Model struct {
-	Data	[]float64
-	NComp	int
+	Data  []float64
+	NComp int
 }
 
 func (m *Model) Observe(x []float64) float64 {
