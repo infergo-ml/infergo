@@ -812,32 +812,23 @@ func (m Model) Observe(x []float64) float64 {
 }`,
 		},
 		//====================================================
-		{`package call
+		{`package importad
+import "bitbucket.org/dtolpin/infergo/dist/ad"
 
 type Model float64
-
-func (m Model) sum(x, y float64) float64 {
-	return x + y
-}
 
 func (m Model) Observe(x []float64) float64 {
-	return m.sum(x[0], x[1])
+	return dist.Normal.Observe(x)
 }`,
 			//----------------------------------------------------
-			`package call
+			`package importad
 
-import "bitbucket.org/dtolpin/infergo/ad"
+import (
+	"bitbucket.org/dtolpin/infergo/dist/ad"
+	"bitbucket.org/dtolpin/infergo/ad"
+)
 
 type Model float64
-
-func (m Model) sum(x, y float64) float64 {
-    if ad.Called() {
-        ad.Enter(&x, &y)
-    } else {
-        panic("sum called outside Observe.")
-    }
-    return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y))
-}
 
 func (m Model) Observe(x []float64) float64 {
 	if ad.Called() {
@@ -846,8 +837,38 @@ func (m Model) Observe(x []float64) float64 {
 		ad.Setup(x)
 	}
 	return ad.Return(ad.Call(func (_vararg []float64) {
-			m.sum(0, 0)
-	}, 2, &x[0], &x[1]))
+			dist.Normal.Observe(x)
+	}, 0))
+}`,
+		},
+		//====================================================
+		{`package importautoad
+import "bitbucket.org/dtolpin/infergo/dist"
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	return dist.Normal.Observe(x)
+}`,
+			//----------------------------------------------------
+			`package importautoad
+
+import (
+	"bitbucket.org/dtolpin/infergo/dist/ad"
+	"bitbucket.org/dtolpin/infergo/ad"
+)
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
+	return ad.Return(ad.Call(func (_vararg []float64) {
+			dist.Normal.Observe(x)
+	}, 0))
 }`,
 		},
 		//====================================================
@@ -953,6 +974,7 @@ func (m Model) Observe(x []float64) float64 {
 	return ad.Return(ad.Call(func (_vararg []float64) {
 		m.Observe([]float64{x[0]})
 	}, 0))
+		//====================================================
 }`,
 		},
 	} {
