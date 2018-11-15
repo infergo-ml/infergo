@@ -877,8 +877,8 @@ func (m *model) isDifferentiated(call *ast.CallExpr) bool {
 		types.TypeString(t.Recv(),
 			func(pkg *types.Package) string {
 				if strings.HasSuffix(pkg.Path(), "/ad") {
-					// All is well, we are already using a
-					// differentiated model
+					// We are already using a differentiated
+					// model, do nothing.
 					return pkg.Path()
 				}
 				pos := m.fset.Position(call.Pos())
@@ -889,6 +889,7 @@ func (m *model) isDifferentiated(call *ast.CallExpr) bool {
 					// Traverse the list of imports to find the
 					// name of the file.
 					if pkg.Path() == path {
+						// Found, add the /ad suffix.
 						is.Path.Value = fmt.Sprintf(`"%s/ad"`, path)
 						break
 					}
