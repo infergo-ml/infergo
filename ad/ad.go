@@ -560,10 +560,17 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				}
 				ontape = true
 			case *ast.AssignStmt: // if all are float64
-				for _, r := range n.Lhs {
-					t, basic := m.info.TypeOf(r).(*types.Basic)
+				for _, l := range n.Lhs {
+					t, basic := m.info.TypeOf(l).(*types.Basic)
 					if !basic || t.Kind() != types.Float64 {
 						return false
+					}
+					if ie, ok := l.(*ast.IndexExpr); ok {
+						if _, ok := m.info.TypeOf(ie).(*types.Map); ok {
+							// cannot differentiate assignment
+							// to a map entry
+							return false
+						}
 					}
 				}
 				ontape = true
@@ -608,9 +615,15 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				}
 				c.Replace(place)
 			case *ast.IndexExpr:
-				place := &ast.UnaryExpr{
-					Op: token.AND,
-					X:  n,
+				var place ast.Expr
+				if _, ok := m.info.TypeOf(n.X).(*types.Map); ok {
+					// Map entries cannot be differentiated
+					place = callExpr("Value", n)
+				} else {
+					place = &ast.UnaryExpr{
+						Op: token.AND,
+						X:  n,
+					}
 				}
 				c.Replace(place)
 			case *ast.SelectorExpr:
