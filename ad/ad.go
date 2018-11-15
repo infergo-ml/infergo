@@ -570,7 +570,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 							pos := m.fset.Position(n.Pos())
 							log.Printf(
 								"WARNING: %v:%v:%v: cannot differentiate "+
-								"assignment to a map entry",
+									"assignment to a map entry",
 								pos.Filename, pos.Line, pos.Column)
 							return false
 						}
