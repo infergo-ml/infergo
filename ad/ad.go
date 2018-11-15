@@ -566,9 +566,12 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 						return false
 					}
 					if ie, ok := l.(*ast.IndexExpr); ok {
-						if _, ok := m.info.TypeOf(ie).(*types.Map); ok {
-							// cannot differentiate assignment
-							// to a map entry
+						if _, ok := m.info.TypeOf(ie.X).(*types.Map); ok {
+							pos := m.fset.Position(n.Pos())
+							log.Printf(
+								"WARNING: %v:%v:%v: cannot differentiate "+
+								"assignment to a map entry",
+								pos.Filename, pos.Line, pos.Column)
 							return false
 						}
 					}

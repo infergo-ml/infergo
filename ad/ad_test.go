@@ -531,6 +531,35 @@ func (m Model) Observe(x []float64) float64 {
 }`,
 		},
 		//====================================================
+		{`package mapentry
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	y := make(map[string]float64)
+	y["a"] = 1
+	return y["a"]
+}`,
+			//----------------------------------------------------
+			`package mapentry
+
+import "bitbucket.org/dtolpin/infergo/ad"
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
+	var y map[string]float64
+	y = make(map[string]float64)
+	y["a"] = 1
+	return ad.Return(ad.Value(y["a"]))
+}`,
+		},
+		//====================================================
 		{`package selector
 
 type Model struct {
