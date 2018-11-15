@@ -446,7 +446,7 @@ func (m *model) typeAst(t types.Type, p token.Pos) ast.Expr {
 			for _, is := range file.Imports {
 				// Remove quotes from the literal value.
 				path := is.Path.Value[1 : len(is.Path.Value)-1]
-				// Traverse the list of import to find the
+				// Traverse the list of imports to find the
 				// name of the file.
 				if pkg.Path() == path {
 					switch {
@@ -867,6 +867,35 @@ func (m *model) isDifferentiated(call *ast.CallExpr) bool {
 		return ok
 	}
 	ok = t.Recv() != nil && m.isType(t.Recv())
+	if ok {
+		// fix the import, if the import refers to the
+		// undifferentiated source, add the "/ad" suffix.
+
+		// We are using TypeString with a custom qualifier here
+		// to get access to the receive type's package. This is
+		// slightly perversive but does the job.
+		types.TypeString(t.Recv(),
+			func(pkg *types.Package) string {
+				if strings.HasSuffix(pkg.Path(), "/ad") {
+					// All is well, we are already using a
+					// differentiated model
+					return pkg.Path()
+				}
+				pos := m.fset.Position(call.Pos())
+				file := m.pkg.Files[pos.Filename]
+				for _, is := range file.Imports {
+					// Remove quotes from the literal value.
+					path := is.Path.Value[1 : len(is.Path.Value)-1]
+					// Traverse the list of imports to find the
+					// name of the file.
+					if pkg.Path() == path {
+						is.Path.Value = fmt.Sprintf(`"%s/ad"`, path)
+						break
+					}
+				}
+				return pkg.Path()
+			})
+	}
 	return ok
 }
 
