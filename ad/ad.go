@@ -868,12 +868,12 @@ func (m *model) isDifferentiated(call *ast.CallExpr) bool {
 	}
 	ok = t.Recv() != nil && m.isType(t.Recv())
 	if ok {
-		// fix the import, if the import refers to the
+		// Fix the import: if the import refers to the
 		// undifferentiated source, add the "/ad" suffix.
 
 		// We are using TypeString with a custom qualifier here
 		// to get access to the receive type's package. This is
-		// slightly perversive but does the job.
+		// slightly perversive, but does the job.
 		types.TypeString(t.Recv(),
 			func(pkg *types.Package) string {
 				if strings.HasSuffix(pkg.Path(), "/ad") {
