@@ -507,6 +507,37 @@ func (m Model) Count() int {
 }`,
 		},
 		//====================================================
+		{`package assign
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	y := 1.
+	z, _ := 2., y
+	return z
+}`,
+			//----------------------------------------------------
+			`package assign
+
+import "bitbucket.org/dtolpin/infergo/ad"
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
+	var y float64
+	ad.Assignment(&y, ad.Value(1.))
+	var z float64
+	var _ float64
+	ad.ParallelAssignment(&z, ad.Value(0), ad.Value(2.), &y)
+	return ad.Return(&z)
+}`,
+		},
+		//====================================================
 		{`package index
 
 type Model float64

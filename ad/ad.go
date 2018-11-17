@@ -559,18 +559,25 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					}
 				}
 				ontape = true
-			case *ast.AssignStmt: // if all are float64
-				for _, l := range n.Lhs {
-					t, basic := m.info.TypeOf(l).(*types.Basic)
+			case *ast.AssignStmt:
+				// All expressions are float64.
+				for _, r := range n.Rhs {
+					t, basic := m.info.TypeOf(r).(*types.Basic)
 					if !basic || t.Kind() != types.Float64 {
 						return false
 					}
-					if ie, ok := l.(*ast.IndexExpr); ok {
-						if _, ok := m.info.TypeOf(ie.X).(*types.Map); ok {
-							pos := m.fset.Position(n.Pos())
+				}
+				// All places are assignable.
+				for _, l := range n.Lhs {
+					switch l := l.(type) {
+					case *ast.IndexExpr:
+						_, ok := m.info.TypeOf(l.X).(*types.Map)
+						if ok {
+							pos := m.fset.Position(l.Pos())
 							log.Printf(
-								"WARNING: %v:%v:%v: cannot differentiate "+
-									"assignment to a map entry",
+								"WARNING: %v:%v:%v: cannot "+
+									"differentiate assignment to "+
+									"a map entry",
 								pos.Filename, pos.Line, pos.Column)
 							return false
 						}
@@ -608,13 +615,26 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				value := callExpr("Value", n)
 				c.Replace(value)
 			case *ast.Ident:
-				if n.Name[0] == '_' {
-					panic(fmt.Sprintf("identifier %v is reserved",
-						n.Name))
-				}
-				place := &ast.UnaryExpr{
-					Op: token.AND,
-					X:  n,
+				var place ast.Expr
+				if n.Name == "_" {
+					// Dummy identifier, assign to a new value.
+					place = callExpr("Value", floatExpr(0))
+				} else {
+					if n.Name[0] == '_' {
+						// Reserved identifier.
+						obj := m.info.ObjectOf(n)
+						if n.Pos() == obj.Pos() { // declared here
+							pos := m.fset.Position(n.Pos())
+							log.Printf("WARNING: %v:%v:%v: "+
+								"identifier %v is reserved",
+								pos.Filename, pos.Line, pos.Column,
+								n.Name)
+						}
+					}
+					place = &ast.UnaryExpr{
+						Op: token.AND,
+						X:  n,
+					}
 				}
 				c.Replace(place)
 			case *ast.IndexExpr:
@@ -832,7 +852,7 @@ func (m *model) enterStmt(method *ast.FuncDecl) ast.Stmt {
 		if p.Name() == "_" {
 			// There is no variable to copy the value to,
 			// create a dummy value.
-			expr = callExpr("Value", floatExpr(0.))
+			expr = callExpr("Value", floatExpr(0))
 		} else {
 			expr = &ast.UnaryExpr{
 				Op: token.AND,
