@@ -3,8 +3,11 @@ package model
 import (
 	"bitbucket.org/dtolpin/infergo/ad"
 	. "bitbucket.org/dtolpin/infergo/dist/ad"
+	ad "bitbucket.org/dtolpin/infergo/examples/gmm/model"
 	"math"
 )
+
+var _ ad.Model
 
 type Model struct {
 	Data []float64

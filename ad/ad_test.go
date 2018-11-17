@@ -13,7 +13,7 @@ import (
 
 // The input to ad routines is a parsed package. Let's
 // emulate parsing a package on scripts.
-func parseTestModel(m *model, sources map[string]string) {
+func parseTestModel(m *model, sources map[string]string) error {
 	m.fset = token.NewFileSet()
 
 	// parse it
@@ -30,9 +30,10 @@ func parseTestModel(m *model, sources map[string]string) {
 			}
 			m.pkg.Files[fname] = file
 		} else {
-			panic(err)
+			return err
 		}
 	}
+	return nil
 }
 
 // Tests that the expected source is equivalent to the tree.
@@ -157,11 +158,13 @@ func (m Model) Sample() float64 {
 			}},
 	} {
 		m := &model{}
-		parseTestModel(m, c.model)
-		err := m.check()
+		err := parseTestModel(m, c.model)
 		if err != nil {
-			t.Errorf("failed to check model %v: %s",
-				m.pkg.Name, err)
+			t.Errorf("failed to parse: %s", err)
+		}
+		err = m.check()
+		if err != nil {
+			t.Errorf("failed to check %v: %s", m.pkg.Name, err)
 		}
 		methods, err := m.collectMethods()
 		if len(methods) > 0 && err != nil {
@@ -397,13 +400,15 @@ func (m Model) Observe(x []float64) float64 {
 		},
 	} {
 		m := &model{}
-		parseTestModel(m, map[string]string{
+		err := parseTestModel(m, map[string]string{
 			"original.go": c.original,
 		})
-		err := m.check()
 		if err != nil {
-			t.Errorf("failed to check model %v: %s",
-				m.pkg.Name, err)
+			t.Errorf("failed to parse: %s", err)
+		}
+		err = m.check()
+		if err != nil {
+			t.Errorf("failed to check %v: %s", m.pkg.Name, err)
 		}
 		methods, err := m.collectMethods()
 		for _, method := range methods {
@@ -837,7 +842,7 @@ func (m Model) Observe(x []float64) float64 {
 	} else {
 		ad.Setup(x)
 	}
-	return ad.Return(ad.Call(func (_vararg []float64) {
+	return ad.Return(ad.Call(func (_ []float64) {
 		m.sum(0, 0, 0)
 	}, 3, &x[0], &x[1], &x[2]))
 }`,
@@ -867,7 +872,7 @@ func (m Model) Observe(x []float64) float64 {
 	} else {
 		ad.Setup(x)
 	}
-	return ad.Return(ad.Call(func (_vararg []float64) {
+	return ad.Return(ad.Call(func (_ []float64) {
 			dist.Normal.Observe(x)
 	}, 0))
 }`,
@@ -897,7 +902,7 @@ func (m Model) Observe(x []float64) float64 {
 	} else {
 		ad.Setup(x)
 	}
-	return ad.Return(ad.Call(func (_vararg []float64) {
+	return ad.Return(ad.Call(func (_ []float64) {
 			dist.Normal.Observe(x)
 	}, 0))
 }`,
@@ -1002,7 +1007,7 @@ func (m Model) Observe(x []float64) float64 {
 	} else {
 		ad.Setup(x)
 	}
-	return ad.Return(ad.Call(func (_vararg []float64) {
+	return ad.Return(ad.Call(func (_ []float64) {
 		m.Observe([]float64{x[0]})
 	}, 0))
 		//====================================================
@@ -1010,15 +1015,20 @@ func (m Model) Observe(x []float64) float64 {
 		},
 	} {
 		m := &model{}
-		parseTestModel(m, map[string]string{
+		err := parseTestModel(m, map[string]string{
 			"original.go": c.original,
 		})
-		err := m.check()
 		if err != nil {
-			t.Errorf("failed to check model %v: %s",
-				m.pkg.Name, err)
+			t.Errorf("failed to parse: %s", err)
 		}
-		m.deriv()
+		err = m.check()
+		if err != nil {
+			t.Errorf("failed to check %v: %s", m.pkg.Name, err)
+		}
+		err = m.deriv()
+		if err != nil {
+			t.Errorf("failed to differentiate %v: %s", m.pkg.Name, err)
+		}
 		if !equiv(m.pkg.Files["original.go"], c.differentiated) {
 			b := new(bytes.Buffer)
 			printer.Fprint(b, m.fset, m.pkg.Files["original.go"])
@@ -1028,6 +1038,63 @@ func (m Model) Observe(x []float64) float64 {
 				m.pkg.Name,
 				b.String(),
 				c.differentiated)
+		}
+	}
+}
+
+func TestDerivErrors(t *testing.T) {
+	for _, c := range []struct {
+		erroneous string
+		err       string
+	}{
+		{
+			`package adoverride
+import ad "fmt"
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	ad.Println()
+	return 0.
+}
+`,
+			"erroneous.go:2:8: package name \"ad\" is reserved",
+		},
+		{
+			`package pkgname
+import "go/ast"
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	a := ast.Ident{}.NamePos
+	a = a
+	return 0.
+}
+`,
+			"erroneous.go:7:2: desugar/pre: cannot find name " +
+				"for package \"go/token\"",
+		},
+	} {
+		m := &model{}
+		err := parseTestModel(m, map[string]string{
+			"erroneous.go": c.erroneous,
+		})
+		if err != nil {
+			t.Errorf("failed to parse: %s", err)
+			continue
+		}
+		err = m.check()
+		if err != nil {
+			t.Errorf("failed to check %v: %s", m.pkg.Name, err)
+		}
+		err = m.deriv()
+		if err == nil {
+			t.Errorf("should fail on %v: %s", m.pkg.Name, c.err)
+		}
+		if err.Error() != c.err {
+			t.Errorf("wrong error on %v: got %q, want %q",
+				m.pkg.Name, err, c.err)
 		}
 	}
 }

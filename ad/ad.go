@@ -14,6 +14,7 @@ package ad
 //      c) standalone calls to methods on the type implementing
 //         model.Model (apparently called for side  effects on
 //         the model).
+//   4. Imported package name "ad" is reserved.
 //   4. Non-dummy identifiers starting with '_' are reserved.
 //
 // Functions are considered elementals (and must have a
@@ -33,7 +34,7 @@ package ad
 // not registered for an elemental, calling the elemental in a
 // differentiated context will cause a run-time error.
 //
-// The differentiated model is put into subpackage 'ad' of the
+// The differentiated model is put into subpackage "ad" of the
 // model's package, with the same name as the original package.
 
 import (
@@ -154,9 +155,10 @@ func (m *model) check() (err error) {
 		files = append(files, file)
 	}
 	m.info = &types.Info{
+		Types:      make(map[ast.Expr]types.TypeAndValue),
 		Defs:       make(map[*ast.Ident]types.Object),
 		Uses:       make(map[*ast.Ident]types.Object),
-		Types:      make(map[ast.Expr]types.TypeAndValue),
+		Implicits:  make(map[ast.Node]types.Object),
 		Selections: make(map[*ast.SelectorExpr]*types.Selection),
 	}
 	_, err = conf.Check(m.path, m.fset, files, m.info)
@@ -169,7 +171,9 @@ const infergoImport = "bitbucket.org/dtolpin/infergo/ad"
 
 // deriv differentiates the model through rewriting the ASTs.
 func (m *model) deriv() (err error) {
-	// Differentiate each model method
+	// Differentiate each model method.
+
+	// Collect the methods.
 	methods, err := m.collectMethods()
 	if err != nil {
 		return err
@@ -184,12 +188,39 @@ func (m *model) deriv() (err error) {
 		}
 	}
 
+	// Rewrite file imports, adding the infergo import to all
+	// files containing model methods.
+	files := make(map[string]bool)
+	for _, method := range methods {
+		fname := m.fset.Position(method.Pos()).Filename
+		processed := files[fname]
+		if !processed {
+			files[fname] = true
+			// Ensure that package name "ad" is available.
+			for _, imp := range m.pkg.Files[fname].Imports {
+				var obj types.Object
+				if imp.Name != nil {
+					obj = m.info.ObjectOf(imp.Name)
+				} else {
+					obj = m.info.Implicits[imp]
+				}
+				pkgName := obj.(*types.PkgName)
+				if pkgName.Name() == "ad" &&
+					pkgName.Imported().Path() != infergoImport {
+					pos := m.fset.Position(imp.Pos())
+					err = fmt.Errorf(
+						"%v:%v:%v: package name \"ad\" is reserved",
+						pos.Filename, pos.Line, pos.Column)
+					return err
+				}
+			}
+			// Add the import (safe to add more than once)
+			astutil.AddImport(m.fset, m.pkg.Files[fname], infergoImport)
+		}
+	}
+
 	// Finally, rewrite the code using tape-writing calls.
 	for _, method := range methods {
-		// Add the import (safe to add more than once)
-		fname := m.fset.Position(method.Pos()).Filename
-		astutil.AddImport(m.fset, m.pkg.Files[fname], infergoImport)
-
 		err = m.rewrite(method)
 		if err != nil {
 			return err
@@ -277,12 +308,12 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 			case *ast.DeclStmt:
 				// If a variable declaration, split into
 				// declaration and assignment.
-				decl, _ := n.Decl.(*ast.GenDecl)
+				decl := n.Decl.(*ast.GenDecl)
 				if decl.Tok != token.VAR {
 					return false
 				}
 				for ispec, spec := range decl.Specs {
-					spec, _ := spec.(*ast.ValueSpec)
+					spec := spec.(*ast.ValueSpec)
 					if spec.Values != nil {
 						// If a variable declaration assigns
 						// values, prune the values and then
@@ -462,7 +493,7 @@ func (m *model) typeAst(t types.Type, p token.Pos) ast.Expr {
 			// An object may have a type which does not have a
 			// name in the current file. We let the programmer
 			// fix this by adding the import.
-			panic(fmt.Sprintf("cannot find name for package %v",
+			panic(fmt.Sprintf("cannot find name for package %q",
 				pkg.Path()))
 		}))
 	if err != nil {
@@ -516,7 +547,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 			case *ast.IndexExpr, *ast.SelectorExpr,
 				*ast.StarExpr, *ast.UnaryExpr, *ast.BinaryExpr:
 				// Expressions must be of type float64
-				e, _ := n.(ast.Expr)
+				e := n.(ast.Expr)
 				t, basic := m.info.TypeOf(e).(*types.Basic)
 				if !basic || t.Kind() != types.Float64 {
 					return false
@@ -726,7 +757,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					ellipsis := token.NoPos
 					if t.Variadic() && len(n.Args) > nparams {
 						variadic := t.Params().At(nparams)
-						vt, _ := variadic.Type().(*types.Slice)
+						vt := variadic.Type().(*types.Slice)
 						et, ok := vt.Elem().(*types.Basic)
 						if ok && et.Kind() == types.Float64 &&
 							n.Ellipsis == token.NoPos {
@@ -1002,6 +1033,14 @@ func callWrapper(
 	args []ast.Expr,
 	ellipsis token.Pos,
 ) *ast.FuncLit {
+	var vararg string // parameter for passing variadic arguments
+	if ellipsis.IsValid() {
+		// Variadic, name it.
+		vararg = "_vararg"
+	} else {
+		// Not variadic, unused.
+		vararg = "_"
+	}
 	return &ast.FuncLit{
 		Type: &ast.FuncType{
 			Params: &ast.FieldList{
@@ -1009,7 +1048,7 @@ func callWrapper(
 					&ast.Field{
 						Names: []*ast.Ident{
 							&ast.Ident{
-								Name: "_vararg",
+								Name: vararg,
 							}},
 						Type: &ast.ArrayType{
 							Elt: &ast.Ident{
