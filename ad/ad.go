@@ -42,12 +42,12 @@ import (
 	"bufio"
 	"fmt"
 	"go/ast"
-	"go/importer"
 	"go/parser"
 	"go/printer"
 	"go/token"
 	"go/types"
 	"golang.org/x/tools/go/ast/astutil"
+	"golang.org/x/tools/go/packages"
 	"log"
 	"os"
 	"path"
@@ -156,9 +156,29 @@ func (m *model) parse(mpath string) (err error) {
 	return err
 }
 
+// A types importer aware of modules, instead of the default
+// importer which requires installation in the Go path.
+type tImporter packages.Config
+
+var importer *tImporter
+
+func init() {
+	importer = &tImporter{
+		Mode: packages.LoadTypes,
+	}
+}
+
+func (importer *tImporter) Import(path string) (
+	pkg *types.Package,
+	err error,
+) {
+	pkgs, err := packages.Load((*packages.Config)(importer), path)
+	return pkgs[0].Types, err
+}
+
 // check typechecks the model and builds the info structure.
 func (m *model) check() (err error) {
-	conf := types.Config{Importer: importer.Default()}
+	conf := types.Config{Importer: importer}
 	// Check expects the package as a slice of file ASTs.
 	var files []*ast.File
 	for _, file := range m.pkg.Files {
