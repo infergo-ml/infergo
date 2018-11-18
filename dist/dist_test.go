@@ -138,3 +138,60 @@ func TestBeta(t *testing.T) {
 		}
 	}
 }
+
+func TestDirichlet(t *testing.T) {
+	for _, c := range []struct {
+        n int
+		alpha []float64
+		y     [][]float64
+		ll    float64
+	}{
+        {
+            2, 
+            []float64{1., 1.},
+            [][]float64{{0.5, 0.25}}, 
+            0,
+        },
+        {
+            3, 
+            []float64{0.5, 1., 2.},
+            [][]float64{{0.1, 0.1, 1.}},
+            0.523248143764548,
+        },
+		{
+            2, 
+            []float64{3., 1.},
+            [][]float64{
+                {0.3, 0.6},
+                {0.6, 0.3},
+            },
+            -1.2323722788476341,
+        },
+	} {
+        dist := Dirichlet{c.n}
+		ll := dist.Logps(c.alpha, c.y...)
+		if math.Abs(ll-c.ll) > 1E-6 {
+			t.Errorf("Wrong logpdf of Dirichlet(%v|%v): "+
+				"got %.4g, want %.4g",
+				c.y, c.alpha, ll, c.ll)
+		}
+        x := c.alpha
+        for _, y := range c.y {
+            x = append(x, y...)
+        }
+		llo := dist.Observe(x)
+		if math.Abs(ll-llo) > 1E-6 {
+			t.Errorf("Wrong result of Observe(%v..., %v...): "+
+				"got %.4g, want %.4g",
+				c.alpha, c.y, llo, ll)
+		}
+		if len(c.y) == 1 {
+			ll1 := dist.Logp(c.alpha, c.y[0])
+			if math.Abs(ll-ll1) > 1E-6 {
+				t.Errorf("Wrong result of Logp(%v, %v): "+
+					"got %.4g, want %.4g",
+					c.alpha, c.y[0], ll1, ll)
+			}
+		}
+	}
+}
