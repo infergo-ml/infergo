@@ -39,7 +39,7 @@ func (_ normal) Logp(mu, sigma float64, y float64) float64 {
 	return -0.5 * (d*d/vari + logv + log2pi)
 }
 
-// Logp computes the log pdf of a vector of observations.
+// Logps computes the log pdf of a vector of observations.
 func (_ normal) Logps(mu, sigma float64, y ...float64) float64 {
 	vari := sigma * sigma
 	logv := math.Log(vari)
@@ -74,7 +74,7 @@ func (_ expon) Logp(lambda float64, y float64) float64 {
 	return logl - lambda*y
 }
 
-// Logp computes the log pdf of a vector of observations.
+// Logps computes the log pdf of a vector of observations.
 func (_ expon) Logps(lambda float64, y ...float64) float64 {
 	ll := 0.
 	logl := math.Log(lambda)
@@ -107,7 +107,7 @@ func (_ gamma) Logp(alpha, beta float64, y float64) float64 {
 		mathx.LogGamma(alpha) + alpha*math.Log(beta)
 }
 
-// Logp computes the log pdf of a vector of observations.
+// Logps computes the log pdf of a vector of observations.
 func (_ gamma) Logps(alpha, beta float64, y ...float64) float64 {
 	ll := 0.
 	for i := 0; i != len(y); i++ {
@@ -142,7 +142,7 @@ func (_ beta) Logp(alpha, beta float64, y float64) float64 {
 		mathx.LogGamma(alpha+beta)
 }
 
-// Logp computes the log pdf of alpha vector of observations.
+// Logp computes the log pdf of a vector of observations.
 func (_ beta) Logps(alpha, beta float64, y ...float64) float64 {
 	ll := 0.
 	for i := 0; i != len(y); i++ {
@@ -159,6 +159,8 @@ type Dirichlet struct{
     N int // number of dimensions
 }
 
+// Observe implements the Model interface. The parameters are
+// alpha and observations,  flattened.
 func (dist Dirichlet) Observe(x []float64) float64 {
     alpha := x[:dist.N]
     if len(x[dist.N:]) == dist.N {
@@ -172,6 +174,7 @@ func (dist Dirichlet) Observe(x []float64) float64 {
     }
 }
 
+// logZ computes normalization term independent of observations.
 func (dist Dirichlet) logZ(alpha []float64) float64 {
     sumAlpha := 0.
     for j := 0; j != len(alpha); j++ {
@@ -186,6 +189,7 @@ func (dist Dirichlet) logZ(alpha []float64) float64 {
     return mathx.LogGamma(sumAlpha) - sumLogGammaAlpha
 }
 
+// Logp computes logpdf of a single observation.
 func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
     sum := 0.
     for j := 0; j != len(y); j++ {
@@ -195,6 +199,7 @@ func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
     return dist.logZ(alpha) + sum
 }
 
+// Logps computes logpdf of a vector of observations.
 func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
     ll := 0.
     logZ := dist.logZ(alpha)
