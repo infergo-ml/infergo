@@ -7,22 +7,31 @@ import (
 	"log"
 )
 
+const (
+	command = "deriv"
+	version = "0.1.0b1"
+)
+
 var (
 	// command line flags
-	PREFIX = "_"
+	VERSION = false
+	PREFIX  = "_"
 )
 
 func init() {
+	flag.BoolVar(&VERSION, "version", VERSION,
+		"print version")
 	flag.StringVar(&PREFIX, "prefix", PREFIX,
 		"prefix of generated identifiers")
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(),
 			`Generates a differentiated model. Usage:
-    deriv [flags] [path/to/model/directory/]
+    %s [flags] [path/to/model/directory/]
 If the path is omitted, the model in the current directory `+
 				`is differentiated. The differentiated model is placed into `+
 				`the 'ad/' subdirectory. Flags:
-`)
+`,
+			command)
 		flag.PrintDefaults()
 	}
 	log.SetFlags(0)
@@ -30,6 +39,12 @@ If the path is omitted, the model in the current directory `+
 
 func main() {
 	flag.Parse()
+	if VERSION {
+		fmt.Fprintf(flag.CommandLine.Output(), "%s v%s\n",
+			command, version)
+		return
+	}
+
 	if flag.NArg() == 0 {
 		// If there are no command line arguments, differentiate
 		// the current directory.
