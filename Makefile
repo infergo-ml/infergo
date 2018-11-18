@@ -20,7 +20,7 @@ build: test
 	for package in $(PACKAGES); do go build ./$$package; done
 
 benchmark: test
-	for package in $(PACKAGES); do go test -bench . ./$$package; done
+	for package in $(TESTPACKAGES); do go test -bench . ./$$package; done
 
 GOFILES=ad/ad.go ad/elementals.go ad/tape.go \
 	model/model.go \
