@@ -153,3 +153,58 @@ func (_ beta) Logps(alpha, beta float64, y ...float64) float64 {
 	}
 	return ll
 }
+
+// Dirichlet distribution
+type Dirichlet struct{
+    N int // number of dimensions
+}
+
+func (dist Dirichlet) Observe(x []float64) float64 {
+    alpha := x[:dist.N]
+    if len(x[dist.N:]) == dist.N {
+        return dist.Logp(alpha, x[dist.N:])
+    } else {
+        ys := make([][]float64, len(x[dist.N:])/dist.N)
+        for i := 0; i != len(ys); i++ {
+            ys[i] = x[dist.N*(i+1):dist.N*(i+2)]
+        }
+        return dist.Logps(alpha, ys...)
+    }
+}
+
+func (dist Dirichlet) logZ(alpha []float64) float64 {
+    sumAlpha := 0.
+    for j := 0; j != len(alpha); j++ {
+        sumAlpha += alpha[j]
+    }
+
+    sumLogGammaAlpha := 0.
+    for j := 0; j != len(alpha); j++ {
+        sumLogGammaAlpha += mathx.LogGamma(alpha[j])
+    }
+
+    return mathx.LogGamma(sumAlpha) - sumLogGammaAlpha
+}
+
+func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
+    sum := 0.
+    for j := 0; j != len(y); j++ {
+        sum += (alpha[j] - 1.)*math.Log(y[j])
+    }
+
+    return dist.logZ(alpha) + sum
+}
+
+func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
+    ll := 0.
+    logZ := dist.logZ(alpha)
+    for i := 0; i != len(y); i++ {
+        ll += logZ
+        sum := 0.
+        for j := 0; j != len(y[i]); j++ {
+            sum += (alpha[j] - 1.)*math.Log(y[i][j])
+        }
+        ll += sum
+    }
+    return ll
+}

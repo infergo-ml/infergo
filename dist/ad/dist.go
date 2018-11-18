@@ -1,8 +1,8 @@
 package dist
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	"bitbucket.org/dtolpin/infergo/mathx"
+	"bitbucket.org/dtolpin/infergo/ad"
 	"math"
 )
 
@@ -22,11 +22,11 @@ func (dist normal) Observe(x []float64) float64 {
 
 	mu, sigma, y = x[0], x[1], x[2:]
 	if len(y) == 1 {
-		return ad.Return(ad.Call(func(_ []float64) {
+		return ad.Return(ad.Call(func(_vararg []float64) {
 			dist.Logp(0, 0, 0)
 		}, 3, &mu, &sigma, &y[0]))
 	} else {
-		return ad.Return(ad.Call(func(_ []float64) {
+		return ad.Return(ad.Call(func(_vararg []float64) {
 			dist.Logps(0, 0, y...)
 		}, 2, &mu, &sigma))
 	}
@@ -88,11 +88,11 @@ func (dist expon) Observe(x []float64) float64 {
 
 	lambda, y = x[0], x[1:]
 	if len(y) == 1 {
-		return ad.Return(ad.Call(func(_ []float64) {
+		return ad.Return(ad.Call(func(_vararg []float64) {
 			dist.Logp(0, 0)
 		}, 2, &lambda, &y[0]))
 	} else {
-		return ad.Return(ad.Call(func(_ []float64) {
+		return ad.Return(ad.Call(func(_vararg []float64) {
 			dist.Logps(0, y...)
 		}, 1, &lambda))
 	}
@@ -141,11 +141,11 @@ func (dist gamma) Observe(x []float64) float64 {
 
 	alpha, beta, y = x[0], x[1], x[2:]
 	if len(y) == 1 {
-		return ad.Return(ad.Call(func(_ []float64) {
+		return ad.Return(ad.Call(func(_vararg []float64) {
 			dist.Logp(0, 0, 0)
 		}, 3, &alpha, &beta, &y[0]))
 	} else {
-		return ad.Return(ad.Call(func(_ []float64) {
+		return ad.Return(ad.Call(func(_vararg []float64) {
 			dist.Logps(0, 0, y...)
 		}, 2, &alpha, &beta))
 	}
@@ -190,11 +190,11 @@ func (dist beta) Observe(x []float64) float64 {
 
 	alpha, beta, y = x[0], x[1], x[2:]
 	if len(y) == 1 {
-		return ad.Return(ad.Call(func(_ []float64) {
+		return ad.Return(ad.Call(func(_vararg []float64) {
 			dist.Logp(0, 0, 0)
 		}, 3, &alpha, &beta, &y[0]))
 	} else {
-		return ad.Return(ad.Call(func(_ []float64) {
+		return ad.Return(ad.Call(func(_vararg []float64) {
 			dist.Logps(0, 0, y...)
 		}, 2, &alpha, &beta))
 	}
@@ -219,6 +219,97 @@ func (_ beta) Logps(alpha, beta float64, y ...float64) float64 {
 	ad.Assignment(&ll, ad.Value(0.))
 	for i := 0; i != len(y); i = i + 1 {
 		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &y[i])), ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &beta, ad.Value(1))), ad.Elemental(math.Log, ad.Arithmetic(ad.OpSub, ad.Value(1), &y[i])))), ad.Elemental(mathx.LogGamma, &alpha)), ad.Elemental(mathx.LogGamma, &beta)), ad.Elemental(mathx.LogGamma, ad.Arithmetic(ad.OpAdd, &alpha, &beta)))))
+	}
+	return ad.Return(&ll)
+}
+
+type Dirichlet struct {
+	N int
+}
+
+func (dist Dirichlet) Observe(x []float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
+	var alpha []float64
+
+	alpha = x[:dist.N]
+	if len(x[dist.N:]) == dist.N {
+		return ad.Return(ad.Call(func(_vararg []float64) {
+			dist.Logp(alpha, x[dist.N:])
+		}, 0))
+	} else {
+		var ys [][]float64
+
+		ys = make([][]float64, len(x[dist.N:])/dist.N)
+		for i := 0; i != len(ys); i = i + 1 {
+			ys[i] = x[dist.N*(i+1) : dist.N*(i+2)]
+		}
+		return ad.Return(ad.Call(func(_vararg []float64) {
+			dist.Logps(alpha, ys...)
+		}, 0))
+	}
+}
+
+func (dist Dirichlet) logZ(alpha []float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		panic("logZ called outside Observe.")
+	}
+	var sumAlpha float64
+	ad.Assignment(&sumAlpha, ad.Value(0.))
+	for j := 0; j != len(alpha); j = j + 1 {
+		ad.Assignment(&sumAlpha, ad.Arithmetic(ad.OpAdd, &sumAlpha, &alpha[j]))
+	}
+	var sumLogGammaAlpha float64
+	ad.Assignment(&sumLogGammaAlpha, ad.Value(0.))
+	for j := 0; j != len(alpha); j = j + 1 {
+		ad.Assignment(&sumLogGammaAlpha, ad.Arithmetic(ad.OpAdd, &sumLogGammaAlpha, ad.Elemental(mathx.LogGamma, &alpha[j])))
+	}
+
+	return ad.Return(ad.Arithmetic(ad.OpSub, ad.Elemental(mathx.LogGamma, &sumAlpha), &sumLogGammaAlpha))
+}
+
+func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		panic("Logp called outside Observe.")
+	}
+	var sum float64
+	ad.Assignment(&sum, ad.Value(0.))
+	for j := 0; j != len(y); j = j + 1 {
+		ad.Assignment(&sum, ad.Arithmetic(ad.OpAdd, &sum, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha[j], ad.Value(1.))), ad.Elemental(math.Log, &y[j]))))
+	}
+
+	return ad.Return(ad.Arithmetic(ad.OpAdd, ad.Call(func(_vararg []float64) {
+		dist.logZ(alpha)
+	}, 0), &sum))
+}
+
+func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		panic("Logps called outside Observe.")
+	}
+	var ll float64
+	ad.Assignment(&ll, ad.Value(0.))
+	var logZ float64
+	ad.Assignment(&logZ, ad.Call(func(_vararg []float64) {
+		dist.logZ(alpha)
+	}, 0))
+	for i := 0; i != len(y); i = i + 1 {
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, &logZ))
+		var sum float64
+		ad.Assignment(&sum, ad.Value(0.))
+		for j := 0; j != len(y[i]); j = j + 1 {
+			ad.Assignment(&sum, ad.Arithmetic(ad.OpAdd, &sum, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha[j], ad.Value(1.))), ad.Elemental(math.Log, &y[i][j]))))
+		}
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, &sum))
 	}
 	return ad.Return(&ll)
 }
