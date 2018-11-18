@@ -22,11 +22,11 @@ func (dist normal) Observe(x []float64) float64 {
 
 	mu, sigma, y = x[0], x[1], x[2:]
 	if len(y) == 1 {
-		return ad.Return(ad.Call(func(_vararg []float64) {
+		return ad.Return(ad.Call(func(_ []float64) {
 			dist.Logp(0, 0, 0)
 		}, 3, &mu, &sigma, &y[0]))
 	} else {
-		return ad.Return(ad.Call(func(_vararg []float64) {
+		return ad.Return(ad.Call(func(_ []float64) {
 			dist.Logps(0, 0, y...)
 		}, 2, &mu, &sigma))
 	}
@@ -88,11 +88,11 @@ func (dist expon) Observe(x []float64) float64 {
 
 	lambda, y = x[0], x[1:]
 	if len(y) == 1 {
-		return ad.Return(ad.Call(func(_vararg []float64) {
+		return ad.Return(ad.Call(func(_ []float64) {
 			dist.Logp(0, 0)
 		}, 2, &lambda, &y[0]))
 	} else {
-		return ad.Return(ad.Call(func(_vararg []float64) {
+		return ad.Return(ad.Call(func(_ []float64) {
 			dist.Logps(0, y...)
 		}, 1, &lambda))
 	}
@@ -141,11 +141,11 @@ func (dist gamma) Observe(x []float64) float64 {
 
 	alpha, beta, y = x[0], x[1], x[2:]
 	if len(y) == 1 {
-		return ad.Return(ad.Call(func(_vararg []float64) {
+		return ad.Return(ad.Call(func(_ []float64) {
 			dist.Logp(0, 0, 0)
 		}, 3, &alpha, &beta, &y[0]))
 	} else {
-		return ad.Return(ad.Call(func(_vararg []float64) {
+		return ad.Return(ad.Call(func(_ []float64) {
 			dist.Logps(0, 0, y...)
 		}, 2, &alpha, &beta))
 	}
@@ -190,11 +190,11 @@ func (dist beta) Observe(x []float64) float64 {
 
 	alpha, beta, y = x[0], x[1], x[2:]
 	if len(y) == 1 {
-		return ad.Return(ad.Call(func(_vararg []float64) {
+		return ad.Return(ad.Call(func(_ []float64) {
 			dist.Logp(0, 0, 0)
 		}, 3, &alpha, &beta, &y[0]))
 	} else {
-		return ad.Return(ad.Call(func(_vararg []float64) {
+		return ad.Return(ad.Call(func(_ []float64) {
 			dist.Logps(0, 0, y...)
 		}, 2, &alpha, &beta))
 	}
