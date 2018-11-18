@@ -3,20 +3,27 @@ package main
 import (
 	"bitbucket.org/dtolpin/infergo/ad"
 	"flag"
+	"fmt"
 	"log"
 )
 
 var (
-// command line flags
+	// command line flags
+	PREFIX = "_"
 )
 
 func init() {
+	flag.StringVar(&PREFIX, "prefix", PREFIX,
+		"prefix of generated identifiers")
 	flag.Usage = func() {
-		log.Printf(`Generates a differentiated model. Usage:
-    deriv [path/to/model/directory/]
-If the path is omitted, the model in the current directory
-is differentiated. The differentiated model is placed into
-the 'ad/' subdirectory.` + "\n")
+		fmt.Fprintf(flag.CommandLine.Output(),
+			`Generates a differentiated model. Usage:
+    deriv [flags] [path/to/model/directory/]
+If the path is omitted, the model in the current directory `+
+				`is differentiated. The differentiated model is placed into `+
+				`the 'ad/' subdirectory. Flags:
+`)
+		flag.PrintDefaults()
 	}
 	log.SetFlags(0)
 }
@@ -37,7 +44,7 @@ func main() {
 
 // deriv differentiates the model in the package.
 func deriv(model string) {
-	err := ad.Deriv(model)
+	err := ad.Deriv(model, PREFIX)
 	if err != nil {
 		log.Printf("ERROR: %v", err.Error())
 	}
