@@ -13,8 +13,8 @@ dist/ad/dist.go: dist/dist.go
 test: dist/ad/dist.go
 	for package in $(TESTPACKAGES); do go test -short ./$$package; done
 
-fulltest: test
-	for package in $(TESTPACKAGES); do go test ./$$package; done
+fulltest:
+	for package in $(TESTPACKAGES); do go test -count=1 ./$$package; done
 
 build: test
 	for package in $(PACKAGES); do go build ./$$package; done
