@@ -760,6 +760,11 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 						}
 					}
 
+					// If there are no variadic arguments, the
+					// wrapper parameter is unused.
+					vararg := &ast.Ident{
+						Name: "_",
+					}
 					ellipsis := token.NoPos
 					if t.Variadic() && len(n.Args) > nparams {
 						variadic := t.Params().At(nparams)
@@ -767,17 +772,17 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 						et, ok := vt.Elem().(*types.Basic)
 						if ok && et.Kind() == types.Float64 &&
 							n.Ellipsis == token.NoPos {
-							// Variadic float64 arguments
-							innerArgs = append(innerArgs,
-								&ast.Ident{
-									Name: varargName,
-								})
+							// Variadic float64 arguments, passed
+							// through the wrapper parameter.
+							vararg = &ast.Ident{
+								Name: varargName,
+							}
+							innerArgs = append(innerArgs, vararg)
 							ellipsis = 1
 							outerArgs = append(outerArgs,
 								n.Args[nparams:]...)
 						} else {
-							// Either not float or a slice is
-							// passed.
+							// Either not float or a slice is passed.
 							innerArgs = append(innerArgs,
 								n.Args[nparams:]...)
 							ellipsis = n.Ellipsis
@@ -789,7 +794,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 
 					differentiated := callExpr("Call",
 						append([]ast.Expr{
-							callWrapper(n.Fun, innerArgs, ellipsis),
+							callWrapper(vararg,
+								n.Fun, innerArgs, ellipsis),
 						}, outerArgs...)...)
 					c.Replace(differentiated)
 				case m.isElemental(n):
@@ -1032,31 +1038,22 @@ func callExpr(name string, args ...ast.Expr) ast.Expr {
 	}
 }
 
-// callWrapper returns an Expr for a wrapped differentiated
+// callWrapper retUrns an Expr for a wrapped differentiated
 // call.
 func callWrapper(
+	vararg *ast.Ident,
 	fun ast.Expr,
 	args []ast.Expr,
 	ellipsis token.Pos,
 ) *ast.FuncLit {
-	var vararg string // parameter for passing variadic arguments
-	if lastArg, ok := args[len(args)-1].(*ast.Ident); ok &&
-		lastArg.Name == varargName {
-		// Variadic, name the parameter.
-		vararg = varargName
-	} else {
-		// Not variadic, the parameter is unused.
-		vararg = "_"
-	}
 	return &ast.FuncLit{
 		Type: &ast.FuncType{
 			Params: &ast.FieldList{
 				List: []*ast.Field{
 					&ast.Field{
 						Names: []*ast.Ident{
-							&ast.Ident{
-								Name: vararg,
-							}},
+							vararg,
+						},
 						Type: &ast.ArrayType{
 							Elt: &ast.Ident{
 								Name: "float64",
