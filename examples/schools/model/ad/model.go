@@ -27,7 +27,7 @@ func (m *Model) Observe(x []float64) float64 {
 
 	eta = x[2:]
 	var ll float64
-	ad.Assignment(&ll, ad.Call(func(_vararg []float64) {
+	ad.Assignment(&ll, ad.Call(func(_ []float64) {
 		Normal.Logp(0, 0, 0)
 	}, 3, ad.Value(0), &m.Stau, &x[1]))
 	ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Call(func(_vararg []float64) {
@@ -36,7 +36,7 @@ func (m *Model) Observe(x []float64) float64 {
 	for i, y := range m.Y {
 		var theta float64
 		ad.Assignment(&theta, ad.Arithmetic(ad.OpAdd, &mu, ad.Arithmetic(ad.OpMul, &tau, &eta[i])))
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Call(func(_vararg []float64) {
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Call(func(_ []float64) {
 			Normal.Logp(0, 0, 0)
 		}, 3, &theta, &m.Sigma[i], &y)))
 	}

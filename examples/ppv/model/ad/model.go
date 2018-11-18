@@ -31,7 +31,7 @@ func (m *Model) Observe(x []float64) float64 {
 		ad.Assignment(&beliefs[j][1], ad.Arithmetic(ad.OpMul, ad.Value(2.), (ad.Arithmetic(ad.OpSub, ad.Value(1), &churn_probability))))
 	}
 	var target float64
-	ad.Assignment(&target, ad.Call(func(_vararg []float64) {
+	ad.Assignment(&target, ad.Call(func(_ []float64) {
 		Expon.Logp(0, 0)
 	}, 2, ad.Arithmetic(ad.OpDiv, ad.Value(1), &m.PriorBandwidth), &bandwidth))
 

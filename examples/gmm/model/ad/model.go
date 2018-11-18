@@ -36,7 +36,7 @@ func (m *Model) Observe(x []float64) float64 {
 		var l float64
 		for j := 0; j != m.NComp; j = j + 1 {
 			var lj float64
-			ad.Assignment(&lj, ad.Call(func(_vararg []float64) {
+			ad.Assignment(&lj, ad.Call(func(_ []float64) {
 				Normal.Logp(0, 0, 0)
 			}, 3, &mu[j], &sigma[j], &m.Data[i]))
 			if j == 0 {
