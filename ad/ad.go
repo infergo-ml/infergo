@@ -55,7 +55,7 @@ import (
 
 const (
 	// Import path for the package providing tape functions.
-    infergoImport = "bitbucket.org/dtolpin/infergo/ad"
+	infergoImport = "bitbucket.org/dtolpin/infergo/ad"
 	// Name of the parameter to pass variadic arguments through
 	// a wrapper to the differentiated function.
 	varargName = "_vararg"

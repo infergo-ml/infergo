@@ -62,9 +62,9 @@ func equiv(gotTree *ast.File, expected string) bool {
 func TestEquiv(t *testing.T) {
 	// kick the tyres
 	for _, c := range []struct {
-		got		 string
+		got      string
 		expected string
-		equal	 bool
+		equal    bool
 	}{
 		{
 			"package a; func foo() {}",
@@ -1060,7 +1060,7 @@ func (m Model) Observe(x []float64) float64 {
 func TestDerivErrors(t *testing.T) {
 	for _, c := range []struct {
 		erroneous string
-		err		  string
+		err       string
 	}{
 		{
 			`package adoverride
