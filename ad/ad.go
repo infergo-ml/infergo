@@ -53,6 +53,14 @@ import (
 	"strings"
 )
 
+const (
+	// Import path for the package providing tape functions.
+    infergoImport = "bitbucket.org/dtolpin/infergo/ad"
+	// Name of the parameter to pass variadic arguments through
+	// a wrapper to the differentiated function.
+	varargName = "_vararg"
+)
+
 // modelInterface is used to identify model types
 var modelInterface *types.Interface
 
@@ -166,8 +174,6 @@ func (m *model) check() (err error) {
 }
 
 // Differentiation
-
-const infergoImport = "bitbucket.org/dtolpin/infergo/ad"
 
 // deriv differentiates the model through rewriting the ASTs.
 func (m *model) deriv() (err error) {
@@ -764,7 +770,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 							// Variadic float64 arguments
 							innerArgs = append(innerArgs,
 								&ast.Ident{
-									Name: "_vararg",
+									Name: varargName,
 								})
 							ellipsis = 1
 							outerArgs = append(outerArgs,
@@ -1034,11 +1040,12 @@ func callWrapper(
 	ellipsis token.Pos,
 ) *ast.FuncLit {
 	var vararg string // parameter for passing variadic arguments
-	if ellipsis.IsValid() {
-		// Variadic, name it.
-		vararg = "_vararg"
+	if lastArg, ok := args[len(args)-1].(*ast.Ident); ok &&
+		lastArg.Name == varargName {
+		// Variadic, name the parameter.
+		vararg = varargName
 	} else {
-		// Not variadic, unused.
+		// Not variadic, the parameter is unused.
 		vararg = "_"
 	}
 	return &ast.FuncLit{
