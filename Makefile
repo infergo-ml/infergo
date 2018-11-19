@@ -28,7 +28,7 @@ GOFILES=ad/ad.go ad/elementals.go ad/tape.go \
 
 install: all test
 	for package in $(PACKAGES); do go install ./$$package; done
-	if [ -n $(GOPATH) ] ; then cp deriv $(GOPATH)/bin ; fi
+	if [ -n "$(GOPATH)" ] ; then cp deriv $(GOPATH)/bin ; fi
 
 clean-examples:
 	for x in $(EXAMPLES); do (cd examples/$$x && make clean); done

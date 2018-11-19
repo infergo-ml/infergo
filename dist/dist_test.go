@@ -141,44 +141,44 @@ func TestBeta(t *testing.T) {
 
 func TestDirichlet(t *testing.T) {
 	for _, c := range []struct {
-        n int
+		n     int
 		alpha []float64
 		y     [][]float64
 		ll    float64
 	}{
-        {
-            2, 
-            []float64{1., 1.},
-            [][]float64{{0.75, 0.25}}, 
-            0,
-        },
-        {
-            3, 
-            []float64{0.5, 1., 2.},
-            [][]float64{{0.1, 0.1, 0.8}},
-            1.5567576546051873,
-        },
 		{
-            2, 
-            []float64{3., 1.},
-            [][]float64{
-                {0.4, 0.6},
-                {0.6, 0.4},
-            },
-            -0.6570081339440723,
-        },
+			2,
+			[]float64{1., 1.},
+			[][]float64{{0.75, 0.25}},
+			0,
+		},
+		{
+			3,
+			[]float64{0.5, 1., 2.},
+			[][]float64{{0.1, 0.1, 0.8}},
+			1.5567576546051873,
+		},
+		{
+			2,
+			[]float64{3., 1.},
+			[][]float64{
+				{0.4, 0.6},
+				{0.6, 0.4},
+			},
+			-0.6570081339440723,
+		},
 	} {
-        dist := Dirichlet{c.n}
+		dist := Dirichlet{c.n}
 		ll := dist.Logps(c.alpha, c.y...)
 		if math.Abs(ll-c.ll) > 1E-6 {
 			t.Errorf("Wrong logpdf of Dirichlet(%v|%v): "+
 				"got %.4g, want %.4g",
 				c.y, c.alpha, ll, c.ll)
 		}
-        x := c.alpha
-        for _, y := range c.y {
-            x = append(x, y...)
-        }
+		x := c.alpha
+		for _, y := range c.y {
+			x = append(x, y...)
+		}
 		llo := dist.Observe(x)
 		if math.Abs(ll-llo) > 1E-6 {
 			t.Errorf("Wrong result of Observe(%v..., %v...): "+
