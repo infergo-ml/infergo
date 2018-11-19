@@ -34,7 +34,7 @@ clean-examples:
 	for x in $(EXAMPLES); do (cd examples/$$x && make clean); done
 
 clean: clean-examples
-	rm -f deriv
+	rm -rf deriv dist/ad
 
 # Examples
 #

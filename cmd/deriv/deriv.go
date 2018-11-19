@@ -9,7 +9,7 @@ import (
 
 const (
 	command = "deriv"
-	version = "0.1.0b2"
+	version = "0.2.0a1"
 )
 
 var (
@@ -40,7 +40,7 @@ If the path is omitted, the model in the current directory `+
 func main() {
 	flag.Parse()
 	if VERSION {
-		fmt.Fprintf(flag.CommandLine.Output(), "%s v%s\n",
+		fmt.Fprintf(flag.CommandLine.Output(), "infergo %s v%s\n",
 			command, version)
 		return
 	}
