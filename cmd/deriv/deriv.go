@@ -40,7 +40,7 @@ If the path is omitted, the model in the current directory `+
 func main() {
 	flag.Parse()
 	if VERSION {
-		fmt.Fprintf(flag.CommandLine.Output(), "%s v%s\n",
+		fmt.Fprintf(flag.CommandLine.Output(), "infergo %s v%s\n",
 			command, version)
 		return
 	}
