@@ -174,21 +174,6 @@ func (dist Dirichlet) Observe(x []float64) float64 {
 	}
 }
 
-// logZ computes normalization term independent of observations.
-func (dist Dirichlet) logZ(alpha []float64) float64 {
-	sumAlpha := 0.
-	for j := 0; j != len(alpha); j++ {
-		sumAlpha += alpha[j]
-	}
-
-	sumLogGammaAlpha := 0.
-	for j := 0; j != len(alpha); j++ {
-		sumLogGammaAlpha += mathx.LogGamma(alpha[j])
-	}
-
-	return mathx.LogGamma(sumAlpha) - sumLogGammaAlpha
-}
-
 // Logp computes logpdf of a single observation.
 func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
 	sum := 0.
@@ -212,4 +197,19 @@ func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 		ll += sum
 	}
 	return ll
+}
+
+// logZ computes normalization term independent of observations.
+func (dist Dirichlet) logZ(alpha []float64) float64 {
+	sumAlpha := 0.
+	for j := 0; j != len(alpha); j++ {
+		sumAlpha += alpha[j]
+	}
+
+	sumLogGammaAlpha := 0.
+	for j := 0; j != len(alpha); j++ {
+		sumLogGammaAlpha += mathx.LogGamma(alpha[j])
+	}
+
+	return mathx.LogGamma(sumAlpha) - sumLogGammaAlpha
 }
