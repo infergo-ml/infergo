@@ -8,9 +8,9 @@ EXAMPLES=hello gmm adapt schools ppv
 examples: build $(EXAMPLES)
 
 dist/ad/dist.go: dist/dist.go
-	deriv dist
+	./deriv dist
 
-test: dist/ad/dist.go
+test: 
 	for package in $(TESTPACKAGES); do go test -short ./$$package; done
 
 fulltest:
@@ -26,7 +26,7 @@ GOFILES=ad/ad.go ad/elementals.go ad/tape.go \
 	model/model.go \
 	infer/infer.go
 
-install: all test
+install: all test dist/ad/dist.go
 	for package in $(PACKAGES); do go install ./$$package; done
 	if [ -n "$(GOPATH)" ] ; then cp deriv $(GOPATH)/bin ; fi
 
