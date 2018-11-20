@@ -7,14 +7,15 @@ EXAMPLES=hello gmm adapt schools ppv
 
 examples: build $(EXAMPLES)
 
-dist/ad/dist.go: dist/dist.go
-	./deriv dist
-
-test: 
+test: dist/ad/dist.go
 	for package in $(TESTPACKAGES); do go test -short ./$$package; done
 
-fulltest:
+fulltest: dist/ad/dist.go
 	for package in $(TESTPACKAGES); do go test -count=1 ./$$package; done
+
+dist/ad/dist.go: dist/dist.go
+	go build ./cmd/deriv
+	./deriv dist
 
 build: test
 	for package in $(PACKAGES); do go build ./$$package; done
@@ -26,7 +27,7 @@ GOFILES=ad/ad.go ad/elementals.go ad/tape.go \
 	model/model.go \
 	infer/infer.go
 
-install: all test dist/ad/dist.go
+install: all test
 	for package in $(PACKAGES); do go install ./$$package; done
 	if [ -n "$(GOPATH)" ] ; then cp deriv $(GOPATH)/bin ; fi
 
@@ -34,7 +35,7 @@ clean-examples:
 	for x in $(EXAMPLES); do (cd examples/$$x && make clean); done
 
 clean: clean-examples
-	rm -rf deriv
+	rm -rf deriv dist/ad
 
 # Examples
 #
