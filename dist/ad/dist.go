@@ -1,8 +1,8 @@
 package dist
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	"bitbucket.org/dtolpin/infergo/mathx"
+	"bitbucket.org/dtolpin/infergo/ad"
 	"fmt"
 	"math"
 )
@@ -323,6 +323,12 @@ func (dist Dirichlet) SoftMax(x, p []float64) {
 	for i := range p {
 		ad.Assignment(&p[i], ad.Arithmetic(ad.OpDiv, &p[i], &z))
 	}
+}
+
+var SoftMax func(x, p []float64)
+
+func init() {
+	SoftMax = Dirichlet{}.SoftMax
 }
 
 func (dist Dirichlet) logZ(alpha []float64) float64 {

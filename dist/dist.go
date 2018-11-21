@@ -228,6 +228,12 @@ func (dist Dirichlet) SoftMax(x, p []float64) {
 	}
 }
 
+var SoftMax func(x, p []float64)
+
+func init() {
+    SoftMax = Dirichlet{}.SoftMax
+}
+
 // logZ computes normalization term independent of observations.
 func (dist Dirichlet) logZ(alpha []float64) float64 {
 	sumAlpha := 0.
