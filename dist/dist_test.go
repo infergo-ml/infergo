@@ -195,3 +195,30 @@ func TestDirichlet(t *testing.T) {
 		}
 	}
 }
+
+func TestSoftMax(t *testing.T) {
+	for _, c := range []struct {
+		x []float64
+		p []float64
+	}{
+		{
+			[]float64{0., 0.},
+			[]float64{0.5, 0.5},
+		},
+		{
+			[]float64{math.Log(1), math.Log(3), math.Log(6)},
+			[]float64{0.1, 0.3, 0.6},
+		},
+	} {
+		dist := Dirichlet{len(c.x)}
+		p := make([]float64, dist.N)
+		dist.SoftMax(c.x, p)
+		for i := range p {
+			if math.Abs(p[i]-c.p[i]) > 1E-6 {
+				t.Errorf("Wrong result of SoftMax(%v): "+
+					"got %v, want %v", c.x, p, c.p)
+				break
+			}
+		}
+	}
+}
