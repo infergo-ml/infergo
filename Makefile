@@ -31,6 +31,10 @@ install: all test
 	for package in $(PACKAGES); do go install ./$$package; done
 	if [ -n "$(GOPATH)" ] ; then cp deriv $(GOPATH)/bin ; fi
 
+push:
+	git push
+	git push ssh://git@github.com/dtolpin/infergo
+
 clean-examples:
 	for x in $(EXAMPLES); do (cd examples/$$x && make clean); done
 

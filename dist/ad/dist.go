@@ -1,8 +1,8 @@
 package dist
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	"bitbucket.org/dtolpin/infergo/mathx"
+	"bitbucket.org/dtolpin/infergo/ad"
 	"fmt"
 	"math"
 )
@@ -305,11 +305,18 @@ func (dist Dirichlet) SoftMax(x, p []float64) {
 		panic(fmt.Sprintf("lengths of x and p are different: "+
 			"got len(x)=%v, len(p)=%v", len(x), len(p)))
 	}
+	var xmax float64
+	ad.Assignment(&xmax, ad.Value(math.Inf(-1)))
+	for _, y := range x {
+		if y > xmax {
+			ad.Assignment(&xmax, &y)
+		}
+	}
 	var z float64
 	ad.Assignment(&z, ad.Value(0.))
 	for i, y := range x {
 		var q float64
-		ad.Assignment(&q, ad.Elemental(math.Exp, &y))
+		ad.Assignment(&q, ad.Elemental(math.Exp, ad.Arithmetic(ad.OpSub, &y, &xmax)))
 		ad.Assignment(&z, ad.Arithmetic(ad.OpAdd, &z, &q))
 		ad.Assignment(&p[i], &q)
 	}

@@ -207,9 +207,19 @@ func (dist Dirichlet) SoftMax(x, p []float64) {
 		panic(fmt.Sprintf("lengths of x and p are different: "+
 			"got len(x)=%v, len(p)=%v", len(x), len(p)))
 	}
+
+    // For a more stable computation, first find max(x) and
+    // then divide both numerator and denominator of SoftMax
+    // by exp(xmax).
+    xmax := math.Inf(-1)
+    for _, y := range x {
+        if y > xmax {
+            xmax = y
+        }
+    }
 	z := 0.
 	for i, y := range x {
-		q := math.Exp(y)
+		q := math.Exp(y - xmax)
 		z += q
 		p[i] = q
 	}
