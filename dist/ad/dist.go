@@ -66,9 +66,9 @@ func (_ normal) Logps(mu, sigma float64, y ...float64) float64 {
 	ad.Assignment(&logv, ad.Elemental(math.Log, &vari))
 	var ll float64
 	ad.Assignment(&ll, ad.Value(0.))
-	for _, yi := range y {
+	for i := range y {
 		var d float64
-		ad.Assignment(&d, ad.Arithmetic(ad.OpSub, &yi, &mu))
+		ad.Assignment(&d, ad.Arithmetic(ad.OpSub, &y[i], &mu))
 		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpMul, ad.Arithmetic(ad.OpNeg, ad.Value(0.5)), (ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpDiv, ad.Arithmetic(ad.OpMul, &d, &d), &vari), &logv), &log2pi)))))
 	}
 	return ad.Return(&ll)
@@ -120,8 +120,8 @@ func (_ expon) Logps(lambda float64, y ...float64) float64 {
 	ad.Assignment(&ll, ad.Value(0.))
 	var logl float64
 	ad.Assignment(&logl, ad.Elemental(math.Log, &lambda))
-	for _, yi := range y {
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpSub, &logl, ad.Arithmetic(ad.OpMul, &lambda, &yi))))
+	for i := range y {
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpSub, &logl, ad.Arithmetic(ad.OpMul, &lambda, &y[i]))))
 	}
 	return ad.Return(&ll)
 }
@@ -169,8 +169,8 @@ func (_ gamma) Logps(alpha, beta float64, y ...float64) float64 {
 	}
 	var ll float64
 	ad.Assignment(&ll, ad.Value(0.))
-	for _, yi := range y {
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &yi)), ad.Arithmetic(ad.OpMul, &beta, &yi)), ad.Elemental(mathx.LogGamma, &alpha)), ad.Arithmetic(ad.OpMul, &alpha, ad.Elemental(math.Log, &beta)))))
+	for i := range y {
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &y[i])), ad.Arithmetic(ad.OpMul, &beta, &y[i])), ad.Elemental(mathx.LogGamma, &alpha)), ad.Arithmetic(ad.OpMul, &alpha, ad.Elemental(math.Log, &beta)))))
 	}
 	return ad.Return(&ll)
 }
@@ -218,8 +218,8 @@ func (_ beta) Logps(alpha, beta float64, y ...float64) float64 {
 	}
 	var ll float64
 	ad.Assignment(&ll, ad.Value(0.))
-	for _, yi := range y {
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &yi)), ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &beta, ad.Value(1))), ad.Elemental(math.Log, ad.Arithmetic(ad.OpSub, ad.Value(1), &yi)))), ad.Elemental(mathx.LogGamma, &alpha)), ad.Elemental(mathx.LogGamma, &beta)), ad.Elemental(mathx.LogGamma, ad.Arithmetic(ad.OpAdd, &alpha, &beta)))))
+	for i := range y {
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &y[i])), ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &beta, ad.Value(1))), ad.Elemental(math.Log, ad.Arithmetic(ad.OpSub, ad.Value(1), &y[i])))), ad.Elemental(mathx.LogGamma, &alpha)), ad.Elemental(mathx.LogGamma, &beta)), ad.Elemental(mathx.LogGamma, ad.Arithmetic(ad.OpAdd, &alpha, &beta)))))
 	}
 	return ad.Return(&ll)
 }
@@ -307,16 +307,16 @@ func (dist Dirichlet) SoftMax(x, p []float64) {
 	}
 	var xmax float64
 	ad.Assignment(&xmax, ad.Value(math.Inf(-1)))
-	for _, y := range x {
-		if y > xmax {
-			ad.Assignment(&xmax, &y)
+	for i := range x {
+		if x[i] > xmax {
+			ad.Assignment(&xmax, &x[i])
 		}
 	}
 	var z float64
 	ad.Assignment(&z, ad.Value(0.))
-	for i, y := range x {
+	for i := range x {
 		var q float64
-		ad.Assignment(&q, ad.Elemental(math.Exp, ad.Arithmetic(ad.OpSub, &y, &xmax)))
+		ad.Assignment(&q, ad.Elemental(math.Exp, ad.Arithmetic(ad.OpSub, &x[i], &xmax)))
 		ad.Assignment(&z, ad.Arithmetic(ad.OpAdd, &z, &q))
 		ad.Assignment(&p[i], &q)
 	}
@@ -335,9 +335,9 @@ func (dist Dirichlet) logZ(alpha []float64) float64 {
 	ad.Assignment(&sumAlpha, ad.Value(0.))
 	var sumLogGammaAlpha float64
 	ad.Assignment(&sumLogGammaAlpha, ad.Value(0.))
-	for _, a := range alpha {
-		ad.Assignment(&sumAlpha, ad.Arithmetic(ad.OpAdd, &sumAlpha, &a))
-		ad.Assignment(&sumLogGammaAlpha, ad.Arithmetic(ad.OpAdd, &sumLogGammaAlpha, ad.Elemental(mathx.LogGamma, &a)))
+	for i := range alpha {
+		ad.Assignment(&sumAlpha, ad.Arithmetic(ad.OpAdd, &sumAlpha, &alpha[i]))
+		ad.Assignment(&sumLogGammaAlpha, ad.Arithmetic(ad.OpAdd, &sumLogGammaAlpha, ad.Elemental(mathx.LogGamma, &alpha[i])))
 	}
 
 	return ad.Return(ad.Arithmetic(ad.OpSub, ad.Elemental(mathx.LogGamma, &sumAlpha), &sumLogGammaAlpha))

@@ -45,8 +45,8 @@ func (_ normal) Logps(mu, sigma float64, y ...float64) float64 {
 	vari := sigma * sigma
 	logv := math.Log(vari)
 	ll := 0.
-	for _, yi := range y {
-		d := yi - mu
+	for i := range y {
+		d := y[i] - mu
 		ll += -0.5 * (d*d/vari + logv + log2pi)
 	}
 	return ll
@@ -79,8 +79,8 @@ func (_ expon) Logp(lambda float64, y float64) float64 {
 func (_ expon) Logps(lambda float64, y ...float64) float64 {
 	ll := 0.
 	logl := math.Log(lambda)
-	for _, yi := range y {
-		ll += logl - lambda*yi
+	for i := range y {
+		ll += logl - lambda*y[i]
 	}
 	return ll
 }
@@ -111,8 +111,8 @@ func (_ gamma) Logp(alpha, beta float64, y float64) float64 {
 // Logps computes the log pdf of a vector of observations.
 func (_ gamma) Logps(alpha, beta float64, y ...float64) float64 {
 	ll := 0.
-	for _, yi := range y {
-		ll += (alpha-1)*math.Log(yi) - beta*yi -
+	for i := range y {
+		ll += (alpha-1)*math.Log(y[i]) - beta*y[i] -
 			mathx.LogGamma(alpha) + alpha*math.Log(beta)
 	}
 	return ll
@@ -146,9 +146,9 @@ func (_ beta) Logp(alpha, beta float64, y float64) float64 {
 // Logp computes the log pdf of a vector of observations.
 func (_ beta) Logps(alpha, beta float64, y ...float64) float64 {
 	ll := 0.
-	for _, yi := range y {
-		ll += (alpha-1)*math.Log(yi) +
-			(beta-1)*math.Log(1-yi) -
+	for i := range y {
+		ll += (alpha-1)*math.Log(y[i]) +
+			(beta-1)*math.Log(1-y[i]) -
 			mathx.LogGamma(alpha) - mathx.LogGamma(beta) +
 			mathx.LogGamma(alpha+beta)
 	}
@@ -212,14 +212,14 @@ func (dist Dirichlet) SoftMax(x, p []float64) {
 	// then divide both numerator and denominator of SoftMax
 	// by exp(xmax).
 	xmax := math.Inf(-1)
-	for _, y := range x {
-		if y > xmax {
-			xmax = y
+	for i := range x {
+		if x[i] > xmax {
+			xmax = x[i]
 		}
 	}
 	z := 0.
-	for i, y := range x {
-		q := math.Exp(y - xmax)
+	for i := range x {
+		q := math.Exp(x[i] - xmax)
 		z += q
 		p[i] = q
 	}
@@ -232,9 +232,9 @@ func (dist Dirichlet) SoftMax(x, p []float64) {
 func (dist Dirichlet) logZ(alpha []float64) float64 {
 	sumAlpha := 0.
 	sumLogGammaAlpha := 0.
-	for _, a := range alpha {
-		sumAlpha += a
-		sumLogGammaAlpha += mathx.LogGamma(a)
+	for i := range alpha {
+		sumAlpha += alpha[i]
+		sumLogGammaAlpha += mathx.LogGamma(alpha[i])
 	}
 
 	return mathx.LogGamma(sumAlpha) - sumLogGammaAlpha
