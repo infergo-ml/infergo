@@ -228,10 +228,12 @@ func (dist Dirichlet) SoftMax(x, p []float64) {
 	}
 }
 
+// Outside of differentiated context, SoftMax can be used
+// without distribution.
 var SoftMax func(x, p []float64)
 
 func init() {
-    SoftMax = Dirichlet{}.SoftMax
+	SoftMax = Dirichlet{}.SoftMax
 }
 
 // logZ computes normalization term independent of observations.

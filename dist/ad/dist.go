@@ -1,8 +1,8 @@
 package dist
 
 import (
-	"bitbucket.org/dtolpin/infergo/mathx"
 	"bitbucket.org/dtolpin/infergo/ad"
+	"bitbucket.org/dtolpin/infergo/mathx"
 	"fmt"
 	"math"
 )
