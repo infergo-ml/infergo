@@ -3,6 +3,7 @@ package dist
 import (
 	"bitbucket.org/dtolpin/infergo/mathx"
 	"bitbucket.org/dtolpin/infergo/ad"
+	"fmt"
 	"math"
 )
 
@@ -65,9 +66,9 @@ func (_ normal) Logps(mu, sigma float64, y ...float64) float64 {
 	ad.Assignment(&logv, ad.Elemental(math.Log, &vari))
 	var ll float64
 	ad.Assignment(&ll, ad.Value(0.))
-	for i := 0; i != len(y); i = i + 1 {
+	for _, yi := range y {
 		var d float64
-		ad.Assignment(&d, ad.Arithmetic(ad.OpSub, &y[i], &mu))
+		ad.Assignment(&d, ad.Arithmetic(ad.OpSub, &yi, &mu))
 		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpMul, ad.Arithmetic(ad.OpNeg, ad.Value(0.5)), (ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpDiv, ad.Arithmetic(ad.OpMul, &d, &d), &vari), &logv), &log2pi)))))
 	}
 	return ad.Return(&ll)
@@ -119,8 +120,8 @@ func (_ expon) Logps(lambda float64, y ...float64) float64 {
 	ad.Assignment(&ll, ad.Value(0.))
 	var logl float64
 	ad.Assignment(&logl, ad.Elemental(math.Log, &lambda))
-	for i := 0; i != len(y); i = i + 1 {
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpSub, &logl, ad.Arithmetic(ad.OpMul, &lambda, &y[i]))))
+	for _, yi := range y {
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpSub, &logl, ad.Arithmetic(ad.OpMul, &lambda, &yi))))
 	}
 	return ad.Return(&ll)
 }
@@ -168,8 +169,8 @@ func (_ gamma) Logps(alpha, beta float64, y ...float64) float64 {
 	}
 	var ll float64
 	ad.Assignment(&ll, ad.Value(0.))
-	for i := 0; i != len(y); i = i + 1 {
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &y[i])), ad.Arithmetic(ad.OpMul, &beta, &y[i])), ad.Elemental(mathx.LogGamma, &alpha)), ad.Arithmetic(ad.OpMul, &alpha, ad.Elemental(math.Log, &beta)))))
+	for _, yi := range y {
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &yi)), ad.Arithmetic(ad.OpMul, &beta, &yi)), ad.Elemental(mathx.LogGamma, &alpha)), ad.Arithmetic(ad.OpMul, &alpha, ad.Elemental(math.Log, &beta)))))
 	}
 	return ad.Return(&ll)
 }
@@ -217,8 +218,8 @@ func (_ beta) Logps(alpha, beta float64, y ...float64) float64 {
 	}
 	var ll float64
 	ad.Assignment(&ll, ad.Value(0.))
-	for i := 0; i != len(y); i = i + 1 {
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &y[i])), ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &beta, ad.Value(1))), ad.Elemental(math.Log, ad.Arithmetic(ad.OpSub, ad.Value(1), &y[i])))), ad.Elemental(mathx.LogGamma, &alpha)), ad.Elemental(mathx.LogGamma, &beta)), ad.Elemental(mathx.LogGamma, ad.Arithmetic(ad.OpAdd, &alpha, &beta)))))
+	for _, yi := range y {
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &yi)), ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &beta, ad.Value(1))), ad.Elemental(math.Log, ad.Arithmetic(ad.OpSub, ad.Value(1), &yi)))), ad.Elemental(mathx.LogGamma, &alpha)), ad.Elemental(mathx.LogGamma, &beta)), ad.Elemental(mathx.LogGamma, ad.Arithmetic(ad.OpAdd, &alpha, &beta)))))
 	}
 	return ad.Return(&ll)
 }
@@ -244,7 +245,7 @@ func (dist Dirichlet) Observe(x []float64) float64 {
 		var ys [][]float64
 
 		ys = make([][]float64, len(x[dist.N:])/dist.N)
-		for i := 0; i != len(ys); i = i + 1 {
+		for i := range ys {
 			ys[i] = x[dist.N*(i+1) : dist.N*(i+2)]
 		}
 		return ad.Return(ad.Call(func(_ []float64) {
@@ -261,7 +262,7 @@ func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
 	}
 	var sum float64
 	ad.Assignment(&sum, ad.Value(0.))
-	for j := 0; j != len(y); j = j + 1 {
+	for j := range y {
 		ad.Assignment(&sum, ad.Arithmetic(ad.OpAdd, &sum, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha[j], ad.Value(1.))), ad.Elemental(math.Log, &y[j]))))
 	}
 
@@ -282,16 +283,39 @@ func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 	ad.Assignment(&logZ, ad.Call(func(_ []float64) {
 		dist.logZ(alpha)
 	}, 0))
-	for i := 0; i != len(y); i = i + 1 {
+	for i := range y {
 		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, &logZ))
 		var sum float64
 		ad.Assignment(&sum, ad.Value(0.))
-		for j := 0; j != len(y[i]); j = j + 1 {
+		for j := range alpha {
 			ad.Assignment(&sum, ad.Arithmetic(ad.OpAdd, &sum, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha[j], ad.Value(1.))), ad.Elemental(math.Log, &y[i][j]))))
 		}
 		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, &sum))
 	}
 	return ad.Return(&ll)
+}
+
+func (dist Dirichlet) SoftMax(x, p []float64) {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		panic("SoftMax called outside Observe.")
+	}
+	if len(x) != len(p) {
+		panic(fmt.Sprintf("lengths of x and p are different: "+
+			"got len(x)=%v, len(p)=%v", len(x), len(p)))
+	}
+	var z float64
+	ad.Assignment(&z, ad.Value(0.))
+	for i, y := range x {
+		var q float64
+		ad.Assignment(&q, ad.Elemental(math.Exp, &y))
+		ad.Assignment(&z, ad.Arithmetic(ad.OpAdd, &z, &q))
+		ad.Assignment(&p[i], &q)
+	}
+	for i := range p {
+		ad.Assignment(&p[i], ad.Arithmetic(ad.OpDiv, &p[i], &z))
+	}
 }
 
 func (dist Dirichlet) logZ(alpha []float64) float64 {
@@ -302,13 +326,11 @@ func (dist Dirichlet) logZ(alpha []float64) float64 {
 	}
 	var sumAlpha float64
 	ad.Assignment(&sumAlpha, ad.Value(0.))
-	for j := 0; j != len(alpha); j = j + 1 {
-		ad.Assignment(&sumAlpha, ad.Arithmetic(ad.OpAdd, &sumAlpha, &alpha[j]))
-	}
 	var sumLogGammaAlpha float64
 	ad.Assignment(&sumLogGammaAlpha, ad.Value(0.))
-	for j := 0; j != len(alpha); j = j + 1 {
-		ad.Assignment(&sumLogGammaAlpha, ad.Arithmetic(ad.OpAdd, &sumLogGammaAlpha, ad.Elemental(mathx.LogGamma, &alpha[j])))
+	for _, a := range alpha {
+		ad.Assignment(&sumAlpha, ad.Arithmetic(ad.OpAdd, &sumAlpha, &a))
+		ad.Assignment(&sumLogGammaAlpha, ad.Arithmetic(ad.OpAdd, &sumLogGammaAlpha, ad.Elemental(mathx.LogGamma, &a)))
 	}
 
 	return ad.Return(ad.Arithmetic(ad.OpSub, ad.Elemental(mathx.LogGamma, &sumAlpha), &sumLogGammaAlpha))

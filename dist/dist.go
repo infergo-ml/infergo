@@ -5,6 +5,7 @@ package dist
 
 import (
 	"bitbucket.org/dtolpin/infergo/mathx"
+    "fmt"
 	"math"
 )
 
@@ -44,8 +45,8 @@ func (_ normal) Logps(mu, sigma float64, y ...float64) float64 {
 	vari := sigma * sigma
 	logv := math.Log(vari)
 	ll := 0.
-	for i := 0; i != len(y); i++ {
-		d := y[i] - mu
+    for _, yi := range y {
+		d := yi - mu
 		ll += -0.5 * (d*d/vari + logv + log2pi)
 	}
 	return ll
@@ -78,8 +79,8 @@ func (_ expon) Logp(lambda float64, y float64) float64 {
 func (_ expon) Logps(lambda float64, y ...float64) float64 {
 	ll := 0.
 	logl := math.Log(lambda)
-	for i := 0; i != len(y); i++ {
-		ll += logl - lambda*y[i]
+    for _, yi := range y {
+		ll += logl - lambda*yi
 	}
 	return ll
 }
@@ -110,8 +111,8 @@ func (_ gamma) Logp(alpha, beta float64, y float64) float64 {
 // Logps computes the log pdf of a vector of observations.
 func (_ gamma) Logps(alpha, beta float64, y ...float64) float64 {
 	ll := 0.
-	for i := 0; i != len(y); i++ {
-		ll += (alpha-1)*math.Log(y[i]) - beta*y[i] -
+	for _, yi := range y {
+		ll += (alpha-1)*math.Log(yi) - beta*yi -
 			mathx.LogGamma(alpha) + alpha*math.Log(beta)
 	}
 	return ll
@@ -145,9 +146,9 @@ func (_ beta) Logp(alpha, beta float64, y float64) float64 {
 // Logp computes the log pdf of a vector of observations.
 func (_ beta) Logps(alpha, beta float64, y ...float64) float64 {
 	ll := 0.
-	for i := 0; i != len(y); i++ {
-		ll += (alpha-1)*math.Log(y[i]) +
-			(beta-1)*math.Log(1-y[i]) -
+    for _, yi := range y {
+		ll += (alpha-1)*math.Log(yi) +
+			(beta-1)*math.Log(1-yi) -
 			mathx.LogGamma(alpha) - mathx.LogGamma(beta) +
 			mathx.LogGamma(alpha+beta)
 	}
@@ -167,7 +168,7 @@ func (dist Dirichlet) Observe(x []float64) float64 {
 		return dist.Logp(alpha, x[dist.N:])
 	} else {
 		ys := make([][]float64, len(x[dist.N:])/dist.N)
-		for i := 0; i != len(ys); i++ {
+		for i := range ys {
 			ys[i] = x[dist.N*(i+1) : dist.N*(i+2)]
 		}
 		return dist.Logps(alpha, ys...)
@@ -177,7 +178,7 @@ func (dist Dirichlet) Observe(x []float64) float64 {
 // Logp computes logpdf of a single observation.
 func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
 	sum := 0.
-	for j := 0; j != len(y); j++ {
+	for j := range y {
 		sum += (alpha[j] - 1.) * math.Log(y[j])
 	}
 
@@ -188,10 +189,10 @@ func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
 func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 	ll := 0.
 	logZ := dist.logZ(alpha)
-	for i := 0; i != len(y); i++ {
+	for i := range y {
 		ll += logZ
 		sum := 0.
-		for j := 0; j != len(y[i]); j++ {
+		for j := range alpha {
 			sum += (alpha[j] - 1.) * math.Log(y[i][j])
 		}
 		ll += sum
@@ -199,16 +200,31 @@ func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 	return ll
 }
 
+// SoftMax transforms unconstrained parameters to a point on the
+// unit hyperplane suitable to be observed from Dirichlet.
+func (dist Dirichlet) SoftMax(x, p []float64) {
+    if len(x) != len(p) {
+        panic(fmt.Sprintf("lengths of x and p are different: "+
+            "got len(x)=%v, len(p)=%v", len(x), len(p)))
+    }
+    z := 0.
+    for i, y := range x {
+        q := math.Exp(y)
+        z += q
+        p[i] = q
+    }
+    for i := range p {
+        p[i] /= z
+    }
+}
+
 // logZ computes normalization term independent of observations.
 func (dist Dirichlet) logZ(alpha []float64) float64 {
 	sumAlpha := 0.
-	for j := 0; j != len(alpha); j++ {
-		sumAlpha += alpha[j]
-	}
-
 	sumLogGammaAlpha := 0.
-	for j := 0; j != len(alpha); j++ {
-		sumLogGammaAlpha += mathx.LogGamma(alpha[j])
+	for _, a := range alpha {
+		sumAlpha += a
+		sumLogGammaAlpha += mathx.LogGamma(a)
 	}
 
 	return mathx.LogGamma(sumAlpha) - sumLogGammaAlpha

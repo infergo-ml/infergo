@@ -18,7 +18,7 @@ func (m *constGrad) Observe(x []float64) float64 {
 	ad.Setup(x)
 	var ll float64
 	ad.Assignment(&ll, ad.Value(0.))
-	for i := 0; i != len(x); i++ {
+	for i := range x {
 		ad.Assignment(&ll,
 			ad.Arithmetic(ad.OpAdd, &ll,
 				ad.Arithmetic(ad.OpMul, &m.grad[i], &x[i])))
@@ -34,7 +34,7 @@ func TestModel(t *testing.T) {
 	}
 	m.Observe([]float64{3., 1.})
 	grad := ad.Gradient()
-	for i := 0; i != len(grad); i++ {
+	for i := range grad {
 		if grad[i] != m.grad[i] {
 			t.Fatalf("wrong gradient: got %v, want %v",
 				grad, m.grad)
@@ -54,7 +54,7 @@ func TestMomentum(t *testing.T) {
 	// Basic update
 	xNext := []float64{0.1, 0.2}
 	opt.Step(m, x)
-	for i := 0; i != len(x); i++ {
+	for i := range x {
 		if math.Abs(xNext[i]-x[i]) > 1E-6 {
 			t.Errorf("wrong first update: got x[%d] = %.6g, "+
 				"want %.6g", i, x[i], xNext[i])
@@ -63,7 +63,7 @@ func TestMomentum(t *testing.T) {
 	// Update with decay
 	xNext = []float64{0.15, 0.3}
 	opt.Step(m, x)
-	for i := 0; i != len(x); i++ {
+	for i := range x {
 		if math.Abs(xNext[i]-x[i]) > 1E-6 {
 			t.Errorf("wrong second update (decay): "+
 				"got x[%d] = %.6g, want %.6g",
@@ -74,7 +74,7 @@ func TestMomentum(t *testing.T) {
 	opt.Gamma = 0.25
 	xNext = []float64{0.1875, 0.375}
 	opt.Step(m, x)
-	for i := 0; i != len(x); i++ {
+	for i := range x {
 		if math.Abs(xNext[i]-x[i]) > 1E-6 {
 			t.Errorf("wrong third update (momentum): "+
 				"got x[%d] = %.6g, want %.6g",
@@ -93,7 +93,7 @@ func TestAdam(t *testing.T) {
 	x := []float64{0., 0.}
 	xNext := []float64{0.1, 0.1}
 	opt.Step(m, x)
-	for i := 0; i != len(x); i++ {
+	for i := range x {
 		if math.Abs(xNext[i]-x[i]) > 1E-6 {
 			t.Errorf("wrong first update: got x[%d] = %.6g, "+
 				"want %.6g", i, x[i], xNext[i])
@@ -101,7 +101,7 @@ func TestAdam(t *testing.T) {
 	}
 	opt.Step(m, x)
 	xNext = []float64{0.2, 0.2}
-	for i := 0; i != len(x); i++ {
+	for i := range x {
 		if math.Abs(xNext[i]-x[i]) > 1E-6 {
 			t.Errorf("wrong second update (decay): "+
 				"got x[%d] = %.6g, want %.6g",

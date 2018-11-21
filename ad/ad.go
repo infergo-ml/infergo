@@ -362,7 +362,7 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 							// a single specification with implicit
 							// type may have different types.  Split
 							// them into separate specifications.
-							for i := 0; i != len(spec.Names); i++ {
+							for i := range spec.Names {
 								t := m.info.TypeOf(spec.Names[i])
 								typedSpec := &ast.ValueSpec{
 									Names: spec.Names[i : i+1],
@@ -405,8 +405,8 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 					}
 
 					// Declaration.
-					for i := 0; i != len(n.Lhs); i++ {
-						ident := n.Lhs[i].(*ast.Ident)
+                    for _, l := range n.Lhs {
+						ident := l.(*ast.Ident)
 
 						obj := m.info.ObjectOf(ident)
 						if ident.Pos() != obj.Pos() {
@@ -415,7 +415,7 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 						}
 
 						// Add declaration.
-						t := m.info.TypeOf(n.Lhs[i])
+						t := m.info.TypeOf(l)
 						spec := &ast.ValueSpec{
 							Names: []*ast.Ident{ident},
 							Type:  m.typeAst(t, n.Pos()),

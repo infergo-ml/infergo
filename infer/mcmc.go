@@ -61,8 +61,8 @@ func (s *sampler) Stop() {
 // by HMC variants.
 func energy(l float64, r []float64) float64 {
 	k := 0.
-	for i := 0; i != len(r); i++ {
-		k += r[i] * r[i]
+    for _, ri := range r {
+		k += ri * ri
 	}
 	return l + 0.5*k
 }
@@ -75,7 +75,7 @@ func leapfrog(
 	x, r []float64,
 	eps float64,
 ) (l float64) {
-	for i := 0; i != len(x); i++ {
+	for i := range x {
 		r[i] += 0.5 * eps * (*gradp)[i]
 		x[i] += eps * r[i]
 	}
@@ -83,7 +83,7 @@ func leapfrog(
 	if math.IsNaN(l) {
 		panic("energy diverged")
 	}
-	for i := 0; i != len(x); i++ {
+	for i := range x {
 		r[i] += 0.5 * eps * (*gradp)[i]
 	}
 	return l
@@ -120,7 +120,7 @@ func (hmc *HMC) Sample(
 				break
 			}
 			// Sample the next r.
-			for i := 0; i != len(x); i++ {
+			for i := range r {
 				r[i] = rand.NormFloat64()
 			}
 
@@ -191,7 +191,7 @@ func (nuts *NUTS) Sample(
 				break
 			}
 			// Sample the next r.
-			for i := 0; i != len(x); i++ {
+			for i := range r {
 				r[i] = rand.NormFloat64()
 			}
 
@@ -338,8 +338,8 @@ func (nuts *NUTS) updateDepth(depth int) {
 func (nuts *NUTS) MeanDepth() float64 {
 	meanDepth := 0.
 	p := 1.
-	for i := 0; i != len(nuts.Depth); i++ {
-		alpha, beta := nuts.Depth[i][0], nuts.Depth[i][1]
+	for _, depth := range nuts.Depth {
+		alpha, beta := depth[0], depth[1]
 		p *= alpha / (alpha + beta)
 		meanDepth += p
 	}
@@ -351,7 +351,7 @@ func uTurn(xl, rl, xr, rr []float64) bool {
 	// Dot products of changes and moments to
 	// stop on U-turns.
 	dxrl, dxrr := 0., 0.
-	for i := 0; i != len(xl); i++ {
+	for i := range xl {
 		dxrl += (xr[i] - xl[i]) * rl[i]
 		dxrr += (xr[i] - xl[i]) * rr[i]
 	}

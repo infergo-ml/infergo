@@ -111,7 +111,7 @@ func push(n int) {
 // The places are then used to collect the partial
 // derivatives of the gradient.
 func register(x []float64) {
-	for i := 0; i != len(x); i++ {
+	for i := range x {
 		tape.places = append(tape.places, &x[i])
 	}
 }

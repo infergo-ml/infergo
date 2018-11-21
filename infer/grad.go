@@ -39,7 +39,7 @@ func (opt *Momentum) Step(
 		// u is initialized to zeros.
 		opt.u = make([]float64, len(x))
 	}
-	for i := 0; i != len(x); i++ {
+	for i := range x {
 		u := opt.Rate*grad[i] + opt.u[i]*opt.Gamma
 		x[i] += u
 		opt.u[i] = u
@@ -80,7 +80,7 @@ func (opt *Adam) Step(
 		opt.b2t = opt.Beta2
 	}
 
-	for i := 0; i != len(x); i++ {
+	for i := range x {
 		// Compute the new momenta.
 		u := opt.Beta1*opt.u[i] + (1.-opt.Beta1)*grad[i]
 		v := opt.Beta2*opt.v[i] + (1.-opt.Beta2)*grad[i]*grad[i]

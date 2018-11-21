@@ -43,13 +43,13 @@ func TestLeapfrog(t *testing.T) {
 	grad := ad.Gradient()
 	leapfrog(m, &grad, x, r, eps)
 	xNext, rNext := []float64{0.5625, -0.3125}, []float64{1.25, -0.25}
-	for i := 0; i != len(x); i++ {
+	for i := range x {
 		if math.Abs(x[i]-xNext[i]) > 1E-6 {
 			t.Errorf("wrong leapfrog step: got x[%d] = %.6g, "+
 				"want %.6g", i, x[i], xNext[i])
 		}
 	}
-	for i := 0; i != len(x); i++ {
+	for i := range x {
 		if math.Abs(r[i]-rNext[i]) > 1E-6 {
 			t.Errorf("wrong leapfrog step: got r[%d] = %.6g, "+
 				"want %.6g", i, r[i], rNext[i])
@@ -73,7 +73,7 @@ func (m *testModel) Observe(x []float64) float64 {
 	ad.Assignment(&ll, ad.Value(0.))
 	var stddev float64
 	ad.Assignment(&stddev, ad.Elemental(math.Exp, &x[1]))
-	for i := 0; i != len(m.data); i++ {
+	for i := range m.data {
 		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd,
 			&ll,
 			ad.Call(func(_ []float64) {
@@ -94,9 +94,9 @@ func init() {
 		-0.854, 1.067, -1.220, 0.818, -0.749,
 		0.805, 1.443, 1.069, 1.426, 0.308}
 	s, s2 := 0., 0.
-	for i := 0; i != len(testData); i++ {
-		s += testData[i]
-		s2 += testData[i] * testData[i]
+	for _, y := range testData {
+		s += y
+		s2 += y*y
 	}
 	n := float64(len(testData))
 	testMean = s / n
