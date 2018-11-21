@@ -52,7 +52,7 @@ func LogGamma(x float64) float64 {
 	tmp := x + 5.5
 	tmp -= (x + 0.5) * math.Log(tmp)
 	var ser = 1.000000000190015
-    for _, g := range gammaCof {
+	for _, g := range gammaCof {
 		x += 1
 		ser += g / x
 	}

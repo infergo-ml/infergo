@@ -61,7 +61,7 @@ func (s *sampler) Stop() {
 // by HMC variants.
 func energy(l float64, r []float64) float64 {
 	k := 0.
-    for _, ri := range r {
+	for _, ri := range r {
 		k += ri * ri
 	}
 	return l + 0.5*k

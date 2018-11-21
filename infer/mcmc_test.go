@@ -96,7 +96,7 @@ func init() {
 	s, s2 := 0., 0.
 	for _, y := range testData {
 		s += y
-		s2 += y*y
+		s2 += y * y
 	}
 	n := float64(len(testData))
 	testMean = s / n

@@ -5,7 +5,7 @@ package dist
 
 import (
 	"bitbucket.org/dtolpin/infergo/mathx"
-    "fmt"
+	"fmt"
 	"math"
 )
 
@@ -45,7 +45,7 @@ func (_ normal) Logps(mu, sigma float64, y ...float64) float64 {
 	vari := sigma * sigma
 	logv := math.Log(vari)
 	ll := 0.
-    for _, yi := range y {
+	for _, yi := range y {
 		d := yi - mu
 		ll += -0.5 * (d*d/vari + logv + log2pi)
 	}
@@ -79,7 +79,7 @@ func (_ expon) Logp(lambda float64, y float64) float64 {
 func (_ expon) Logps(lambda float64, y ...float64) float64 {
 	ll := 0.
 	logl := math.Log(lambda)
-    for _, yi := range y {
+	for _, yi := range y {
 		ll += logl - lambda*yi
 	}
 	return ll
@@ -146,7 +146,7 @@ func (_ beta) Logp(alpha, beta float64, y float64) float64 {
 // Logp computes the log pdf of a vector of observations.
 func (_ beta) Logps(alpha, beta float64, y ...float64) float64 {
 	ll := 0.
-    for _, yi := range y {
+	for _, yi := range y {
 		ll += (alpha-1)*math.Log(yi) +
 			(beta-1)*math.Log(1-yi) -
 			mathx.LogGamma(alpha) - mathx.LogGamma(beta) +
@@ -203,19 +203,19 @@ func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 // SoftMax transforms unconstrained parameters to a point on the
 // unit hyperplane suitable to be observed from Dirichlet.
 func (dist Dirichlet) SoftMax(x, p []float64) {
-    if len(x) != len(p) {
-        panic(fmt.Sprintf("lengths of x and p are different: "+
-            "got len(x)=%v, len(p)=%v", len(x), len(p)))
-    }
-    z := 0.
-    for i, y := range x {
-        q := math.Exp(y)
-        z += q
-        p[i] = q
-    }
-    for i := range p {
-        p[i] /= z
-    }
+	if len(x) != len(p) {
+		panic(fmt.Sprintf("lengths of x and p are different: "+
+			"got len(x)=%v, len(p)=%v", len(x), len(p)))
+	}
+	z := 0.
+	for i, y := range x {
+		q := math.Exp(y)
+		z += q
+		p[i] = q
+	}
+	for i := range p {
+		p[i] /= z
+	}
 }
 
 // logZ computes normalization term independent of observations.

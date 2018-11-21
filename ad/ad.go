@@ -405,7 +405,7 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 					}
 
 					// Declaration.
-                    for _, l := range n.Lhs {
+					for _, l := range n.Lhs {
 						ident := l.(*ast.Ident)
 
 						obj := m.info.ObjectOf(ident)
