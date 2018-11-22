@@ -40,7 +40,7 @@ func init() {
 		&DECAY, "decay", DECAY, "rate decay (Gradient, Momentum)")
 	flag.Float64Var(
 		&GAMMA, "gamma", GAMMA, "momentum factor (Momentum)")
-	flag.Float64Var( &STEP, "step", STEP, "NUTS step")
+	flag.Float64Var(&STEP, "step", STEP, "NUTS step")
 	flag.IntVar(&NBURN, "nburn", NBURN, "number of burn-in iterations")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	log.SetFlags(0)

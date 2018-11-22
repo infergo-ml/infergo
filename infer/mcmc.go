@@ -114,7 +114,7 @@ func (hmc *HMC) Sample(
 				log.Printf("ERROR: HMC: %v", r)
 			}
 		}()
-		backup := make([]float64, len(x))
+		x_ := make([]float64, len(x))
 		r := make([]float64, len(x))
 		for {
 			if hmc.stop {
@@ -126,7 +126,7 @@ func (hmc *HMC) Sample(
 			}
 
 			// Back up the current value of x.
-			copy(backup, x)
+			copy(x_, x)
 
 			l0, grad := m.Observe(x), ad.Gradient()
 			e0 := energy(l0, r) // initial energy
@@ -140,8 +140,8 @@ func (hmc *HMC) Sample(
 			if e-e0 >= math.Log(1.-rand.Float64()) {
 				hmc.NAcc++
 			} else {
-				// Rejected, restore x from backup.
-				copy(x, backup)
+				// Rejected, restore x.
+				copy(x, x_)
 				hmc.NRej++
 			}
 
@@ -156,9 +156,9 @@ func (hmc *HMC) Sample(
 // setDefaults sets the default value for auxiliary parameters
 // of HMC.
 func (hmc *HMC) setDefaults() {
-    if hmc.L == 0 {
-        hmc.L = 10
-    }
+	if hmc.L == 0 {
+		hmc.L = 10
+	}
 }
 
 // No U-Turn Sampler (https://arxiv.org/abs/1111.4246).
@@ -225,21 +225,22 @@ func (nuts *NUTS) Sample(
 					dir = 1.
 				}
 
-				xl, rl, xr, rr, xSub, nelemSub, stopSub := 
+				xl, rl, xr, rr, x_, nelem_, stop :=
 					nuts.buildLeftOrRightTree(m, &grad,
 						xl, rl, xr, rr, logu, dir, depth)
 
 				// Accept or reject
-				if nelemSub/nelem > rand.Float64() {
+				if !stop && nelem_/nelem > rand.Float64() {
 					accepted = true
-					copy(x, xSub)
+					x = x_
+					copy(x, x_)
 				}
 
-				if stopSub || uTurn(xl, rl, xr, rr) {
+				if stop || uTurn(xl, rl, xr, rr) {
 					break
 				}
 
-				nelem += nelemSub
+				nelem += nelem_
 				depth++
 			}
 
@@ -261,37 +262,32 @@ func (nuts *NUTS) Sample(
 
 func (nuts *NUTS) buildLeftOrRightTree(
 	m model.Model,
-	gradp *[]float64, 
-	xl_, rl_, xr_, rr_ []float64,
+	gradp *[]float64,
+	xl, rl, xr, rr []float64,
 	logu float64,
 	dir float64,
 	depth int,
 ) (
-	xl, rl, xr, rr, x []float64,
+	_, _, _, _, x []float64,
 	nelem float64,
 	stop bool,
 ) {
-	xl, rl, xr, rr = xl_, rl_, xr_, rr_
-	var (
-		nelemSub float64
-		stopSub  bool
-	)
-	xSub := make([]float64, len(xl))
-	rSub := make([]float64, len(rl))
-	if dir == -1 {
-		copy(xSub, xl)
-		copy(rSub, rl)
-		xl, rl, _, _, x, nelemSub, stopSub =
-			nuts.buildTree(m, gradp,
-				xSub, rSub, logu, dir, depth)
+	// We are building a subtree and need memory for each new
+	// node.
+	x_ := make([]float64, len(xl))
+	r_ := make([]float64, len(rl))
+	if dir == -1. {
+		copy(x_, xl)
+		copy(r_, rl)
+		xl, rl, _, _, x, nelem, stop = nuts.buildTree(m, gradp,
+			x_, r_, logu, dir, depth)
 	} else {
-		copy(xSub, xr)
-		copy(rSub, rr)
-		_, _, xr, rr, x, nelemSub, stopSub =
-			nuts.buildTree(m, gradp,
-				xSub, rSub, logu, dir, depth)
+		copy(x_, xr)
+		copy(r_, rr)
+		_, _, xr, rr, x, nelem, stop = nuts.buildTree(m, gradp,
+			x_, r_, logu, dir, depth)
 	}
-	return xl, rl, xr, rr, x, nelemSub, stopSub
+	return xl, rl, xr, rr, x, nelem, stop
 }
 
 func (nuts *NUTS) buildTree(
@@ -302,11 +298,12 @@ func (nuts *NUTS) buildTree(
 	dir float64,
 	depth int,
 ) (
-	xl, rl, xr, rr, x_ []float64,
+	xl, rl, xr, rr, _ []float64,
 	nelem float64,
 	stop bool,
 ) {
 	if depth == 0 {
+		// Base case: single leapfrog
 		l := leapfrog(m, gradp, x, r, dir*nuts.Eps)
 		if energy(l, r) >= logu {
 			nelem = 1.
@@ -317,21 +314,27 @@ func (nuts *NUTS) buildTree(
 		return x, r, x, r, x, nelem, stop
 	} else {
 		depth--
+
 		xl, rl, xr, rr, x, nelem, stop =
 			nuts.buildTree(m, gradp, x, r, logu, dir, depth)
-		if !stop {
-			xl, rl, xr, rr, xSub, nelemSub, stopSub := 
-				nuts.buildLeftOrRightTree(m, gradp,
-					xl, rl, xr, rr, logu, dir, depth)
-
-			nelem += nelemSub
-			stop = stopSub || uTurn(xl, rl, xr, rr)
-
-			// Select uniformly from nodes.
-			if nelemSub/nelem > rand.Float64() {
-				copy(x, xSub)
-			}
+		if stop {
+			return xl, rl, xr, rr, x, nelem, stop
 		}
+
+		xl, rl, xr, rr, x_, nelem_, stop :=
+			nuts.buildLeftOrRightTree(m, gradp,
+				xl, rl, xr, rr, logu, dir, depth)
+		nelem += nelem_
+
+		// Select uniformly from nodes.
+		if nelem_/nelem > rand.Float64() {
+			x = x_
+		}
+
+		if uTurn(xl, rl, xr, rr) {
+			stop = true
+		}
+
 		return xl, rl, xr, rr, x, nelem, stop
 	}
 }
