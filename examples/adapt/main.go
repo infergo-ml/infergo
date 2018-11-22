@@ -132,7 +132,7 @@ func main() {
 		}
 		for j := 0; j != m.NComp; j++ {
 			mean[j] += x[2*j]
-			stddev[j] += math.Exp(0.5 * x[2*j+1])
+			stddev[j] += math.Exp(x[2*j+1])
 		}
 		n++
 	}

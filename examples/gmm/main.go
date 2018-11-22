@@ -17,13 +17,13 @@ import (
 // Command line arguments
 
 var (
-	NCOMP int     = 2
-	RATE  float64 = 0.1
-	DECAY float64 = 0.98
-	GAMMA float64 = 0.9
-	STEP  float64 = 0.5
-	NBURN int     = 0
-	NITER int     = 100
+	NCOMP = 2
+	RATE  = 0.1
+	DECAY = 0.98
+	GAMMA = 0.9
+	STEP  = 0.5
+	NBURN = 0
+	NITER = 100
 )
 
 func init() {
@@ -40,8 +40,7 @@ func init() {
 		&DECAY, "decay", DECAY, "rate decay (Gradient, Momentum)")
 	flag.Float64Var(
 		&GAMMA, "gamma", GAMMA, "momentum factor (Momentum)")
-	flag.Float64Var(
-		&STEP, "step", STEP, "NUTS step (NUTS)")
+	flag.Float64Var( &STEP, "step", STEP, "NUTS step")
 	flag.IntVar(&NBURN, "nburn", NBURN, "number of burn-in iterations")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	log.SetFlags(0)
@@ -120,7 +119,7 @@ func main() {
 	log.Printf("MLE components:\n")
 	for j := 0; j != m.NComp; j++ {
 		log.Printf("\t%d: mean=%.4g, stddev=%.4g\n",
-			j, x[2*j], math.Exp(0.5*x[2*j+1]))
+			j, x[2*j], math.Exp(x[2*j+1]))
 	}
 
 	// Now let's infer the posterior with NUTS.
@@ -147,7 +146,7 @@ func main() {
 		}
 		for j := 0; j != m.NComp; j++ {
 			mean[j] += x[2*j]
-			stddev[j] += math.Exp(0.5 * x[2*j+1])
+			stddev[j] += math.Exp(x[2*j+1])
 		}
 		n++
 	}
@@ -159,7 +158,7 @@ func main() {
 	log.Printf("Mean components:\n")
 	for j := 0; j != m.NComp; j++ {
 		log.Printf("\t%d: mean=%.4g, stddev=%.4g\n",
-			j, x[2*j], math.Exp(0.5*x[2*j+1]))
+			j, x[2*j], math.Exp(x[2*j+1]))
 	}
 
 	log.Printf(`NUTS:
