@@ -18,7 +18,7 @@ import (
 
 var (
 	NCOMP = 2
-	STEP  = 0.1
+	STEP  = 0.5
 	NITER = 100
 	NBURN = 0
 	NADPT = 10

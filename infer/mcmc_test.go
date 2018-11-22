@@ -155,36 +155,31 @@ func inferMeanStddev(
 
 func TestUTurn(t *testing.T) {
 	for _, c := range []struct {
-		xl, rl, xr, rr []float64
-		uturn          bool
+		xl, xr, r []float64
+		uturn     bool
 	}{
 		{
-			[]float64{-1., 0}, []float64{0., 1.},
-			[]float64{1., 0.}, []float64{1., 0.},
+			[]float64{-1., 0}, []float64{1., 0.},
+			[]float64{1., 0.},
 			false,
 		},
 		{
-			[]float64{-1., 0}, []float64{0., 1.},
-			[]float64{-1., 0.}, []float64{1., 0.},
+			[]float64{-1., 0}, []float64{-1., 0.},
+			[]float64{0., 1.},
 			false,
 		},
 		{
 			[]float64{1., 0}, []float64{0., 1.},
-			[]float64{0., 1.}, []float64{1., 0.},
+			[]float64{1., 0.},
 			true,
-		},
-		{
-			[]float64{1., 0}, []float64{0., 1.},
-			[]float64{0., 1.}, []float64{-1., 0.},
-			false,
 		},
 	} {
 		if c.uturn {
-			if !uTurn(c.xl, c.rl, c.xr, c.rr) {
+			if !uTurn(c.xl, c.xr, c.r) {
 				t.Errorf("missed uturn: %+v", c)
 			}
 		} else {
-			if uTurn(c.xl, c.rl, c.xr, c.rr) {
+			if uTurn(c.xl, c.xr, c.r) {
 				t.Errorf("false uturn: %+v", c)
 			}
 		}
@@ -194,13 +189,13 @@ func TestUTurn(t *testing.T) {
 // Basic convergence of MCMC samplers. Empirical mean and stddev
 // should be around the inferred mean and stddev.
 func TestSamplers(t *testing.T) {
-	nattempts := 100
+	nattempts := 10
 	niter := 100
-	prec := 1E-2
+	prec := 5E-2
 	if testing.Short() {
 		// just kicking tyres
 		niter = 10
-		prec = 1E-1
+		prec = 2E-1
 	}
 	for _, c := range []struct {
 		sampler func() MCMC
@@ -208,15 +203,15 @@ func TestSamplers(t *testing.T) {
 		{
 			func() MCMC {
 				return &HMC{
-					L:   10,
-					Eps: 0.05,
+					L:   5,
+					Eps: 0.1,
 				}
 			},
 		},
 		{
 			func() MCMC {
 				return &NUTS{
-					Eps: 0.05,
+					Eps: 0.1,
 				}
 			},
 		},

@@ -114,7 +114,7 @@ func (hmc *HMC) Sample(
 				log.Printf("ERROR: HMC: %v", r)
 			}
 		}()
-		backup := make([]float64, len(x))
+		x_ := make([]float64, len(x))
 		r := make([]float64, len(x))
 		for {
 			if hmc.stop {
@@ -126,7 +126,7 @@ func (hmc *HMC) Sample(
 			}
 
 			// Back up the current value of x.
-			copy(backup, x)
+			copy(x_, x)
 
 			l0, grad := m.Observe(x), ad.Gradient()
 			e0 := energy(l0, r) // initial energy
@@ -140,8 +140,8 @@ func (hmc *HMC) Sample(
 			if e-e0 >= math.Log(1.-rand.Float64()) {
 				hmc.NAcc++
 			} else {
-				// Rejected, restore x from backup.
-				copy(x, backup)
+				// Rejected, restore x.
+				copy(x, x_)
 				hmc.NRej++
 			}
 
@@ -193,7 +193,6 @@ func (nuts *NUTS) Sample(
 			}
 		}()
 
-		backup := make([]float64, len(x))
 		r := make([]float64, len(x))
 		for {
 			if nuts.stop {
@@ -204,10 +203,7 @@ func (nuts *NUTS) Sample(
 				r[i] = rand.NormFloat64()
 			}
 
-			// Back up the current value of x.
-			copy(backup, x)
-
-			// Compute the energy
+			// Compute the energy.
 			l, grad := m.Observe(x), ad.Gradient()
 			e := energy(l, r)
 
@@ -219,36 +215,36 @@ func (nuts *NUTS) Sample(
 			// Integrate forward
 			accepted := false
 			for {
-				// Build left or right subtree
+				// Build left or right subtree.
+
+				// Choose direction.
+				var dir float64
+				if rand.Float64() < 0.5 {
+					dir = -1.
+				} else {
+					dir = 1.
+				}
+
 				var (
-					nelemSub float64
-					stop     bool
+					x_     []float64
+					nelem_ float64
+					stop   bool
 				)
-				if rand.Float64() < 0.5 { // choose direction
-					dir := -1.
-					xl, rl, _, _, x, nelemSub, stop =
-						nuts.buildTree(m, &grad,
-							x, r, logu, dir, depth)
-				} else {
-					dir := 1.
-					_, _, xr, rr, x, nelemSub, stop =
-						nuts.buildTree(m, &grad,
-							x, r, logu, dir, depth)
-				}
-
-				// Accept or reject
-				if nelemSub/nelem > rand.Float64() {
-					accepted = true
-				} else {
-					// Rejected, restore x from backup.
-					copy(x, backup)
-				}
-
-				if stop || uTurn(xl, rl, xr, rr) {
+				xl, rl, xr, rr, x_, nelem_, stop =
+					nuts.buildLeftOrRightTree(m, &grad,
+						xl, rl, xr, rr, logu, dir, depth)
+				if stop {
 					break
 				}
 
-				nelem += nelemSub
+				// Accept or reject
+				if nelem_/nelem > rand.Float64() {
+					accepted = true
+					x = x_
+					copy(x, x_)
+				}
+
+				nelem += nelem_
 				depth++
 			}
 
@@ -268,6 +264,41 @@ func (nuts *NUTS) Sample(
 	}()
 }
 
+func (nuts *NUTS) buildLeftOrRightTree(
+	m model.Model,
+	gradp *[]float64,
+	xl, rl, xr, rr []float64,
+	logu float64,
+	dir float64,
+	depth int,
+) (
+	_, _, _, _, x []float64,
+	nelem float64,
+	stop bool,
+) {
+	// We are building a subtree and need memory for each new
+	// node.
+	x_ := make([]float64, len(xl))
+	r_ := make([]float64, len(rl))
+	if dir == -1. {
+		copy(x_, xl)
+		copy(r_, rl)
+		xl, rl, _, _, x, nelem, stop = nuts.buildTree(m, gradp,
+			x_, r_, logu, dir, depth)
+	} else {
+		copy(x_, xr)
+		copy(r_, rr)
+		_, _, xr, rr, x, nelem, stop = nuts.buildTree(m, gradp,
+			x_, r_, logu, dir, depth)
+	}
+
+	if uTurn(xl, xr, rl) || uTurn(xl, xr, rr) {
+		stop = true
+	}
+
+	return xl, rl, xr, rr, x, nelem, stop
+}
+
 func (nuts *NUTS) buildTree(
 	m model.Model,
 	gradp *[]float64,
@@ -276,11 +307,12 @@ func (nuts *NUTS) buildTree(
 	dir float64,
 	depth int,
 ) (
-	xl, rl, xr, rr, x_ []float64,
+	xl, rl, xr, rr, _ []float64,
 	nelem float64,
 	stop bool,
 ) {
 	if depth == 0 {
+		// Base case: single leapfrog
 		l := leapfrog(m, gradp, x, r, dir*nuts.Eps)
 		if energy(l, r) >= logu {
 			nelem = 1.
@@ -290,35 +322,24 @@ func (nuts *NUTS) buildTree(
 		}
 		return x, r, x, r, x, nelem, stop
 	} else {
-		xl, rl, xr, rr, x, nelem, stop =
-			nuts.buildTree(m, gradp, x, r, logu, dir, depth-1)
-		if !stop {
-			// We build a subtree and need a separate memory
-			// for x and r.
-			xSub := make([]float64, len(x))
-			rSub := make([]float64, len(r))
-			var nelemSub float64
-			if dir == -1. {
-				copy(xSub, xl)
-				copy(rSub, rl)
-				xl, rl, _, _, xSub, nelemSub, stop =
-					nuts.buildTree(m, gradp,
-						xSub, rSub, logu, dir, depth-1)
-			} else {
-				copy(xSub, xr)
-				copy(rSub, rr)
-				_, _, xr, rr, xSub, nelemSub, stop =
-					nuts.buildTree(m, gradp,
-						xSub, rSub, logu, dir, depth-1)
-			}
-			nelem += nelemSub
-			stop = stop || uTurn(xl, rl, xr, rr)
+		depth--
 
-			// Select uniformly from nodes.
-			if nelemSub/nelem > rand.Float64() {
-				x = xSub
-			}
+		xl, rl, xr, rr, x, nelem, stop =
+			nuts.buildTree(m, gradp, x, r, logu, dir, depth)
+		if stop {
+			return xl, rl, xr, rr, x, nelem, stop
 		}
+
+		xl, rl, xr, rr, x_, nelem_, stop :=
+			nuts.buildLeftOrRightTree(m, gradp,
+				xl, rl, xr, rr, logu, dir, depth)
+		nelem += nelem_
+
+		// Select uniformly from nodes.
+		if nelem_/nelem > rand.Float64() {
+			x = x_
+		}
+
 		return xl, rl, xr, rr, x, nelem, stop
 	}
 }
@@ -356,13 +377,12 @@ func (nuts *NUTS) MeanDepth() float64 {
 }
 
 // uTurn returns true iff there is a u-turn.
-func uTurn(xl, rl, xr, rr []float64) bool {
-	// Dot products of changes and moments to
-	// stop on U-turns.
-	dxrl, dxrr := 0., 0.
+func uTurn(xl, xr, r []float64) bool {
+	// Dot product of changes and moment to
+	// stop on U-turn.
+	dxr := 0.
 	for i := range xl {
-		dxrl += (xr[i] - xl[i]) * rl[i]
-		dxrr += (xr[i] - xl[i]) * rr[i]
+		dxr += (xr[i] - xl[i]) * r[i]
 	}
-	return dxrl < 0 || dxrr < 0
+	return dxr < 0
 }
