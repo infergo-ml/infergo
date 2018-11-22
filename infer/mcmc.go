@@ -156,9 +156,9 @@ func (hmc *HMC) Sample(
 // setDefaults sets the default value for auxiliary parameters
 // of HMC.
 func (hmc *HMC) setDefaults() {
-    if hmc.L == 0 {
-        hmc.L = 10
-    }
+	if hmc.L == 0 {
+		hmc.L = 10
+	}
 }
 
 // No U-Turn Sampler (https://arxiv.org/abs/1111.4246).
