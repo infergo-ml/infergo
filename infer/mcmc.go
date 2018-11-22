@@ -225,18 +225,23 @@ func (nuts *NUTS) Sample(
 					dir = 1.
 				}
 
-				xl, rl, xr, rr, x_, nelem_, stop :=
+				var (
+					x_     []float64
+					nelem_ float64
+					stop   bool
+				)
+				xl, rl, xr, rr, x_, nelem_, stop =
 					nuts.buildLeftOrRightTree(m, &grad,
 						xl, rl, xr, rr, logu, dir, depth)
 
 				// Accept or reject
-				if !stop && nelem_/nelem > rand.Float64() {
+				if nelem_/nelem > rand.Float64() {
 					accepted = true
 					x = x_
 					copy(x, x_)
 				}
 
-				if stop || uTurn(xl, rl, xr, rr) {
+				if stop {
 					break
 				}
 
@@ -287,6 +292,11 @@ func (nuts *NUTS) buildLeftOrRightTree(
 		_, _, xr, rr, x, nelem, stop = nuts.buildTree(m, gradp,
 			x_, r_, logu, dir, depth)
 	}
+
+	if uTurn(xl, xr, rl) || uTurn(xl, xr, rr) {
+		stop = true
+	}
+
 	return xl, rl, xr, rr, x, nelem, stop
 }
 
@@ -331,10 +341,6 @@ func (nuts *NUTS) buildTree(
 			x = x_
 		}
 
-		if uTurn(xl, rl, xr, rr) {
-			stop = true
-		}
-
 		return xl, rl, xr, rr, x, nelem, stop
 	}
 }
@@ -372,13 +378,12 @@ func (nuts *NUTS) MeanDepth() float64 {
 }
 
 // uTurn returns true iff there is a u-turn.
-func uTurn(xl, rl, xr, rr []float64) bool {
-	// Dot products of changes and moments to
-	// stop on U-turns.
-	dxrl, dxrr := 0., 0.
+func uTurn(xl, xr, r []float64) bool {
+	// Dot product of changes and moment to
+	// stop on U-turn.
+	dxr := 0.
 	for i := range xl {
-		dxrl += (xr[i] - xl[i]) * rl[i]
-		dxrr += (xr[i] - xl[i]) * rr[i]
+		dxr += (xr[i] - xl[i]) * r[i]
 	}
-	return dxrl < 0 || dxrr < 0
+	return dxr < 0
 }
