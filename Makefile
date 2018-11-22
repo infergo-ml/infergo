@@ -34,6 +34,8 @@ install: all test
 push:
 	git push
 	git push ssh://git@github.com/dtolpin/infergo
+	git push --tags
+	git push --tags ssh://git@github.com/dtolpin/infergo
 
 clean-examples:
 	for x in $(EXAMPLES); do (cd examples/$$x && make clean); done
