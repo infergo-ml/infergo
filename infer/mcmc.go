@@ -103,6 +103,7 @@ func (hmc *HMC) Sample(
 	samples chan []float64,
 ) {
 	hmc.samples = samples // Stop needs access to samples
+	hmc.setDefaults()
 	go func() {
 		// Close samples on exit
 		defer close(samples)
