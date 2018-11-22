@@ -10,8 +10,10 @@ import (
 	"io"
 	"log"
 	"math"
+	"math/rand"
 	"os"
 	"strconv"
+	"time"
 )
 
 // Command line arguments
@@ -31,6 +33,7 @@ var (
 )
 
 func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
 	flag.Usage = func() {
 		fmt.Printf(`Inferring best bandwidth. Usage:
 		goppv [OPTIONS]` + "\n")

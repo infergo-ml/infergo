@@ -233,16 +233,15 @@ func (nuts *NUTS) Sample(
 				xl, rl, xr, rr, x_, nelem_, stop =
 					nuts.buildLeftOrRightTree(m, &grad,
 						xl, rl, xr, rr, logu, dir, depth)
+				if stop {
+					break
+				}
 
 				// Accept or reject
 				if nelem_/nelem > rand.Float64() {
 					accepted = true
 					x = x_
 					copy(x, x_)
-				}
-
-				if stop {
-					break
 				}
 
 				nelem += nelem_
