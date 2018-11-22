@@ -28,8 +28,8 @@ func init() {
 			`Generates a differentiated model. Usage:
     %s [flags] [path/to/model/directory/]
 If the path is omitted, the model in the current directory `+
-				`is differentiated. The differentiated model is placed into `+
-				`the 'ad/' subdirectory. Flags:
+				`is differentiated. The differentiated model `+
+				`is placed into the 'ad/' subdirectory. Flags:
 `,
 			command)
 		flag.PrintDefaults()
