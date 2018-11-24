@@ -1,3 +1,5 @@
+// Package mathx provides auxiliary elemental functions,
+// ubiquitously useful but not found in package math.
 package mathx
 
 import (
