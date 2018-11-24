@@ -23,6 +23,7 @@ var (
 	NBURN = 0
 	NADPT = 10
 	DEPTH = 3.
+	MAXDEPTH = 0
 	RATE  = 0.01
 )
 
@@ -37,8 +38,11 @@ func init() {
 	flag.Float64Var(&STEP, "step", STEP, "NUTS step")
 	flag.IntVar(&NITER, "niter", NITER, "number of iterations")
 	flag.IntVar(&NBURN, "nburn", NBURN, "number of burned iterations")
-	flag.IntVar(&NADPT, "nadpt", NADPT, "number of steps per adaptation")
+	flag.IntVar(&NADPT, "nadpt", NADPT,
+		"number of steps per adaptation")
 	flag.Float64Var(&DEPTH, "depth", DEPTH, "target NUTS tree depth")
+	flag.IntVar(&MAXDEPTH, "maxdepth", MAXDEPTH,
+		"maximum NUTS tree depth")
 	flag.Float64Var(&RATE, "rate", RATE, "adaptation rate")
 	log.SetFlags(0)
 }
@@ -109,6 +113,7 @@ func main() {
 	// Let's infer the posterior with NUTS.
 	nuts := &infer.NUTS{
 		Eps: STEP / math.Sqrt(float64(len(m.Data))),
+		MaxDepth: MAXDEPTH,
 	}
 	samples := make(chan []float64)
 	nuts.Sample(m, x, samples)

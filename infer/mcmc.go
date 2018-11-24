@@ -173,6 +173,7 @@ type NUTS struct {
 	// distributions. If the depth is greater than the element's
 	// index i, Depth[i][0] is incremented; for index depth,
 	// Depth[depth][1] is incremented.
+	MaxDepth int // maximum depth, if 0, the depth is unlimited
 }
 
 func (nuts *NUTS) Sample(
@@ -246,6 +247,9 @@ func (nuts *NUTS) Sample(
 
 				nelem += nelem_
 				depth++
+				if depth == nuts.MaxDepth {
+					break
+				}
 			}
 
 			// Collect statistics
