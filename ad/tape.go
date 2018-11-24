@@ -90,8 +90,8 @@ func Setup(x []float64) {
 	register(x)
 }
 
-// push pushes a counter frame to the counter stack.
-// n is the number of function parameters.
+// push pushes a counter frame to the counter stack. n is the
+// number of function parameters.
 func push(n int) {
 	c := counters{
 		n: n,
@@ -106,18 +106,17 @@ func push(n int) {
 	tape.places = append(tape.places, Value(0.))
 }
 
-// register stores locations of function parameters
-// at the beginning of the current frame's places.
-// The places are then used to collect the partial
-// derivatives of the gradient.
+// register stores locations of function parameters at the
+// beginning of the current frame's places.  The places are then
+// used to collect the partial derivatives of the gradient.
 func register(x []float64) {
 	for i := range x {
 		tape.places = append(tape.places, &x[i])
 	}
 }
 
-// Constant adds value v to the memory and returns
-// the location of the value.
+// Value adds value v to the memory and returns the location of
+// the value.
 func Value(v float64) *float64 {
 	tape.values = append(tape.values, v)
 	return &tape.values[len(tape.values)-1]
@@ -131,8 +130,8 @@ func Return(px *float64) float64 {
 	return *px
 }
 
-// Arithmetic encodes an arithmetic operation and returns
-// the location of the result.
+// Arithmetic encodes an arithmetic operation and returns the
+// location of the result.
 func Arithmetic(op int, px ...*float64) *float64 {
 	p := Value(0.)
 

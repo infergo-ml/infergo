@@ -13,20 +13,20 @@ type gradient func(value float64, params ...float64) []float64
 
 var elementals map[uintptr]gradient
 
-// Function fkey computes map key for a function.
+// fkey computes map key for a function.
 func fkey(f interface{}) uintptr {
 	return reflect.ValueOf(f).Pointer()
 }
 
-// Function RegisterElemental registers the gradient
-// for an elemental function.
+// RegisterElemental registers the gradient for an elemental
+// function.
 func RegisterElemental(f interface{}, g gradient) {
 	elementals[fkey(f)] = g
 }
 
-// Function Elementalgradient returns the gradient for a function.
-// If the function is not registered as elemental, the second returned
-// value is false.
+// Elementalgradient returns the gradient for a function.  If
+// the function is not registered as elemental, the second
+// returned value is false.
 func ElementalGradient(f interface{}) (gradient, bool) {
 	g, ok := elementals[fkey(f)]
 	return g, ok
