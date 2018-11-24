@@ -10,7 +10,8 @@ import (
 // There is one global tape.
 var tape oneGlobalTape
 
-// A tape is a list of records and the memory
+// oneGlobalTape specifies the tape as a list of records and the
+// memory.
 type oneGlobalTape struct {
 	records    []record    // recorded instructions
 	places     []*float64  // variable places
@@ -34,8 +35,8 @@ func init() {
 		record{typ: typDummy})
 }
 
-// A record specifies the record type and indexes the tape
-// memory to specify the record arguments. At the cost of one
+// record specifies the record type and indexes the tape memory
+// to specify the record arguments. At the cost of one
 // redirection, the number of memory allocations is logarithmic
 // in the number of instructions, and a record has a fixed size.
 type record struct {
@@ -45,17 +46,16 @@ type record struct {
 	//   for assignments, op is the number of values
 }
 
-// The structure elemental stores information required
-// to compute the gradient.
+// elemental stores information required to compute the
+// gradient.
 type elemental struct {
 	n int      // number of arguments
 	g gradient // gradient
 }
 
-// The counters structure holds counters for the tape
-// components. Counters are pushed onto stack for repeated
-// calls to automatic differentiation (e.e. for nested
-// inference).
+// counters holds counters for the tape components. Counters are
+// pushed onto stack for repeated calls to automatic
+// differentiation (e.e. for nested inference).
 type counters struct {
 	n, // independents
 	r, // records
@@ -64,7 +64,7 @@ type counters struct {
 	e int // elementals
 }
 
-// Record types
+// Record types.
 const (
 	typDummy      = iota // placeholder
 	typAssignment        // assignment statement
@@ -73,7 +73,7 @@ const (
 	typCall              // last on tape before a method call
 )
 
-// arithmetic operations
+// Arithmetic operation codes.
 const (
 	OpNeg = iota
 	OpAdd
