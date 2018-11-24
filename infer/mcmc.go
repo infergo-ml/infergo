@@ -64,7 +64,7 @@ func energy(l float64, r []float64) float64 {
 	for _, ri := range r {
 		k += ri * ri
 	}
-	return l + 0.5*k
+	return l - 0.5*k
 }
 
 // leapfrog advances x and r a single 'leapfrog'; used

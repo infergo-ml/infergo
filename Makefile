@@ -8,10 +8,7 @@ EXAMPLES=hello gmm adapt schools ppv
 examples: build $(EXAMPLES)
 
 test: dist/ad/dist.go
-	for package in $(TESTPACKAGES); do go test -short ./$$package; done
-
-fulltest: dist/ad/dist.go
-	for package in $(TESTPACKAGES); do go test -count=1 ./$$package; done
+	for package in $(TESTPACKAGES); do go test ./$$package; done
 
 dist/ad/dist.go: dist/dist.go
 	go build ./cmd/deriv

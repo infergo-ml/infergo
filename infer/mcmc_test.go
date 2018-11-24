@@ -24,7 +24,7 @@ func TestEnergy(t *testing.T) {
 		e float64
 	}{
 		{1., []float64{0.}, 1},
-		{1., []float64{1., 3.}, 6},
+		{1., []float64{1., 3.}, -4},
 	} {
 		if e := energy(c.l, c.r); math.Abs(e-c.e) > 1E-6 {
 			t.Errorf("incorrect energy for l=%v, r=%v: "+
@@ -191,12 +191,7 @@ func TestUTurn(t *testing.T) {
 func TestSamplers(t *testing.T) {
 	nattempts := 10
 	niter := 100
-	prec := 5E-2
-	if testing.Short() {
-		// just kicking tyres
-		niter = 10
-		prec = 2E-1
-	}
+	prec := 1E-1
 	for _, c := range []struct {
 		sampler func() MCMC
 	}{

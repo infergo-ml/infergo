@@ -158,7 +158,7 @@ func main() {
 	log.Printf("Mean components:\n")
 	for j := 0; j != m.NComp; j++ {
 		log.Printf("\t%d: mean=%.4g, stddev=%.4g\n",
-			j, x[2*j], math.Exp(x[2*j+1]))
+			j, mean[j], stddev[j])
 	}
 
 	log.Printf(`NUTS:
