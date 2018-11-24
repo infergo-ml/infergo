@@ -292,7 +292,7 @@ func (nuts *NUTS) buildLeftOrRightTree(
 			x_, r_, logu, dir, depth)
 	}
 
-	if uTurn(xl, xr, rl) || uTurn(xl, xr, rr) {
+	if uTurn(xl, rl, xr, rr) {
 		stop = true
 	}
 
@@ -377,12 +377,13 @@ func (nuts *NUTS) MeanDepth() float64 {
 }
 
 // uTurn returns true iff there is a u-turn.
-func uTurn(xl, xr, r []float64) bool {
-	// Dot product of changes and moment to
-	// stop on U-turn.
-	dxr := 0.
+func uTurn(xl, rl, xr, rr []float64) bool {
+	// Dot products of changes and moment to stop on U-turn.
+	l, r := 0., 0.
 	for i := range xl {
-		dxr += (xr[i] - xl[i]) * r[i]
+		d := xr[i] - xl[i]
+		l += d * rl[i]
+		r += d * rr[i]
 	}
-	return dxr < 0
+	return l < 0 || r < 0
 }
