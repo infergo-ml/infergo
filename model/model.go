@@ -1,4 +1,5 @@
-// Probabilistic model
+// Package model specifies the interface of a probabilistc
+// model.
 package model
 
 // A probabilistic model must implement interface Model. Method

@@ -380,9 +380,9 @@ func (nuts *NUTS) MeanDepth() float64 {
 func uTurn(xl, xr, r []float64) bool {
 	// Dot product of changes and moment to
 	// stop on U-turn.
-	dxr := 0.
+	dot := 0.
 	for i := range xl {
-		dxr += (xr[i] - xl[i]) * r[i]
+		dot += (xr[i] - xl[i]) * r[i]
 	}
-	return dxr < 0
+	return dot < 0
 }

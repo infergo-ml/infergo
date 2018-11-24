@@ -1,3 +1,5 @@
+// Package mathx provides auxiliary elemental functions,
+// ubiquitously useful but not found in package math.
 package mathx
 
 import (
@@ -45,8 +47,8 @@ func init() {
 // WebPPL, https://github.com/probmods/webppl.
 // Copyright © 2014 WebPPL contributors
 
-// LogGamma function is used in the log-density of the
-// Gamma and Beta distributions.
+// LogGamma is used in the log-density of the Gamma and Beta
+// distributions.
 func LogGamma(x float64) float64 {
 	x -= 1
 	tmp := x + 5.5

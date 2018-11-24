@@ -1,4 +1,4 @@
-// Package dist contains differentiatable distribution models.
+// Package dist provides differentiatable distribution models.
 // The package is automatically differentiated by deriv during
 // build.
 package dist

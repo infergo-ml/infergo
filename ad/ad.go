@@ -1,6 +1,4 @@
-// Automatic differentiation of a model
-package ad
-
+// Package ad implements automatic differentiation of a model.
 // A model is defined in it's own package. The model must
 // implement interface model.Model. In the model's source code:
 //   1. Method Observe of interface model.Model is
@@ -37,6 +35,7 @@ package ad
 //
 // The differentiated model is put into subpackage "ad" of the
 // model's package, with the same name as the original package.
+package ad
 
 import (
 	"bufio"
