@@ -155,31 +155,31 @@ func inferMeanStddev(
 
 func TestUTurn(t *testing.T) {
 	for _, c := range []struct {
-		xl, rl, xr, rr []float64
-		uturn          bool
+		xl, xr, r []float64
+		uturn     bool
 	}{
 		{
-			[]float64{-1., 0.}, []float64{1., 0.},
-			[]float64{1., 0.}, []float64{0., 1.},
+			[]float64{-1., 0}, []float64{1., 0.},
+			[]float64{1., 0.},
 			false,
 		},
 		{
-			[]float64{0., 1.}, []float64{-1., 0.},
-			[]float64{-1., 0.}, []float64{0., -1.},
+			[]float64{-1., 0}, []float64{-1., 0.},
+			[]float64{0., 1.},
 			false,
 		},
 		{
-			[]float64{1., 0}, []float64{1., 1.},
-			[]float64{0., 1.}, []float64{1., 0.},
+			[]float64{1., 0}, []float64{0., 1.},
+			[]float64{1., 0.},
 			true,
 		},
 	} {
 		if c.uturn {
-			if !uTurn(c.xl, c.rl, c.xr, c.rr) {
+			if !uTurn(c.xl, c.xr, c.r) {
 				t.Errorf("missed uturn: %+v", c)
 			}
 		} else {
-			if uTurn(c.xl, c.rl, c.xr, c.rr) {
+			if uTurn(c.xl, c.xr, c.r) {
 				t.Errorf("false uturn: %+v", c)
 			}
 		}
