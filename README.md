@@ -4,6 +4,8 @@ Go as a platform for probabilistic inference. Uses
 automatic differentiation and gradient descent
 optimization.
 
+[![GoDoc](https://godoc.org/bitbucket.org/dtolpin/infergo?status.svg)](https://godoc.org/bitbucket.org/dtolpin/infergo)
+
 MIT license (see [LICENSE](LICENSE))
 
 ## Example
