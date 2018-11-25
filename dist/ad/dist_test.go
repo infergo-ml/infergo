@@ -7,9 +7,9 @@ import (
 
 func TestNormal(t *testing.T) {
 	for _, c := range []struct {
-		mu, sigma float64
-		y         []float64
-		ll        float64
+		mu, sigma	float64
+		y		[]float64
+		ll		float64
 	}{
 		{0., 1., []float64{0.}, -0.9189385332046727},
 		{1., 2., []float64{2.}, -1.737085713764618},
@@ -40,9 +40,9 @@ func TestNormal(t *testing.T) {
 
 func TestExpon(t *testing.T) {
 	for _, c := range []struct {
-		lambda float64
-		y      []float64
-		ll     float64
+		lambda	float64
+		y	[]float64
+		ll	float64
 	}{
 		{1., []float64{1.}, -1},
 		{2., []float64{2.}, -3.3068528194400546},
@@ -73,9 +73,9 @@ func TestExpon(t *testing.T) {
 
 func TestGamma(t *testing.T) {
 	for _, c := range []struct {
-		alpha, beta float64
-		y           []float64
-		ll          float64
+		alpha, beta	float64
+		y		[]float64
+		ll		float64
 	}{
 		{1., 1., []float64{1.}, -1},
 		{2., 2., []float64{2.}, -1.9205584583201638},
@@ -106,9 +106,9 @@ func TestGamma(t *testing.T) {
 
 func TestBeta(t *testing.T) {
 	for _, c := range []struct {
-		alpha, beta float64
-		y           []float64
-		ll          float64
+		alpha, beta	float64
+		y		[]float64
+		ll		float64
 	}{
 		{1., 1., []float64{0.5}, 0},
 		{2., 3., []float64{.25}, 0.523248143764548},
@@ -139,10 +139,10 @@ func TestBeta(t *testing.T) {
 
 func TestDirichlet(t *testing.T) {
 	for _, c := range []struct {
-		n     int
-		alpha []float64
-		y     [][]float64
-		ll    float64
+		n	int
+		alpha	[]float64
+		y	[][]float64
+		ll	float64
 	}{
 		{
 			2,
@@ -196,21 +196,29 @@ func TestDirichlet(t *testing.T) {
 
 func TestSoftMax(t *testing.T) {
 	for _, c := range []struct {
-		x []float64
-		p []float64
+		x	[]float64
+		p	[]float64
+		z	float64
 	}{
 		{
 			[]float64{0., 0.},
 			[]float64{0.5, 0.5},
+			2.,
 		},
 		{
 			[]float64{math.Log(1), math.Log(3), math.Log(6)},
 			[]float64{0.1, 0.3, 0.6},
+			10.,
 		},
 	} {
 		dist := Dirichlet{len(c.x)}
 		p := make([]float64, dist.N)
-		dist.SoftMax(c.x, p)
+		z := dist.SoftMax(c.x, p)
+		if math.Abs(z-c.z) > 1E-6 {
+			t.Errorf("Wrong normalization constant of SoftMax(%v): "+
+				"got %.4g, want %.4g", c.x, z, c.z)
+			break
+		}
 		for i := range p {
 			if math.Abs(p[i]-c.p[i]) > 1E-6 {
 				t.Errorf("Wrong result of SoftMax(%v): "+
