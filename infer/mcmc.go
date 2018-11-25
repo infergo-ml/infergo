@@ -102,8 +102,8 @@ func (hmc *HMC) Sample(
 	x []float64,
 	samples chan []float64,
 ) {
-	hmc.samples = samples // Stop needs access to samples
 	hmc.setDefaults()
+	hmc.samples = samples // Stop needs access to samples
 	go func() {
 		// Close samples on exit
 		defer close(samples)
@@ -168,11 +168,15 @@ type NUTS struct {
 	Eps   float64 // step size
 	Delta float64 // lower bound on energy for doubling
 	// Statistics
-	Depth [][2]float64 // depth belief
 	// Depth belief is encoded as a vector of beta-bernoulli
 	// distributions. If the depth is greater than the element's
 	// index i, Depth[i][0] is incremented; for index depth,
 	// Depth[depth][1] is incremented.
+	Depth [][2]float64 // depth belief
+	// Cached model run
+	x     []float64
+	l     float64
+	grad  []float64
 }
 
 func (nuts *NUTS) Sample(
@@ -180,8 +184,9 @@ func (nuts *NUTS) Sample(
 	x []float64,
 	samples chan []float64,
 ) {
-	nuts.samples = samples // Stop needs access to samples
 	nuts.setDefaults()
+	nuts.samples = samples // Stop needs access to samples
+	nuts.x = nil           // invalidate gradient cache
 	go func() {
 		// Close samples on exit
 		defer close(samples)
@@ -204,7 +209,7 @@ func (nuts *NUTS) Sample(
 			}
 
 			// Compute the energy.
-			l, _ := m.Observe(x), ad.Gradient()
+			l, _ := nuts.observe(m, x)
 			e := energy(l, r)
 
 			// Sample the slice variable
@@ -311,8 +316,10 @@ func (nuts *NUTS) buildTree(
 ) {
 	if depth == 0 {
 		// Base case: single leapfrog
-		_, grad := m.Observe(x), ad.Gradient()
+		_, grad := nuts.observe(m, x)
 		l := leapfrog(m, &grad, x, r, dir*nuts.Eps)
+		// Cache model run inside leapfrog
+		nuts.x, nuts.l, nuts.grad = x, l, grad
 		if energy(l, r) >= logu {
 			nelem = 1.
 		}
@@ -341,6 +348,25 @@ func (nuts *NUTS) buildTree(
 
 		return xl, rl, xr, rr, x, nelem, stop
 	}
+}
+
+// observe is a cached call to Observe and Gradient so that we 
+// re-run the model on change of direction, but re-use the earlier
+// computed energy and gradient when possible.
+func (nuts *NUTS) observe(m model.Model, x []float64) (float64, []float64) {
+	cached := nuts.x != nil
+	if cached {
+		for i := range(x) {
+			if x[i] != nuts.x[i] {
+				cached = false
+				break
+			}
+		}
+	}
+	if !cached {
+		nuts.x, nuts.l, nuts.grad = x, m.Observe(x), ad.Gradient()
+	}
+	return nuts.l, nuts.grad
 }
 
 // setDefaults sets the default value for auxiliary parameters
