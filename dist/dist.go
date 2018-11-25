@@ -203,10 +203,7 @@ func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 // SoftMax transforms unconstrained parameters to a point on the
 // unit hyperplane suitable to be observed from Dirichlet. x is
 // the original vector, p is a point on the unit hyperplane.
-// SofTmax returns the normalization constant sum(exp(x_i)),
-// which can optionally be used to constrain the unnormalized
-// vector to stay close to the unit hyperplane.
-func (dist Dirichlet) SoftMax(x, p []float64) float64 {
+func (dist Dirichlet) SoftMax(x, p []float64) {
 	if len(x) != len(p) {
 		panic(fmt.Sprintf("lengths of x and p are different: "+
 			"got len(x)=%v, len(p)=%v", len(x), len(p)))
@@ -232,14 +229,11 @@ func (dist Dirichlet) SoftMax(x, p []float64) float64 {
 	for i := range p {
 		p[i] /= z
 	}
-
-	// Return the normalization constant.
-	return z*math.Exp(xmax)
 }
 
 // Outside of differentiated context, SoftMax can be used
 // without distribution.
-var SoftMax func(x, p []float64) float64
+var SoftMax func(x, p []float64)
 
 func init() {
 	SoftMax = Dirichlet{}.SoftMax

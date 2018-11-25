@@ -100,7 +100,8 @@ func leapfrog(
 	}
 	l, *gradp = m.Observe(x), ad.Gradient()
 	if math.IsNaN(l) {
-		panic("energy diverged")
+		return math.Inf(-1)
+		// panic("energy diverged")
 	}
 	for i := range x {
 		r[i] += 0.5 * eps * (*gradp)[i]
@@ -204,6 +205,7 @@ type NUTS struct {
 	// Parameters
 	Eps   float64 // step size
 	Delta float64 // lower bound on energy for doubling
+	MaxDepth int  // maximum depth
 	// Statistics
 	// Depth belief is encoded as a vector of beta-bernoulli
 	// distributions. If the depth is greater than the element's
@@ -411,6 +413,9 @@ func (nuts *NUTS) observe(m model.Model, x []float64) (float64, []float64) {
 func (nuts *NUTS) setDefaults() {
 	if nuts.Delta == 0 {
 		nuts.Delta = 1E3
+	}
+	if nuts.MaxDepth == 0 {
+		nuts.MaxDepth = 10
 	}
 }
 

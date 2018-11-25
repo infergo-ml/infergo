@@ -198,27 +198,18 @@ func TestSoftMax(t *testing.T) {
 	for _, c := range []struct {
 		x	[]float64
 		p	[]float64
-		z	float64
 	}{
 		{
 			[]float64{0., 0.},
 			[]float64{0.5, 0.5},
-			2.,
 		},
 		{
 			[]float64{math.Log(1), math.Log(3), math.Log(6)},
 			[]float64{0.1, 0.3, 0.6},
-			10.,
 		},
 	} {
 		dist := Dirichlet{len(c.x)}
 		p := make([]float64, dist.N)
-		z := dist.SoftMax(c.x, p)
-		if math.Abs(z-c.z) > 1E-6 {
-			t.Errorf("Wrong normalization constant of SoftMax(%v): "+
-				"got %.4g, want %.4g", c.x, z, c.z)
-			break
-		}
 		for i := range p {
 			if math.Abs(p[i]-c.p[i]) > 1E-6 {
 				t.Errorf("Wrong result of SoftMax(%v): "+

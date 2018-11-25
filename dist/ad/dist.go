@@ -295,7 +295,7 @@ func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 	return ad.Return(&ll)
 }
 
-func (dist Dirichlet) SoftMax(x, p []float64) float64 {
+func (dist Dirichlet) SoftMax(x, p []float64) {
 	if ad.Called() {
 		ad.Enter()
 	} else {
@@ -323,11 +323,9 @@ func (dist Dirichlet) SoftMax(x, p []float64) float64 {
 	for i := range p {
 		ad.Assignment(&p[i], ad.Arithmetic(ad.OpDiv, &p[i], &z))
 	}
-
-	return ad.Return(ad.Arithmetic(ad.OpMul, &z, ad.Elemental(math.Exp, &xmax)))
 }
 
-var SoftMax func(x, p []float64) float64
+var SoftMax func(x, p []float64)
 
 func init() {
 	SoftMax = Dirichlet{}.SoftMax
