@@ -206,6 +206,7 @@ func (nuts *NUTS) Sample(
 			if nuts.stop {
 				break
 			}
+
 			// Sample the next r.
 			for i := range r {
 				r[i] = rand.NormFloat64()
@@ -288,20 +289,12 @@ func (nuts *NUTS) buildLeftOrRightTree(
 	nelem float64,
 	stop bool,
 ) {
-	// We are building a subtree and need memory for each new
-	// node.
-	x_ := make([]float64, len(xl))
-	r_ := make([]float64, len(rl))
 	if dir == -1. {
-		copy(x_, xl)
-		copy(r_, rl)
 		xl, rl, _, _, x, nelem, stop =
-			nuts.buildTree(m, x_, r_, logu, dir, depth)
+			nuts.buildTree(m, xl, rl, logu, dir, depth)
 	} else {
-		copy(x_, xr)
-		copy(r_, rr)
 		_, _, xr, rr, x, nelem, stop =
-			nuts.buildTree(m, x_, r_, logu, dir, depth)
+			nuts.buildTree(m, xr, rr, logu, dir, depth)
 	}
 
 	if uTurn(xl, xr, rl) || uTurn(xl, xr, rr) {
@@ -324,6 +317,10 @@ func (nuts *NUTS) buildTree(
 ) {
 	if depth == 0 {
 		// Base case: single leapfrog
+		// We are going to modify the state and momentum,
+		// ad need a copy.
+		x_ := make([]float64, len(x)); copy(x_, x); x = x_
+		r_ := make([]float64, len(r)); copy(r_, r); r = r_
 		_, grad := nuts.observe(m, x)
 		l := leapfrog(m, &grad, x, r, dir*nuts.Eps)
 		// Cache model run inside leapfrog
