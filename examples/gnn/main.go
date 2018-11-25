@@ -1,8 +1,8 @@
 package main
 
 import (
-	. "bitbucket.org/dtolpin/infergo/examples/gnn/model/ad"
 	. "bitbucket.org/dtolpin/infergo/dist"
+	. "bitbucket.org/dtolpin/infergo/examples/gnn/model/ad"
 	"bitbucket.org/dtolpin/infergo/infer"
 	"encoding/csv"
 	"flag"
@@ -26,14 +26,14 @@ var (
 	TAU   = 0.
 
 	// Inference algorithm parameters
-	MCMC  = "HMC"
-	RATE  = 0.1
-	NITER = 1000
-	NBURN = 0
-	NADPT = 10
-	EPS   = 1E-4
-	STEP  = 0.1
-	DEPTH = 5.
+	MCMC     = "HMC"
+	RATE     = 0.1
+	NITER    = 1000
+	NBURN    = 0
+	NADPT    = 10
+	EPS      = 1E-4
+	STEP     = 0.1
+	DEPTH    = 5.
 	MAXDEPTH = 0
 )
 
@@ -196,7 +196,7 @@ func main() {
 		}
 	case "NUTS":
 		mcmc = &infer.NUTS{
-			Eps: STEP,
+			Eps:      STEP,
 			MaxDepth: MAXDEPTH,
 		}
 	default:

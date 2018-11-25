@@ -71,24 +71,31 @@ func energy(l float64, r []float64) float64 {
 // by HMC variants.
 func leapfrog(
 	m model.Model,
-	gradp *[]float64,
+	grad []float64,
 	x, r []float64,
 	eps float64,
-) (l float64) {
-	l, *gradp = m.Observe(x), ad.Gradient()
+) (l float64, _ []float64) {
 	for i := range x {
-		r[i] += 0.5 * eps * (*gradp)[i]
+		r[i] += 0.5 * eps * grad[i]
 		x[i] += eps * r[i]
 	}
-	l, *gradp = m.Observe(x), ad.Gradient()
+	l, grad = m.Observe(x), ad.Gradient()
 	if math.IsNaN(l) {
 		panic("energy diverged")
 	}
 	for i := range x {
-		r[i] += 0.5 * eps * (*gradp)[i]
+		r[i] += 0.5 * eps * grad[i]
 	}
 
-	return l
+	return l, grad
+}
+
+// clone clones state or momentum slice; used as poor man's
+// copy-on-write.
+func clone(x []float64) []float64 {
+	x_ := make([]float64, len(x))
+	copy(x_, x)
+	return x_
 }
 
 // Vanilla Hamiltonian Monte Carlo Sampler.
@@ -134,7 +141,7 @@ func (hmc *HMC) Sample(
 			e0 := energy(l0, r) // initial energy
 			var l float64
 			for i := 0; i != hmc.L; i++ {
-				l = leapfrog(m, &grad, x, r, hmc.Eps)
+				l, grad = leapfrog(m, grad, x, r, hmc.Eps)
 			}
 			e := energy(l, r) // final energy
 
@@ -148,15 +155,12 @@ func (hmc *HMC) Sample(
 			}
 
 			// Write a sample to the channel.
-			sample := make([]float64, len(x))
-			copy(sample, x)
-			samples <- sample
+			samples <- clone(x)
 		}
 	}()
 }
 
-// setDefaults sets the default value for auxiliary parameters
-// of HMC.
+// setDefaults sets the default value for auxiliary parameters.
 func (hmc *HMC) setDefaults() {
 	if hmc.L == 0 {
 		hmc.L = 10
@@ -250,7 +254,6 @@ func (nuts *NUTS) Sample(
 				if nelem_/nelem > rand.Float64() {
 					accepted = true
 					x = x_
-					copy(x, x_)
 				}
 
 				nelem += nelem_
@@ -271,9 +274,7 @@ func (nuts *NUTS) Sample(
 			nuts.updateDepth(depth)
 
 			// Write a sample to the channel.
-			sample := make([]float64, len(x))
-			copy(sample, x)
-			samples <- sample
+			samples <- clone(x)
 		}
 	}()
 }
@@ -316,13 +317,11 @@ func (nuts *NUTS) buildTree(
 	stop bool,
 ) {
 	if depth == 0 {
-		// Base case: single leapfrog
-		// We are going to modify the state and momentum,
-		// ad need a copy.
-		x_ := make([]float64, len(x)); copy(x_, x); x = x_
-		r_ := make([]float64, len(r)); copy(r_, r); r = r_
+		// Base case: single leapfrog. state and momentum
+		// are copied because leapfrog modifies them in place.
+		x, r := clone(x), clone(r)
 		_, grad := nuts.observe(m, x)
-		l := leapfrog(m, &grad, x, r, dir*nuts.Eps)
+		l, grad := leapfrog(m, grad, x, r, dir*nuts.Eps)
 		// Cache model run inside leapfrog
 		nuts.x, nuts.l, nuts.grad = x, l, grad
 		if energy(l, r) >= logu {
@@ -358,7 +357,10 @@ func (nuts *NUTS) buildTree(
 // observe is a cached call to Observe and Gradient so that we
 // re-run the model on change of direction, but re-use the earlier
 // computed energy and gradient when possible.
-func (nuts *NUTS) observe(m model.Model, x []float64) (float64, []float64) {
+func (nuts *NUTS) observe(m model.Model, x []float64) (
+	/*l*/ float64,
+	/*grad*/ []float64,
+) {
 	cached := nuts.x != nil
 	if cached {
 		for i := range x {
@@ -374,8 +376,7 @@ func (nuts *NUTS) observe(m model.Model, x []float64) (float64, []float64) {
 	return nuts.l, nuts.grad
 }
 
-// setDefaults sets the default value for auxiliary parameters
-// of NUTS.
+// setDefaults sets the default value for auxiliary parameters.
 func (nuts *NUTS) setDefaults() {
 	if nuts.Delta == 0 {
 		nuts.Delta = 1E3

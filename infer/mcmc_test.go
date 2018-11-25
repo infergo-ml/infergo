@@ -41,7 +41,7 @@ func TestLeapfrog(t *testing.T) {
 	x, r, eps := []float64{0., 0.}, []float64{1., -1.}, 0.5
 	m.Observe(x)
 	grad := ad.Gradient()
-	leapfrog(m, &grad, x, r, eps)
+	_, grad = leapfrog(m, grad, x, r, eps)
 	xNext, rNext := []float64{0.5625, -0.3125}, []float64{1.25, -0.25}
 	for i := range x {
 		if math.Abs(x[i]-xNext[i]) > 1E-6 {
