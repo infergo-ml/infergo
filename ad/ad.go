@@ -554,10 +554,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 
 			switch n := n.(type) {
 			case *ast.BasicLit:
-				t, basic := m.info.TypeOf(n).(*types.Basic)
-				if !basic ||
-					!(t.Kind() == types.Float64 ||
-						t.Kind() == types.UntypedFloat) {
+				if !isFloat(m.info.TypeOf(n)) {
 					return false
 				}
 			case *ast.CompositeLit:
@@ -571,8 +568,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				*ast.StarExpr, *ast.UnaryExpr, *ast.BinaryExpr:
 				// Expressions must be of type float64
 				e := n.(ast.Expr)
-				t, basic := m.info.TypeOf(e).(*types.Basic)
-				if !basic || t.Kind() != types.Float64 {
+				if !isFloat(m.info.TypeOf(e)) {
 					return false
 				}
 			case *ast.Ident:
@@ -587,10 +583,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				}
 				// ... and the type must be float64 or untyped
 				// float.
-				t, basic := m.info.TypeOf(n).(*types.Basic)
-				if !basic ||
-					!(t.Kind() == types.Float64 ||
-					  t.Kind() == types.UntypedFloat) {
+				if !isFloat(m.info.TypeOf(n)) {
 					return false
 				}
 			case *ast.CallExpr:
@@ -610,8 +603,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					return false
 				}
 				for _, r := range n.Results {
-					t, basic := m.info.TypeOf(r).(*types.Basic)
-					if !basic || t.Kind() != types.Float64 {
+					if !isFloat(m.info.TypeOf(r)) {
 						return false
 					}
 				}
@@ -619,8 +611,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 			case *ast.AssignStmt:
 				// All expressions are float64.
 				for _, r := range n.Rhs {
-					t, basic := m.info.TypeOf(r).(*types.Basic)
-					if !basic || t.Kind() != types.Float64 {
+					if !isFloat(m.info.TypeOf(r)) {
 						return false
 					}
 				}
@@ -775,8 +766,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					nargs := 0
 					for i := 0; i != nparams; i++ {
 						param := t.Params().At(i)
-						pt, ok := param.Type().(*types.Basic)
-						if ok && pt.Kind() == types.Float64 {
+						if isFloat(param.Type()) {
 							// A float, pass 0 to the actual
 							// function and the differentiated
 							// expression to Call.
@@ -800,8 +790,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					if t.Variadic() && len(n.Args) > nparams {
 						variadic := t.Params().At(nparams)
 						vt := variadic.Type().(*types.Slice)
-						et, ok := vt.Elem().(*types.Basic)
-						if ok && et.Kind() == types.Float64 &&
+						if isFloat(vt.Elem()) &&
 							n.Ellipsis == token.NoPos {
 							// Variadic float64 arguments, passed
 							// through the wrapper parameter.
@@ -916,8 +905,7 @@ func (m *model) enterStmt(method *ast.FuncDecl) ast.Stmt {
 	iparam, ifield := 0, 0 // ast indices
 	for i := 0; i != n; i++ {
 		p := t.Params().At(i)
-		pt, ok := p.Type().(*types.Basic)
-		if !ok || pt.Kind() != types.Float64 {
+		if !isFloat(p.Type()) {
 			continue
 		}
 		var expr ast.Expr
@@ -1012,30 +1000,28 @@ func (m *model) isElemental(call *ast.CallExpr) bool {
 	if t.Results().Len() != 1 {
 		return false
 	}
-	rt, ok := t.Results().At(0).Type().(*types.Basic)
-	if !ok {
-		return ok
-	}
-	ok = rt.Kind() == types.Float64 // the result is float64
-	if !ok {
-		return ok
+	if !isFloat(t.Results().At(0).Type()) {
+		return false
 	}
 
 	if t.Params().Len() == 0 || t.Variadic() {
 		return false
 	}
 	for i := 0; i != t.Params().Len(); i++ {
-		pt, ok := t.Params().At(i).Type().(*types.Basic)
-		if !ok {
-			return ok
-		}
-		ok = pt.Kind() == types.Float64
-		if !ok {
-			return ok
+		if !isFloat(t.Params().At(i).Type()) {
+			return false
 		}
 	}
 
 	return true
+}
+
+// isFloat returns true iff the kind is a float kind 
+func isFloat(typ types.Type) bool {
+	bt, ok := typ.(*types.Basic)
+	return ok &&
+		(bt.Kind() == types.Float64 ||
+		 bt.Kind() == types.UntypedFloat)
 }
 
 // intExpr returns an Expr for integer literal i.
