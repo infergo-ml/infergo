@@ -204,7 +204,7 @@ func (nuts *NUTS) Sample(
 			}
 
 			// Compute the energy.
-			l, grad := m.Observe(x), ad.Gradient()
+			l, _ := m.Observe(x), ad.Gradient()
 			e := energy(l, r)
 
 			// Sample the slice variable
@@ -231,8 +231,8 @@ func (nuts *NUTS) Sample(
 					stop   bool
 				)
 				xl, rl, xr, rr, x_, nelem_, stop =
-					nuts.buildLeftOrRightTree(m, &grad,
-						xl, rl, xr, rr, logu, dir, depth)
+					nuts.buildLeftOrRightTree(
+						m, xl, rl, xr, rr, logu, dir, depth)
 				if stop {
 					break
 				}
@@ -266,7 +266,6 @@ func (nuts *NUTS) Sample(
 
 func (nuts *NUTS) buildLeftOrRightTree(
 	m model.Model,
-	gradp *[]float64,
 	xl, rl, xr, rr []float64,
 	logu float64,
 	dir float64,
@@ -283,13 +282,13 @@ func (nuts *NUTS) buildLeftOrRightTree(
 	if dir == -1. {
 		copy(x_, xl)
 		copy(r_, rl)
-		xl, rl, _, _, x, nelem, stop = nuts.buildTree(m, gradp,
-			x_, r_, logu, dir, depth)
+		xl, rl, _, _, x, nelem, stop = 
+			nuts.buildTree(m, x_, r_, logu, dir, depth)
 	} else {
 		copy(x_, xr)
 		copy(r_, rr)
-		_, _, xr, rr, x, nelem, stop = nuts.buildTree(m, gradp,
-			x_, r_, logu, dir, depth)
+		_, _, xr, rr, x, nelem, stop =
+			nuts.buildTree(m, x_, r_, logu, dir, depth)
 	}
 
 	if uTurn(xl, xr, rl) || uTurn(xl, xr, rr) {
@@ -301,7 +300,6 @@ func (nuts *NUTS) buildLeftOrRightTree(
 
 func (nuts *NUTS) buildTree(
 	m model.Model,
-	gradp *[]float64,
 	x, r []float64,
 	logu float64,
 	dir float64,
@@ -313,7 +311,8 @@ func (nuts *NUTS) buildTree(
 ) {
 	if depth == 0 {
 		// Base case: single leapfrog
-		l := leapfrog(m, gradp, x, r, dir*nuts.Eps)
+		_, grad := m.Observe(x), ad.Gradient()
+		l := leapfrog(m, &grad, x, r, dir*nuts.Eps)
 		if energy(l, r) >= logu {
 			nelem = 1.
 		}
@@ -325,14 +324,14 @@ func (nuts *NUTS) buildTree(
 		depth--
 
 		xl, rl, xr, rr, x, nelem, stop =
-			nuts.buildTree(m, gradp, x, r, logu, dir, depth)
+			nuts.buildTree(m, x, r, logu, dir, depth)
 		if stop {
 			return xl, rl, xr, rr, x, nelem, stop
 		}
 
 		xl, rl, xr, rr, x_, nelem_, stop :=
-			nuts.buildLeftOrRightTree(m, gradp,
-				xl, rl, xr, rr, logu, dir, depth)
+			nuts.buildLeftOrRightTree(
+				m, xl, rl, xr, rr, logu, dir, depth)
 		nelem += nelem_
 
 		// Select uniformly from nodes.
