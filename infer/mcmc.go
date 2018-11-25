@@ -317,7 +317,7 @@ func (nuts *NUTS) buildTree(
 	stop bool,
 ) {
 	if depth == 0 {
-		// Base case: single leapfrog. state and momentum
+		// Base case: single leapfrog. State x and momentum r
 		// are copied because leapfrog modifies them in place.
 		x, r := clone(x), clone(r)
 		_, grad := nuts.observe(m, x)
