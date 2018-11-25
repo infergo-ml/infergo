@@ -174,9 +174,9 @@ type NUTS struct {
 	// Depth[depth][1] is incremented.
 	Depth [][2]float64 // depth belief
 	// Cached model run
-	x     []float64
-	l     float64
-	grad  []float64
+	x    []float64
+	l    float64
+	grad []float64
 }
 
 func (nuts *NUTS) Sample(
@@ -287,7 +287,7 @@ func (nuts *NUTS) buildLeftOrRightTree(
 	if dir == -1. {
 		copy(x_, xl)
 		copy(r_, rl)
-		xl, rl, _, _, x, nelem, stop = 
+		xl, rl, _, _, x, nelem, stop =
 			nuts.buildTree(m, x_, r_, logu, dir, depth)
 	} else {
 		copy(x_, xr)
@@ -350,13 +350,13 @@ func (nuts *NUTS) buildTree(
 	}
 }
 
-// observe is a cached call to Observe and Gradient so that we 
+// observe is a cached call to Observe and Gradient so that we
 // re-run the model on change of direction, but re-use the earlier
 // computed energy and gradient when possible.
 func (nuts *NUTS) observe(m model.Model, x []float64) (float64, []float64) {
 	cached := nuts.x != nil
 	if cached {
-		for i := range(x) {
+		for i := range x {
 			if x[i] != nuts.x[i] {
 				cached = false
 				break
