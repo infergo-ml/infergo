@@ -551,6 +551,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					m.fset.Position(n.Pos()),
 				)()
 			}
+
 			switch n := n.(type) {
 			case *ast.BasicLit:
 				t, basic := m.info.TypeOf(n).(*types.Basic)
@@ -581,18 +582,15 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				}
 				// We only need identifiers which are constants
 				// or variables but not fields ...
-				switch o := o.(type) {
-				case *types.Const:
-	            case *types.Var:
-					if o.IsField() {
-						return false
-					}
-				default:
+				if _, ok := c.Parent().(*ast.SelectorExpr); ok {
 					return false
 				}
-				// ... and the type must be float64.
+				// ... and the type must be float64 or untyped
+				// float.
 				t, basic := m.info.TypeOf(n).(*types.Basic)
-				if !basic || t.Kind() != types.Float64 {
+				if !basic ||
+					!(t.Kind() == types.Float64 ||
+					  t.Kind() == types.UntypedFloat) {
 					return false
 				}
 			case *ast.CallExpr:
@@ -668,6 +666,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					m.fset.Position(n.Pos()),
 				)()
 			}
+
 			switch n := n.(type) {
 			case *ast.BasicLit:
 				value := callExpr("Value", n)

@@ -520,7 +520,7 @@ import "math"
 
 type Model float64
 
-const foo = 1.
+const foo = 1
 
 func (m Model) Observe(x []float64) float64 {
 	return foo
@@ -539,7 +539,7 @@ import (
 
 type Model float64
 
-const foo = 1.
+const foo = 1
 
 func (m Model) Observe(x []float64) float64 {
 	if ad.Called() {
@@ -734,8 +734,12 @@ func (m Model) Observe(x []float64) float64 {
 
 type Model float64
 
+const one = 1
+
 func (m Model) Observe(x []float64) float64 {
 	y := x[0] + x[1]
+	y = y + 1
+	y = y + one
 	y = y - x[2]
 	y = y * x[3]
 	return y / x[4]
@@ -747,6 +751,8 @@ import "bitbucket.org/dtolpin/infergo/ad"
 
 type Model float64
 
+const one = 1
+
 func (m Model) Observe(x []float64) float64 {
 	if ad.Called() {
 		ad.Enter()
@@ -755,6 +761,8 @@ func (m Model) Observe(x []float64) float64 {
 	}
 	var y float64
 	ad.Assignment(&y, ad.Arithmetic(ad.OpAdd, &x[0], &x[1]))
+	ad.Assignment(&y, ad.Arithmetic(ad.OpAdd, &y, ad.Value(1)))
+	ad.Assignment(&y, ad.Arithmetic(ad.OpAdd, &y, ad.Value(one)))
 	ad.Assignment(&y, ad.Arithmetic(ad.OpSub, &y, &x[2]))
 	ad.Assignment(&y, ad.Arithmetic(ad.OpMul, &y, &x[3]))
 	return ad.Return(ad.Arithmetic(ad.OpDiv, &y, &x[4]))

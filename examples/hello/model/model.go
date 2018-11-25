@@ -18,5 +18,5 @@ func (m *Model) Observe(x []float64) float64 {
 	ll := Normal.Logps(0, 1, x...)
 	// ... but the posterior is based on data observations.
 	ll += Normal.Logps(x[0], math.Exp(x[1]), m.Data...)
-	return ll
+	return ll + math.Pi
 }
