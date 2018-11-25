@@ -514,6 +514,52 @@ func (m Model) Count() int {
 }`,
 		},
 		//====================================================
+		{`package constant
+
+import "math"
+
+type Model float64
+
+const foo = 1.
+
+func (m Model) Observe(x []float64) float64 {
+	return foo
+}
+
+func (m Model) Pi () float64 {
+	return math.Pi
+}`,
+			//----------------------------------------------------
+			`package constant
+
+import (
+	"math"
+	"bitbucket.org/dtolpin/infergo/ad"
+)
+
+type Model float64
+
+const foo = 1.
+
+func (m Model) Observe(x []float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
+	return ad.Return(ad.Value(foo))
+}
+
+func (m Model) Pi () float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		panic("Pi called outside Observe.")
+	}
+	return ad.Return(ad.Value(math.Pi))
+}`,
+		},
+		//====================================================
 		{`package assign
 
 type Model float64

@@ -323,6 +323,7 @@ func (dist Dirichlet) SoftMax(x, p []float64) float64 {
 	for i := range p {
 		ad.Assignment(&p[i], ad.Arithmetic(ad.OpDiv, &p[i], &z))
 	}
+
 	return ad.Return(ad.Arithmetic(ad.OpMul, &z, ad.Elemental(math.Exp, &xmax)))
 }
 

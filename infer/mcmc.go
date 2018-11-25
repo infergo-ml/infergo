@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/rand"
 	"time"
+	"fmt"
 )
 
 // MCMC is the interface of MCMC samplers.
@@ -75,6 +76,24 @@ func leapfrog(
 	x, r []float64,
 	eps float64,
 ) (l float64) {
+
+	_, *gradp = m.Observe(x), ad.Gradient()
+	fmt.Printf("x-: ")
+	for _, y := range x {
+		fmt.Printf("%.4g ", y)
+	}
+	fmt.Println()
+	fmt.Printf("r-: ")
+	for _, q := range r {
+		fmt.Printf("%.4g ", q)
+	}
+	fmt.Println()
+	fmt.Printf("g-: ")
+	for _, g := range *gradp {
+		fmt.Printf("%.4g ", g)
+	}
+	fmt.Println()
+
 	for i := range x {
 		r[i] += 0.5 * eps * (*gradp)[i]
 		x[i] += eps * r[i]
@@ -86,6 +105,24 @@ func leapfrog(
 	for i := range x {
 		r[i] += 0.5 * eps * (*gradp)[i]
 	}
+
+	_, *gradp = m.Observe(x), ad.Gradient()
+	fmt.Printf("x+: ")
+	for _, y := range x {
+		fmt.Printf("%.4g ", y)
+	}
+	fmt.Println()
+	fmt.Printf("r+: ")
+	for _, q := range r {
+		fmt.Printf("%.4g ", q)
+	}
+	fmt.Println()
+	fmt.Printf("g+: ")
+	for _, g := range *gradp {
+		fmt.Printf("%.4g ", g)
+	}
+	fmt.Println()
+
 	return l
 }
 

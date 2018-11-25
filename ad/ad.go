@@ -225,13 +225,13 @@ func (m *model) deriv() (err error) {
 			files[fname] = true
 			// Ensure that package name "ad" is available.
 			for _, imp := range m.pkg.Files[fname].Imports {
-				var obj types.Object
+				var o types.Object
 				if imp.Name != nil {
-					obj = m.info.ObjectOf(imp.Name)
+					o = m.info.ObjectOf(imp.Name)
 				} else {
-					obj = m.info.Implicits[imp]
+					o = m.info.Implicits[imp]
 				}
-				pkgName := obj.(*types.PkgName)
+				pkgName := o.(*types.PkgName)
 				if pkgName.Name() == "ad" &&
 					pkgName.Imported().Path() != infergoImport {
 					pos := m.fset.Position(imp.Pos())
@@ -407,8 +407,8 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 					for _, l := range n.Lhs {
 						ident := l.(*ast.Ident)
 
-						obj := m.info.ObjectOf(ident)
-						if ident.Pos() != obj.Pos() {
+						o := m.info.ObjectOf(ident)
+						if ident.Pos() != o.Pos() {
 							// Declared earlier.
 							continue
 						}
@@ -579,9 +579,15 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				if o == nil {
 					return false
 				}
-				// We only need identifiers which are variables
-				// but not fields ...
-				if v, ok := o.(*types.Var); !ok || v.IsField() {
+				// We only need identifiers which are constants
+				// or variables but not fields ...
+				switch o := o.(type) {
+				case *types.Const:
+	            case *types.Var:
+					if o.IsField() {
+						return false
+					}
+				default:
 					return false
 				}
 				// ... and the type must be float64.
@@ -675,15 +681,21 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					if m.prefix != "" &&
 						strings.HasPrefix(n.Name, m.prefix) {
 						// Reserved identifier.
-						obj := m.info.ObjectOf(n)
-						if n.Pos() == obj.Pos() { // declared here
+						o := m.info.ObjectOf(n)
+						if n.Pos() == o.Pos() { // declared here
 							panic(fmt.Sprintf(
 								"identifier %q is reserved", n.Name))
 						}
 					}
-					place = &ast.UnaryExpr{
-						Op: token.AND,
-						X:  n,
+					o := m.info.ObjectOf(n)
+					switch o.(type) {
+					case *types.Const:
+						place = callExpr("Value", n)
+					case *types.Var:
+						place = &ast.UnaryExpr{
+							Op: token.AND,
+							X:  n,
+						}
 					}
 				}
 				c.Replace(place)
@@ -700,9 +712,16 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				}
 				c.Replace(place)
 			case *ast.SelectorExpr:
-				place := &ast.UnaryExpr{
-					Op: token.AND,
-					X:  n,
+				var place ast.Expr
+				o := m.info.ObjectOf(n.Sel)
+				switch o.(type) {
+				case *types.Const:
+					place = callExpr("Value", n)
+				case *types.Var:
+					place = &ast.UnaryExpr{
+						Op: token.AND,
+						X:  n,
+					}
 				}
 				c.Replace(place)
 			case *ast.ReturnStmt:
