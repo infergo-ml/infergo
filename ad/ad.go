@@ -1016,12 +1016,12 @@ func (m *model) isElemental(call *ast.CallExpr) bool {
 	return true
 }
 
-// isFloat returns true iff the kind is a float kind 
+// isFloat returns true iff the kind is a float kind
 func isFloat(typ types.Type) bool {
 	bt, ok := typ.(*types.Basic)
 	return ok &&
 		(bt.Kind() == types.Float64 ||
-		 bt.Kind() == types.UntypedFloat)
+			bt.Kind() == types.UntypedFloat)
 }
 
 // intExpr returns an Expr for integer literal i.
