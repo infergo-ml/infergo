@@ -75,6 +75,7 @@ func leapfrog(
 	x, r []float64,
 	eps float64,
 ) (l float64) {
+	l, *gradp = m.Observe(x), ad.Gradient()
 	for i := range x {
 		r[i] += 0.5 * eps * (*gradp)[i]
 		x[i] += eps * r[i]
