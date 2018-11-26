@@ -123,7 +123,6 @@ func (hmc *HMC) Sample(
 				log.Printf("ERROR: HMC: %v", r)
 			}
 		}()
-		x_ := make([]float64, len(x))
 		r := make([]float64, len(x))
 		for {
 			if hmc.stop {
@@ -134,12 +133,10 @@ func (hmc *HMC) Sample(
 				r[i] = rand.NormFloat64()
 			}
 
-			// Back up the current value of x.
-			copy(x_, x)
-
 			l0, grad := m.Observe(x), ad.Gradient()
 			e0 := energy(l0, r) // initial energy
 			var l float64
+			x_ := clone(x)
 			for i := 0; i != hmc.L; i++ {
 				l, grad = leapfrog(m, grad, x, r, hmc.Eps)
 			}
@@ -150,12 +147,12 @@ func (hmc *HMC) Sample(
 				hmc.NAcc++
 			} else {
 				// Rejected, restore x.
-				copy(x, x_)
+				x = x_
 				hmc.NRej++
 			}
 
 			// Write a sample to the channel.
-			samples <- clone(x)
+			samples <- x
 		}
 	}()
 }
