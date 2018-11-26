@@ -1,4 +1,4 @@
-# Basic examples of `infergo`
+# Basic examples of infergo 
 
  * [hello](hello/) — probabilistic "hello world" — inferring parameters of a normal distribution.
  * [gmm](gmm/) — simple Gaussian mixture model. See [infergo case studies](http://bitbucket.org/dtolpin/infergo-studies) for a more elaborated model.
