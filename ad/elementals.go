@@ -9,7 +9,7 @@ import (
 // and the parameters and returns a vector of partial gradients.
 // Depending on the function, either the value or the parameters
 // may be ignored in the computation of the gradient.
-type gradient func(value float64, params ...float64) []float64
+type gradient = func(value float64, params ...float64) []float64
 
 var elementals map[uintptr]gradient
 
@@ -24,7 +24,7 @@ func RegisterElemental(f interface{}, g gradient) {
 	elementals[fkey(f)] = g
 }
 
-// Elementalgradient returns the gradient for a function.  If
+// ElementalGradient returns the gradient for a function.  If
 // the function is not registered as elemental, the second
 // returned value is false.
 func ElementalGradient(f interface{}) (gradient, bool) {
