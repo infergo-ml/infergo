@@ -5,13 +5,13 @@ import (
 	"reflect"
 )
 
-// The gradient of an elemental function accepts the function value
-// and the parameters and returns a vector of partial gradients.
+// ElementalGradientFunc accepts the function value and the
+// parameters and returns a vector of partial gradients.
 // Depending on the function, either the value or the parameters
 // may be ignored in the computation of the gradient.
-type gradient = func(value float64, params ...float64) []float64
+type ElementalGradientFunc func(value float64, params ...float64) []float64
 
-var elementals map[uintptr]gradient
+var elementals map[uintptr]ElementalGradientFunc
 
 // fkey computes map key for a function.
 func fkey(f interface{}) uintptr {
@@ -20,21 +20,21 @@ func fkey(f interface{}) uintptr {
 
 // RegisterElemental registers the gradient for an elemental
 // function.
-func RegisterElemental(f interface{}, g gradient) {
+func RegisterElemental(f interface{}, g ElementalGradientFunc) {
 	elementals[fkey(f)] = g
 }
 
 // ElementalGradient returns the gradient for a function.  If
 // the function is not registered as elemental, the second
 // returned value is false.
-func ElementalGradient(f interface{}) (gradient, bool) {
+func ElementalGradient(f interface{}) (ElementalGradientFunc, bool) {
 	g, ok := elementals[fkey(f)]
 	return g, ok
 }
 
 // Elementals from the math package.
 func init() {
-	elementals = make(map[uintptr]gradient)
+	elementals = make(map[uintptr]ElementalGradientFunc)
 	RegisterElemental(math.Sqrt,
 		func(value float64, _ ...float64) []float64 {
 			return []float64{0.5 / value}
