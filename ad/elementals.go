@@ -26,7 +26,8 @@ func RegisterElemental(f interface{}, g ElementalGradientFunc) {
 
 // ElementalGradient returns the gradient for a function.  If
 // the function is not registered as elemental, the second
-// returned value is false.
+// returned value is false. Intended to be called from the
+// backward pass of gradient computation. Exported for testing.
 func ElementalGradient(f interface{}) (ElementalGradientFunc, bool) {
 	g, ok := elementals[fkey(f)]
 	return g, ok
