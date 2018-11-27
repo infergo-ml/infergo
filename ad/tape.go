@@ -49,8 +49,8 @@ type record struct {
 // elemental stores information required to compute the
 // gradient.
 type elemental struct {
-	n int      // number of arguments
-	g gradient // gradient
+	n int                   // number of arguments
+	g ElementalGradientFunc // gradient
 }
 
 // counters holds counters for the tape components. Counters are
