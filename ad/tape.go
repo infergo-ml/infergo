@@ -50,7 +50,7 @@ type record struct {
 // gradient.
 type elemental struct {
 	n int                   // number of arguments
-	g ElementalGradientFunc // gradient
+	g ElementalGradientFunc // gradient function
 }
 
 // counters holds counters for the tape components. Counters are
