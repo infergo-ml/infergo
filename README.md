@@ -9,7 +9,7 @@ for optimization and inference.
 
 MIT license (see [LICENSE](LICENSE)).
 
-[![](http://infergo.org/favicon.png) `infergo` home page](http://infergo.org) [![GoDoc](https://godoc.org/bitbucket.org/dtolpin/infergo?status.svg)](https://godoc.org/bitbucket.org/dtolpin/infergo)
+[![](http://infergo.org/logo.png) `infergo` home page](http://infergo.org) [![GoDoc](https://godoc.org/bitbucket.org/dtolpin/infergo?status.svg)](https://godoc.org/bitbucket.org/dtolpin/infergo)
 
 ## Example
 
