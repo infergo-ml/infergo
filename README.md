@@ -1,7 +1,12 @@
 # Go programs that learn
 
-[infergo](http://infergo.org/) — Go as a platform for probabilistic inference.
-Uses automatic differentiation and gradient descent optimization.
+
+[`infergo`](http://infergo.org/) is a  probabilistic
+programming facility for the [Go language](http://golang.org/).
+`infergo` allows to write probabilistic models in almost
+unrestricted Go and relies on [automatic
+differentiation](https://en.wikipedia.org/wiki/Automatic_differentiation)
+for optimization and inference.
 
 [![GoDoc](https://godoc.org/bitbucket.org/dtolpin/infergo?status.svg)](https://godoc.org/bitbucket.org/dtolpin/infergo)
 
