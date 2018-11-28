@@ -1,6 +1,5 @@
 # Infergo — Go programs that learn
 
-
 [`infergo`](http://infergo.org/) is a  probabilistic
 programming facility for the [Go language](http://golang.org/).
 `infergo` allows to write probabilistic models in almost
