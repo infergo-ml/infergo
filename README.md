@@ -8,9 +8,9 @@ unrestricted Go and relies on [automatic
 differentiation](https://en.wikipedia.org/wiki/Automatic_differentiation)
 for optimization and inference.
 
-[![GoDoc](https://godoc.org/bitbucket.org/dtolpin/infergo?status.svg)](https://godoc.org/bitbucket.org/dtolpin/infergo)
+MIT license (see [LICENSE](LICENSE)).
 
-MIT license (see [LICENSE](LICENSE))
+[![GoDoc](https://godoc.org/bitbucket.org/dtolpin/infergo?status.svg)](https://godoc.org/bitbucket.org/dtolpin/infergo)
 
 ## Example
 
