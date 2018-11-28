@@ -7,9 +7,7 @@ unrestricted Go and relies on [automatic
 differentiation](https://en.wikipedia.org/wiki/Automatic_differentiation)
 for optimization and inference.
 
-MIT license (see [LICENSE](LICENSE)).
-
-[![`infergo`](http://infergo.org/favicon.png) home page](http://infergo.org) [![GoDoc](https://godoc.org/bitbucket.org/dtolpin/infergo?status.svg)](https://godoc.org/bitbucket.org/dtolpin/infergo)
+[license](LICENSE) | [home page](http://infergo.org) | [![GoDoc](https://godoc.org/bitbucket.org/dtolpin/infergo?status.svg)](https://godoc.org/bitbucket.org/dtolpin/infergo)
 
 ## Example
 
