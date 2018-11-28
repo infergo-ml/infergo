@@ -48,8 +48,7 @@ func (opt *Momentum) Step(
 	return ll, grad
 }
 
-// Adam (https://arxiv.org/abs/1412.6980). Call SetDefaults
-// to set the default values for Beta1, Beta2, or Eps.
+// Adam (https://arxiv.org/abs/1412.6980).
 type Adam struct {
 	Rate  float64   // learning rate
 	Beta1 float64   // first momentum factor
