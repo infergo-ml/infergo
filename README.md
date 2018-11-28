@@ -1,4 +1,4 @@
-# Go programs that learn
+# Infergo — Go programs that learn
 
 
 [`infergo`](http://infergo.org/) is a  probabilistic
@@ -70,3 +70,19 @@ for i := 0; i != 1000; i++ {
 }
 hmc.Stop()
 ```
+
+## Acknowledgements
+
+I owe a debt of gratitude to [Frank
+Wood](https://www.cs.ubc.ca/~fwood/) who introduced me to
+probabilistic programming and inspired me to pursue
+probabilistic programming paradigms and applications. I also
+want to thank [Jan-Willem van de
+Meent](http://www.ccs.neu.edu/home/jwvdm/), with whom I had
+fruitful discussions of motives, ideas, and implementation
+choices behind `infergo`, and whose thoughts and recommendations
+significantly influenced `infergo` design.  Finally, I want to
+thank [PUB+](http://pubplus.com/), the company I work for, for
+supporting me in development of `infergo` and letting me
+experiment with applying probabilistic programming to critical
+decision-making in production environment.
