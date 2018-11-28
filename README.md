@@ -1,11 +1,6 @@
 # Infergo — Go programs that learn
 
-[`infergo`](http://infergo.org/) is a  probabilistic
-programming facility for the [Go language](http://golang.org/).
-`infergo` allows to write probabilistic models in almost
-unrestricted Go and relies on [automatic
-differentiation](https://en.wikipedia.org/wiki/Automatic_differentiation)
-for optimization and inference.
+[`infergo`](http://infergo.org/) is a probabilistic programming facility for the [Go language](http://golang.org/). `infergo` allows to write probabilistic models in almost unrestricted Go and relies on [automaticdifferentiation](https://en.wikipedia.org/wiki/Automatic_differentiation) for optimization and inference.
 
 [license](LICENSE) | [home page](http://infergo.org) | [![GoDoc](https://godoc.org/bitbucket.org/dtolpin/infergo?status.svg)](https://godoc.org/bitbucket.org/dtolpin/infergo)
 
