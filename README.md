@@ -1,6 +1,6 @@
-# Learning programs in Go
+# Go programs that learn
 
-Go as a platform for probabilistic inference. Uses
+[infergo](http://infergo.org/) — Go as a platform for probabilistic inference. Uses
 automatic differentiation and gradient descent
 optimization.
 
