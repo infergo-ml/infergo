@@ -28,10 +28,7 @@ install: all test
 	for package in $(PACKAGES); do go install ./$$package; done
 
 push:
-	git push
-	git push ssh://git@github.com/dtolpin/infergo
-	git push --tags
-	git push --tags ssh://git@github.com/dtolpin/infergo
+	for repo in origin ssh://git@github.com/infergo-ml/infergo; do git push $$repo; git push --tags $$repo; done
 
 clean-examples:
 	for x in $(EXAMPLES); do (cd examples/$$x && make clean); done
