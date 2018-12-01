@@ -1,8 +1,8 @@
 package dist
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	"bitbucket.org/dtolpin/infergo/mathx"
+	"bitbucket.org/dtolpin/infergo/ad"
 	"fmt"
 	"math"
 )
@@ -51,7 +51,7 @@ func (_ normal) Logp(mu, sigma float64, y float64) float64 {
 	ad.Assignment(&logv, ad.Elemental(math.Log, &vari))
 	var d float64
 	ad.Assignment(&d, ad.Arithmetic(ad.OpSub, &y, &mu))
-	return ad.Return(ad.Arithmetic(ad.OpMul, ad.Arithmetic(ad.OpNeg, ad.Value(0.5)), (ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpDiv, ad.Arithmetic(ad.OpMul, &d, &d), &vari), &logv), &log2pi))))
+	return ad.Return(ad.Arithmetic(ad.OpMul, ad.Value(-0.5), (ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpDiv, ad.Arithmetic(ad.OpMul, &d, &d), &vari), &logv), &log2pi))))
 }
 
 func (_ normal) Logps(mu, sigma float64, y ...float64) float64 {
@@ -69,7 +69,7 @@ func (_ normal) Logps(mu, sigma float64, y ...float64) float64 {
 	for i := range y {
 		var d float64
 		ad.Assignment(&d, ad.Arithmetic(ad.OpSub, &y[i], &mu))
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpMul, ad.Arithmetic(ad.OpNeg, ad.Value(0.5)), (ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpDiv, ad.Arithmetic(ad.OpMul, &d, &d), &vari), &logv), &log2pi)))))
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpMul, ad.Value(-0.5), (ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpDiv, ad.Arithmetic(ad.OpMul, &d, &d), &vari), &logv), &log2pi)))))
 	}
 	return ad.Return(&ll)
 }

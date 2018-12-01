@@ -9,7 +9,7 @@ import (
 
 const (
 	command = "deriv"
-	version = "0.2.1"
+	version = "0.2.2b1"
 )
 
 var (
@@ -23,6 +23,8 @@ func init() {
 		"print version")
 	flag.StringVar(&PREFIX, "prefix", PREFIX,
 		"prefix of generated identifiers")
+	flag.BoolVar(&ad.Fold, "fold", ad.Fold,
+		"fold constants")
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(),
 			`Generates a differentiated model. Usage:

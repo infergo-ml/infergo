@@ -724,7 +724,7 @@ func (m Model) Observe(x []float64) float64 {
 	}
 	var y float64
 	ad.Assignment(&y, &x[0])
-	ad.Assignment(&y, ad.Arithmetic(ad.OpNeg, ad.Value(0.5)))
+	ad.Assignment(&y, ad.Value(-0.5))
 	ad.Assignment(&y, ad.Arithmetic(ad.OpNeg, &x[0]))
 	return ad.Return(&y)
 }`,
@@ -743,6 +743,7 @@ func (m Model) Observe(x []float64) float64 {
 	y = y + 1
 	y = y + one
 	y = y + math.Pi
+	y = one + math.Pi
 	y = y - x[2]
 	y = y * x[3]
 	return y / x[4]
@@ -770,6 +771,7 @@ func (m Model) Observe(x []float64) float64 {
 	ad.Assignment(&y, ad.Arithmetic(ad.OpAdd, &y, ad.Value(1)))
 	ad.Assignment(&y, ad.Arithmetic(ad.OpAdd, &y, ad.Value(one)))
 	ad.Assignment(&y, ad.Arithmetic(ad.OpAdd, &y, ad.Value(math.Pi)))
+	ad.Assignment(&y, ad.Value(4.141592653589793))
 	ad.Assignment(&y, ad.Arithmetic(ad.OpSub, &y, &x[2]))
 	ad.Assignment(&y, ad.Arithmetic(ad.OpMul, &y, &x[3]))
 	return ad.Return(ad.Arithmetic(ad.OpDiv, &y, &x[4]))

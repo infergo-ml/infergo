@@ -41,6 +41,7 @@ import (
 	"bufio"
 	"fmt"
 	"go/ast"
+	"go/constant"
 	"go/parser"
 	"go/printer"
 	"go/token"
@@ -51,6 +52,12 @@ import (
 	"os"
 	"path"
 	"strings"
+)
+
+var (
+	// When Fold is true, folded values are substituted instead
+	// of constant expressions.
+	Fold = true
 )
 
 const (
@@ -723,23 +730,29 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 			case *ast.UnaryExpr:
 				switch n.Op {
 				case token.SUB:
-					neg := callExpr("Arithmetic",
-						varExpr("OpNeg"),
-						n.X)
+					var neg ast.Expr
+					if neg = m.fold(n); neg == nil {
+						neg = callExpr("Arithmetic",
+							varExpr("OpNeg"),
+							n.X)
+					}
 					c.Replace(neg)
 				default:
 					panic(fmt.Sprintf(
 						"cannot rewrite unary %v", n.Op))
 				}
 			case *ast.BinaryExpr:
-				bin := callExpr("Arithmetic",
-					map[token.Token]ast.Expr{
-						token.ADD: varExpr("OpAdd"),
-						token.SUB: varExpr("OpSub"),
-						token.MUL: varExpr("OpMul"),
-						token.QUO: varExpr("OpDiv"),
-					}[n.Op],
-					n.X, n.Y)
+				var bin ast.Expr
+				if bin = m.fold(n); bin == nil {
+					bin = callExpr("Arithmetic",
+						map[token.Token]ast.Expr{
+							token.ADD: varExpr("OpAdd"),
+							token.SUB: varExpr("OpSub"),
+							token.MUL: varExpr("OpMul"),
+							token.QUO: varExpr("OpDiv"),
+						}[n.Op],
+						n.X, n.Y)
+				}
 				c.Replace(bin)
 			case *ast.AssignStmt:
 				var asgn ast.Expr
@@ -929,6 +942,20 @@ func (m *model) enterStmt(method *ast.FuncDecl) ast.Stmt {
 	}
 	enter := &ast.ExprStmt{X: callExpr("Enter", params...)}
 	return enter
+}
+
+// fold constant-folds the expression, if possible. If the expression
+// is not constant, nil is returned.
+func (m *model) fold(expr ast.Expr) ast.Expr {
+	if !Fold {
+		return nil
+	}
+	if v := m.info.Types[expr].Value; v != nil {
+		if fv, known := constant.Float64Val(v); known {
+			return callExpr("Value", floatExpr(fv))
+		}
+	}
+	return nil
 }
 
 // genIdent returns generated identifier based on the name.
