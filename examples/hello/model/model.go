@@ -15,7 +15,7 @@ type Model struct {
 // x[0] is the mean, x[1] is the log stddev of the distribution
 func (m *Model) Observe(x []float64) float64 {
 	// Our prior is a unit normal ...
-	ll := 2*math.Pi + Normal.Logps(0, 1, x...)
+	ll := Normal.Logps(0, 1, x...)
 	// ... but the posterior is based on data observations.
 	ll += Normal.Logps(x[0], math.Exp(x[1]), m.Data...)
 	return ll + math.Pi
