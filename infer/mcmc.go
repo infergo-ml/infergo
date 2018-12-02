@@ -143,7 +143,7 @@ func (hmc *HMC) Sample(
 			e := energy(l, r) // final energy
 
 			// Accept with MH probability.
-			if e-e0 >= math.Log(1.-rand.Float64()) {
+			if e-e0 >= math.Log(1-rand.Float64()) {
 				hmc.NAcc++
 			} else {
 				// Rejected, restore x.
@@ -218,7 +218,7 @@ func (nuts *NUTS) Sample(
 			e := energy(l, r)
 
 			// Sample the slice variable
-			logu := math.Log((1. - rand.Float64())) + e
+			logu := math.Log((1 - rand.Float64())) + e
 
 			// Initialize the tree
 			xl, rl, xr, rr, depth, nelem := x, r, x, r, 0, 1.
@@ -230,9 +230,9 @@ func (nuts *NUTS) Sample(
 				// Choose direction.
 				var dir float64
 				if rand.Float64() < 0.5 {
-					dir = -1.
+					dir = -1
 				} else {
-					dir = 1.
+					dir = 1
 				}
 
 				var (
@@ -287,7 +287,7 @@ func (nuts *NUTS) buildLeftOrRightTree(
 	nelem float64,
 	stop bool,
 ) {
-	if dir == -1. {
+	if dir == -1 {
 		xl, rl, _, _, x, nelem, stop =
 			nuts.buildTree(m, xl, rl, logu, dir, depth)
 	} else {
@@ -322,7 +322,7 @@ func (nuts *NUTS) buildTree(
 		// Cache model run inside leapfrog
 		nuts.x, nuts.l, nuts.grad = x, l, grad
 		if energy(l, r) >= logu {
-			nelem = 1.
+			nelem = 1
 		}
 		if energy(l, r)+nuts.Delta <= logu {
 			stop = true

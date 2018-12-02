@@ -93,13 +93,13 @@ func main() {
 
 	// Set a starting  point
 	if m.NComp == 1 {
-		x[0] = 0.
-		x[1] = 1.
+		x[0] = 0
+		x[1] = 1
 	} else {
 		// Spread the initial components wide and thin
 		for j := 0; j != m.NComp; j++ {
-			x[2*j] = -2. + 4./float64(m.NComp-1)*float64(j)
-			x[2*j+1] = 1.
+			x[2*j] = -2 + 4/float64(m.NComp-1)*float64(j)
+			x[2*j+1] = 1
 		}
 	}
 	// Add some noise for a real-life experience.

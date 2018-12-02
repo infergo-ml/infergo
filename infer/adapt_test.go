@@ -13,7 +13,7 @@ func TestDualAveraging(t *testing.T) {
 		xnext               float64
 	}{
 		{1, 0, 1, 0.1, -0.1},
-		{4, 1, -2, 0.4, 1.},
+		{4, 1, -2, 0.4, 1},
 	} {
 		da := DualAveraging{Rate: c.Rate}
 		xnext := da.Step(c.t, c.x, c.gradSum)

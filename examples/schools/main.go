@@ -76,7 +76,7 @@ func main() {
 	case "gradient", "momentum":
 		opt = &infer.Momentum{
 			Rate:  RATE,
-			Decay: math.Pow(0.1, 1./float64(NITER)),
+			Decay: math.Pow(0.1, 1/float64(NITER)),
 		}
 		if optimizer == "momentum" {
 			opt.(*infer.Momentum).Gamma = GAMMA

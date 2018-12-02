@@ -17,7 +17,7 @@ type Grad interface {
 
 // Gradient ascent with momentum
 // (https://www.nature.com/articles/323533a0). If the momentum
-// factor is not set, and thus 0., reduces to vanilla gradient
+// factor is not set, and thus 0, reduces to vanilla gradient
 // ascent.
 type Momentum struct {
 	Rate  float64   //learning rate
@@ -81,14 +81,14 @@ func (opt *Adam) Step(
 
 	for i := range x {
 		// Compute the new momenta.
-		u := opt.Beta1*opt.u[i] + (1.-opt.Beta1)*grad[i]
-		v := opt.Beta2*opt.v[i] + (1.-opt.Beta2)*grad[i]*grad[i]
+		u := opt.Beta1*opt.u[i] + (1-opt.Beta1)*grad[i]
+		v := opt.Beta2*opt.v[i] + (1-opt.Beta2)*grad[i]*grad[i]
 		opt.u[i] = u
 		opt.v[i] = v
 
 		// Correct the bias.
-		u /= (1. - opt.b1t)
-		v /= (1. - opt.b2t)
+		u /= (1 - opt.b1t)
+		v /= (1 - opt.b2t)
 
 		// Update the parameters.
 		x[i] += opt.Rate / (math.Sqrt(v) + opt.Eps) * u
@@ -104,13 +104,13 @@ func (opt *Adam) Step(
 // setDefaults sets default parameter values for the Adam
 // optimizer unless initialized.
 func (opt *Adam) setDefaults() {
-	if opt.Beta1 == 0. {
+	if opt.Beta1 == 0 {
 		opt.Beta1 = 0.9
 	}
-	if opt.Beta2 == 0. {
+	if opt.Beta2 == 0 {
 		opt.Beta2 = 0.999
 	}
-	if opt.Eps == 0. {
+	if opt.Eps == 0 {
 		opt.Eps = 1E-8
 	}
 }

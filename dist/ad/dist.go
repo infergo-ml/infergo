@@ -263,7 +263,7 @@ func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
 	var sum float64
 	ad.Assignment(&sum, ad.Value(0.))
 	for j := range y {
-		ad.Assignment(&sum, ad.Arithmetic(ad.OpAdd, &sum, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha[j], ad.Value(1.))), ad.Elemental(math.Log, &y[j]))))
+		ad.Assignment(&sum, ad.Arithmetic(ad.OpAdd, &sum, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha[j], ad.Value(1))), ad.Elemental(math.Log, &y[j]))))
 	}
 
 	return ad.Return(ad.Arithmetic(ad.OpAdd, ad.Call(func(_ []float64) {
@@ -288,7 +288,7 @@ func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 		var sum float64
 		ad.Assignment(&sum, ad.Value(0.))
 		for j := range alpha {
-			ad.Assignment(&sum, ad.Arithmetic(ad.OpAdd, &sum, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha[j], ad.Value(1.))), ad.Elemental(math.Log, &y[i][j]))))
+			ad.Assignment(&sum, ad.Arithmetic(ad.OpAdd, &sum, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha[j], ad.Value(1))), ad.Elemental(math.Log, &y[i][j]))))
 		}
 		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, &sum))
 	}

@@ -17,12 +17,12 @@ type Model struct {
 func (m *Model) Observe(x []float64) float64 {
 	bandwidth := math.Exp(x[0])
 	beliefs := make([][2]float64, m.NPages)
-	churn_probability := 2. / float64(m.NPages)
+	churn_probability := 2 / float64(m.NPages)
 
 	// initialize the beliefs
 	for j := 0; j != m.NPages; j++ {
-		beliefs[j][0] = 2. * churn_probability
-		beliefs[j][1] = 2. * (1 - churn_probability)
+		beliefs[j][0] = 2 * churn_probability
+		beliefs[j][1] = 2 * (1 - churn_probability)
 	}
 
 	// put a prior on the bandwidth
@@ -36,10 +36,10 @@ func (m *Model) Observe(x []float64) float64 {
 			evidence := beliefs[j][0] + beliefs[j][1]
 			if churned {
 				target += math.Log(beliefs[j][0] / evidence)
-				beliefs[j][0] += 1.
+				beliefs[j][0] += 1
 			} else {
 				target += math.Log(beliefs[j][1] / evidence)
-				beliefs[j][1] += 1.
+				beliefs[j][1] += 1
 			}
 
 			// discount the beliefs based on the bandwidth

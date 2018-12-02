@@ -130,7 +130,7 @@ func (m Model) Observe(x []float64) float64 {
 }
 
 func (m Model) Sample() float64 {
-	return 0.0
+	return 0
 }
 `,
 		},
@@ -152,7 +152,7 @@ func (m Model) Observe(x []float64) float64 {
 			"second.go": `package two
 
 func (m Model) Sample() float64 {
-	return 0.0
+	return 0
 }
 `,
 		},
@@ -226,7 +226,7 @@ func (m Model) Observe(x []float64) float64 {
 	err := "success"
 	a, err := 0, "failure"
 	println(a, err)
-	return 1.
+	return 1
 }`,
 			//----------------------------------------------------
 			`package definesome
@@ -239,7 +239,7 @@ func (m Model) Observe(x []float64) float64 {
 	var a int
 	a, err = 0, "failure"
 	println(a, err)
-	return 1.
+	return 1
 }`,
 		},
 		//====================================================
@@ -253,7 +253,7 @@ func (m Model) Observe(x []float64) float64 {
 	id := &ast.Ident{}
 	pos := &tok.Position{}
 	println(id, pos)
-	return 0.
+	return 0
 }`,
 			//----------------------------------------------------
 			`package qualified
@@ -268,7 +268,7 @@ func (m Model) Observe(x []float64) float64 {
 	var pos *tok.Position
 	pos = &tok.Position{}
 	println(id, pos)
-	return 0.
+	return 0
 }`,
 		},
 		//====================================================
@@ -310,7 +310,7 @@ func (m Model) Observe(x []float64) float64 {
 	if _, err := foo(); err != nil {
 		println("error")
 	}
-	return 0.
+	return 0
 }`,
 			//----------------------------------------------------
 			`package simplestmt
@@ -323,7 +323,7 @@ func (m Model) Observe(x []float64) float64 {
 	if _, err := foo(); err != nil {
 		println("error")
 	}
-	return 0.
+	return 0
 }`,
 		},
 		//====================================================
@@ -1167,7 +1167,7 @@ type Model float64
 func (m Model) Observe(x []float64) float64 {
 	a := ast.Ident{}.NamePos
 	a = a
-	return 0.
+	return 0
 }
 `,
 			"erroneous.go:7:2: cannot find name " +
@@ -1181,7 +1181,7 @@ type Model float64
 
 func (m Model) Observe(x []float64) float64 {
 	ad.Println()
-	return 0.
+	return 0
 }
 `,
 			"erroneous.go:2:8: package name \"ad\" is reserved",

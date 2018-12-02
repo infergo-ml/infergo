@@ -108,7 +108,7 @@ func main() {
 		// Taken from stan worksheet
 		PPV:            data,
 		NPages:         10,
-		PriorBandwidth: 100.,
+		PriorBandwidth: 100,
 	}
 	// The parameter is log bandwidth
 	x := make([]float64, 1)

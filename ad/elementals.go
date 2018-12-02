@@ -48,7 +48,7 @@ func init() {
 		})
 	RegisterElemental(math.Log,
 		func(_ float64, params ...float64) []float64 {
-			return []float64{1. / params[0]}
+			return []float64{1 / params[0]}
 		})
 	RegisterElemental(math.Pow,
 		func(value float64, params ...float64) []float64 {
@@ -66,6 +66,6 @@ func init() {
 		})
 	RegisterElemental(math.Tan,
 		func(value float64, _ ...float64) []float64 {
-			return []float64{1. + value*value}
+			return []float64{1 + value*value}
 		})
 }

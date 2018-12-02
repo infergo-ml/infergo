@@ -179,7 +179,7 @@ func (dist Dirichlet) Observe(x []float64) float64 {
 func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
 	sum := 0.
 	for j := range y {
-		sum += (alpha[j] - 1.) * math.Log(y[j])
+		sum += (alpha[j] - 1) * math.Log(y[j])
 	}
 
 	return dist.logZ(alpha) + sum
@@ -193,7 +193,7 @@ func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 		ll += logZ
 		sum := 0.
 		for j := range alpha {
-			sum += (alpha[j] - 1.) * math.Log(y[i][j])
+			sum += (alpha[j] - 1) * math.Log(y[i][j])
 		}
 		ll += sum
 	}

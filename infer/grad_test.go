@@ -17,7 +17,7 @@ type constGrad struct {
 func (m *constGrad) Observe(x []float64) float64 {
 	ad.Setup(x)
 	var ll float64
-	ad.Assignment(&ll, ad.Value(0.))
+	ad.Assignment(&ll, ad.Value(0))
 	for i := range x {
 		ad.Assignment(&ll,
 			ad.Arithmetic(ad.OpAdd, &ll,
@@ -30,9 +30,9 @@ func (m *constGrad) Observe(x []float64) float64 {
 // constGrad gradient.
 func TestModel(t *testing.T) {
 	m := &constGrad{
-		grad: []float64{1., 2.},
+		grad: []float64{1, 2},
 	}
-	m.Observe([]float64{3., 1.})
+	m.Observe([]float64{3, 1})
 	grad := ad.Gradient()
 	for i := range grad {
 		if grad[i] != m.grad[i] {
@@ -48,9 +48,9 @@ func TestMomentum(t *testing.T) {
 		Decay: 0.5,
 	}
 	m := &constGrad{
-		grad: []float64{1., 2.},
+		grad: []float64{1, 2},
 	}
-	x := []float64{0., 0.}
+	x := []float64{0, 0}
 	// Basic update
 	xNext := []float64{0.1, 0.2}
 	opt.Step(m, x)
@@ -88,9 +88,9 @@ func TestAdam(t *testing.T) {
 		Rate: 0.1,
 	}
 	m := &constGrad{
-		grad: []float64{1., 2.},
+		grad: []float64{1, 2},
 	}
-	x := []float64{0., 0.}
+	x := []float64{0, 0}
 	xNext := []float64{0.1, 0.1}
 	opt.Step(m, x)
 	for i := range x {

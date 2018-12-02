@@ -30,7 +30,7 @@ func init() {
 	}
 	// The returned value is in the first place;
 	// see Call and Return below.
-	tape.places = append(tape.places, Value(0.))
+	tape.places = append(tape.places, Value(0))
 	tape.records = append(tape.records,
 		record{typ: typDummy})
 }
@@ -103,7 +103,7 @@ func push(n int) {
 	tape.cstack = append(tape.cstack, c)
 	// The returned value is in the first place;
 	// see Call and Return below.
-	tape.places = append(tape.places, Value(0.))
+	tape.places = append(tape.places, Value(0))
 }
 
 // register stores locations of function parameters at the
@@ -133,7 +133,7 @@ func Return(px *float64) float64 {
 // Arithmetic encodes an arithmetic operation and returns the
 // location of the result.
 func Arithmetic(op int, px ...*float64) *float64 {
-	p := Value(0.)
+	p := Value(0)
 
 	// Register
 	r := record{
@@ -216,7 +216,7 @@ func Assignment(p *float64, px *float64) {
 // argument values are copied to the tape memory.
 // Elemental returns the location of the result.
 func Elemental(f interface{}, px ...*float64) *float64 {
-	p := Value(0.)
+	p := Value(0)
 
 	g, ok := ElementalGradient(f)
 	if !ok {
@@ -315,7 +315,7 @@ func variadic(px []*float64) []float64 {
 	var sides []*float64
 	v0 := len(tape.values)
 	for range px { // left-hand side
-		sides = append(sides, Value(0.))
+		sides = append(sides, Value(0))
 	}
 	vararg := tape.values[v0:]   // the slice
 	sides = append(sides, px...) // right-hand side
@@ -364,8 +364,8 @@ func backward() []float64 {
 	// allocate enough place for all adjoints at once, avoids
 	// reallocation of map storage, which is slow.
 	adjoints := make(map[*float64]float64, len(tape.places)-c.p)
-	// Set the adjoint of the result to 1.
-	adjoints[tape.places[c.p]] = 1.
+	// Set the adjoint of the result to 1
+	adjoints[tape.places[c.p]] = 1
 	// Bottom is the first record in the current frame.
 	bottom := tape.cstack[len(tape.cstack)-1].r
 	for ir := len(tape.records); ir != bottom; {
@@ -385,7 +385,7 @@ func backward() []float64 {
 				// left-hand side is zero (because the place is
 				// overwritten) except if the right-hand side is
 				// the same place.
-				adjoints[tape.places[r.p]] = 0.
+				adjoints[tape.places[r.p]] = 0
 				adjoints[tape.places[r.p+1]] += a
 			} else {
 				// Restore the previous values.
@@ -403,7 +403,7 @@ func backward() []float64 {
 				// are overwritten) except if the right-hand
 				// side is the same place.
 				for i := 0; i != r.op; i++ {
-					adjoints[tape.places[r.p+i]] = 0.
+					adjoints[tape.places[r.p+i]] = 0
 				}
 				for i := 0; i != r.op; i++ {
 					adjoints[tape.places[r.p+r.op+i]] += a[i]

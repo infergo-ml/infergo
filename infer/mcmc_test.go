@@ -23,8 +23,8 @@ func TestEnergy(t *testing.T) {
 		r []float64
 		e float64
 	}{
-		{1., []float64{0.}, 1},
-		{1., []float64{1., 3.}, -4},
+		{1, []float64{0}, 1},
+		{1, []float64{1, 3}, -4},
 	} {
 		if e := energy(c.l, c.r); math.Abs(e-c.e) > 1E-6 {
 			t.Errorf("incorrect energy for l=%v, r=%v: "+
@@ -38,7 +38,7 @@ func TestLeapfrog(t *testing.T) {
 	m := &constGrad{
 		grad: []float64{0.5, 1.5},
 	}
-	x, r, eps := []float64{0., 0.}, []float64{1., -1.}, 0.5
+	x, r, eps := []float64{0, 0}, []float64{1, -1}, 0.5
 	m.Observe(x)
 	grad := ad.Gradient()
 	_, grad = leapfrog(m, grad, x, r, eps)
@@ -70,7 +70,7 @@ type testModel struct {
 func (m *testModel) Observe(x []float64) float64 {
 	ad.Setup(x)
 	var ll float64
-	ad.Assignment(&ll, ad.Value(0.))
+	ad.Assignment(&ll, ad.Value(0))
 	var stddev float64
 	ad.Assignment(&stddev, ad.Elemental(math.Exp, &x[1]))
 	for i := range m.data {
@@ -159,18 +159,18 @@ func TestUTurn(t *testing.T) {
 		uturn     bool
 	}{
 		{
-			[]float64{-1., 0}, []float64{1., 0.},
-			[]float64{1., 0.},
+			[]float64{-1, 0}, []float64{1, 0},
+			[]float64{1, 0},
 			false,
 		},
 		{
-			[]float64{-1., 0}, []float64{-1., 0.},
-			[]float64{0., 1.},
+			[]float64{-1, 0}, []float64{-1, 0},
+			[]float64{0, 1},
 			false,
 		},
 		{
-			[]float64{1., 0}, []float64{0., 1.},
-			[]float64{1., 0.},
+			[]float64{1, 0}, []float64{0, 1},
+			[]float64{1, 0},
 			true,
 		},
 	} {
@@ -231,12 +231,12 @@ func TestNUTSDepth(t *testing.T) {
 		depths    []int
 		meanDepth float64
 	}{
-		{[]int{}, 0.},
-		{[]int{0}, 0.},
-		{[]int{1}, 1.},
-		{[]int{2, 2}, 2.},
+		{[]int{}, 0},
+		{[]int{0}, 0},
+		{[]int{1}, 1},
+		{[]int{2, 2}, 2},
 		{[]int{2, 1}, 1.5},
-		{[]int{0, 1, 2}, 1.},
+		{[]int{0, 1, 2}, 1},
 	} {
 		nuts.Depth = nil
 		for _, depth := range c.depths {

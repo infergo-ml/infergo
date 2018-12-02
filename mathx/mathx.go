@@ -38,7 +38,7 @@ func init() {
 	ad.RegisterElemental(LogSumExp,
 		func(_ float64, params ...float64) []float64 {
 			z := math.Exp(params[1] - params[0])
-			t := 1. / (1. + z)
+			t := 1 / (1 + z)
 			return []float64{t, t * z}
 		})
 }
@@ -72,8 +72,8 @@ var gammaCof = []float64{
 
 // digamma is the derivative of LogGamma.
 func digamma(x float64) float64 {
-	if x < 6. {
-		return digamma(x+1) - 1./x
+	if x < 6 {
+		return digamma(x+1) - 1/x
 	}
 	return math.Log(x) -
 		1/(2*x) -

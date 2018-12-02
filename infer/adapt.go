@@ -48,7 +48,7 @@ func (da *DepthAdapter) Adapt(
 			t := float64(i / da.NAdpt)
 			Eps := nuts.Eps
 			depth := nuts.MeanDepth()
-			if t == 0. {
+			if t == 0 {
 				// Guess initial value.
 				// Step is roughly inverse proportional to depth.
 				nuts.Eps *= depth / da.Depth
@@ -79,7 +79,7 @@ func (da *DepthAdapter) setDefaults() {
 	if da.NAdpt == 0 {
 		da.NAdpt = 10
 	}
-	if da.MinGrad == 0. {
+	if da.MinGrad == 0 {
 		da.MinGrad = 0.01
 	}
 }
