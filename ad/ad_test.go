@@ -272,6 +272,33 @@ func (m Model) Observe(x []float64) float64 {
 }`,
 		},
 		//====================================================
+		{`package unimported
+import "go/ast"
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	pos := ast.Ident{}.NamePos
+	pos = pos
+	return 0
+}`,
+			//----------------------------------------------------
+			`package unimported
+import (
+	"go/ast"
+	"go/token"
+)
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	var pos token.Pos
+	pos = ast.Ident{}.NamePos
+	pos = pos
+	return 0
+}`,
+		},
+		//====================================================
 		{`package vardecl
 
 type Model float64
@@ -1160,18 +1187,21 @@ func TestDerivErrors(t *testing.T) {
 	}{
 		{
 			`package pkgname
-import "go/ast"
+import (
+	"go/ast"
+	token "math" // take the name token need to name token.Pos type
+)
 
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-	a := ast.Ident{}.NamePos
-	a = a
-	return 0
+	pos := ast.Ident{}.NamePos
+	pos = pos
+	return token.Sqrt(1)
 }
 `,
-			"erroneous.go:7:2: cannot find name " +
-				"for package \"go/token\"",
+			"erroneous.go:10:2: cannot name package \"go/token\": " +
+				"not imported and name \"token\" is taken",
 		},
 		{
 			`package adoverride
@@ -1212,7 +1242,7 @@ func (m Model) Observe(x []float64) float64 {
 		}
 		err = m.deriv()
 		if err == nil {
-			t.Errorf("should fail on %v: %s", m.pkg.Name, c.err)
+			t.Fatalf("should fail on %v: %s", m.pkg.Name, c.err)
 		}
 		if err.Error() != c.err {
 			t.Errorf("wrong error on %v: got %q, want %q",

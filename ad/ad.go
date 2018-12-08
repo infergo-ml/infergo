@@ -238,14 +238,15 @@ func (m *model) deriv() (err error) {
 				} else {
 					o = m.info.Implicits[imp]
 				}
-				pkgName := o.(*types.PkgName)
-				if pkgName.Name() == "ad" &&
-					pkgName.Imported().Path() != infergoImport {
-					pos := m.fset.Position(imp.Pos())
-					err = fmt.Errorf(
-						"%v:%v:%v: package name \"ad\" is reserved",
-						pos.Filename, pos.Line, pos.Column)
-					return err
+				if pkgName, ok := o.(*types.PkgName); ok {
+					if pkgName.Name() == "ad" &&
+						pkgName.Imported().Path() != infergoImport {
+						pos := m.fset.Position(imp.Pos())
+						err = fmt.Errorf(
+							"%v:%v:%v: package name \"ad\" is reserved",
+							pos.Filename, pos.Line, pos.Column)
+						return err
+					}
 				}
 			}
 			// Add the import (safe to add more than once)
@@ -505,6 +506,9 @@ func (m *model) typeAst(t types.Type, p token.Pos) ast.Expr {
 		func(pkg *types.Package) string {
 			pos := m.fset.Position(p)
 			file := m.pkg.Files[pos.Filename]
+			// If the package is not imported but the package
+			// name is available, we can add the import.
+			nameAvail := pkg.Name() != "ad" // ad is reserved
 			for _, is := range file.Imports {
 				// Remove quotes from the literal value.
 				path := is.Path.Value[1 : len(is.Path.Value)-1]
@@ -520,12 +524,23 @@ func (m *model) typeAst(t types.Type, p token.Pos) ast.Expr {
 						return is.Name.Name
 					}
 				}
+				if is.Name != nil && is.Name.Name == pkg.Name() {
+					nameAvail = false
+				}
 			}
-			// An object may have a type which does not have a
-			// name in the current file. We let the programmer
-			// fix this by adding the import.
-			panic(fmt.Sprintf("cannot find name for package %q",
-				pkg.Path()))
+			if nameAvail {
+				// The package is not imported, but the package
+				// name is available, import it.
+				astutil.AddImport(m.fset, file, pkg.Path())
+				return pkg.Name()
+			}
+			// An object has a type which does not have a name
+			// in the current file, and the package name is used
+			// by another package. We let the programmer fix
+			// this by adding a named import.
+			panic(fmt.Sprintf("cannot name package %q: "+
+				"not imported and name %q is taken",
+				pkg.Path(), pkg.Name()))
 		}))
 	if err != nil {
 		panic(fmt.Sprintf("cannot parse type %v: %v",
