@@ -1,18 +1,16 @@
 // Package ad implements automatic differentiation of a model.
 // A model is defined in it's own package. The model must
 // implement interface model.Model. In the model's source code:
-//   1. Method Observe of interface model.Model is
-//      differentiated.
-//   2. All methods on the type implementing model.Model
+//   1. All methods on the type implementing model.Model
 //      are differentiated.
-//   3. Within the methods, the following is differentiated:
+//   2. Within the methods, the following is differentiated:
 //      a) assignments to float64 (including parallel
 //         assignments if all values are of type float64);
 //      b) returns of float64;
 //      c) standalone calls to methods on the type implementing
 //         model.Model (apparently called for side  effects on
 //         the model).
-//   4. Imported package name "ad" is reserved.
+//   3. Imported package name "ad" is reserved.
 //   4. Non-dummy identifiers starting with the prefix for
 //      generated identifiers ("_" by default) are reserved.
 //
