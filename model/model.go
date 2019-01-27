@@ -9,3 +9,9 @@ package model
 type Model interface {
 	Observe(parameters []float64) float64
 }
+
+// Shift shifts n parameters from x.
+func Shift(x *[]float64, n) []float64 {
+	y, *x := (*x)[:n], (*x)[n:]
+	return y
+}
