@@ -11,7 +11,8 @@ type Model interface {
 }
 
 // Shift shifts n parameters from x.
-func Shift(x *[]float64, n) []float64 {
-	y, *x := (*x)[:n], (*x)[n:]
+func Shift(x *[]float64, n int) []float64 {
+	var y []float64
+	y, *x = (*x)[:n], (*x)[n:]
 	return y
 }
