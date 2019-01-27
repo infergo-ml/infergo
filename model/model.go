@@ -21,5 +21,5 @@ func (m Model) Shiftn(px *[]float64, n int, py *[]float64) {
 // Shiftn shifts a single value from the slice pointed to by px into
 // the float64 variable pointed to by py.
 func (m Model) Shift(px *[]float64, py *float64) {
-	y, *px = (*px)[0], (*px)[1:]
+	*py, *px = (*px)[0], (*px)[1:]
 }
