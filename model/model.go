@@ -12,8 +12,8 @@ type Model interface {
 
 // Shift shifts n parameters from x, useful for destructuring
 // the parameter vector.
-func Shift(x *[]float64, n int) []float64 {
+func Shift(px *[]float64, n int) []float64 {
 	var y []float64
-	y, *x = (*x)[:n], (*x)[n:]
+	y, *px = (*px)[:n], (*px)[n:]
 	return y
 }

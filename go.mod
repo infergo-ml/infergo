@@ -1,3 +1,3 @@
 module bitbucket.org/dtolpin/infergo
 
-require golang.org/x/tools v0.0.0-20181122213734-04b5d21e00f1
+require golang.org/x/tools v0.0.0-20190125232054-d66bd3c5d5a6
