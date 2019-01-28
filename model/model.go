@@ -10,7 +10,8 @@ type Model interface {
 	Observe(parameters []float64) float64
 }
 
-// Shift shifts n parameters from x.
+// Shift shifts n parameters from x, useful for destructuring
+// the parameter vector.
 func Shift(x *[]float64, n int) []float64 {
 	var y []float64
 	y, *x = (*x)[:n], (*x)[n:]
