@@ -491,11 +491,6 @@ func (m Model) Observe(x []float64) float64 {
 }
 
 func (m Model) Count() int {
-	if ad.Called() {
-		ad.Enter()
-	} else {
-		panic("Count called outside Observe.")
-	}
 	return 0
 }`,
 		},
@@ -532,13 +527,7 @@ func (m Model) Observe(x []float64) float64 {
 }
 
 func (m Model) Count() int {
-	if ad.Called() {
-		ad.Enter()
-	} else {
-		panic("Count called outside Observe.")
-	}
-	var y int
-	y = 1
+	y := 1
 	return y
 }`,
 		},
@@ -986,18 +975,13 @@ func (m Model) Observe(x []float64) float64 {
 	return y + z
 }`,
 			//----------------------------------------------------
-		 `package multival
+			`package multival
 
 import "bitbucket.org/dtolpin/infergo/ad"
 
 type Model float64
 
 func (m Model) vals(x float64, y float64) (float64, float64) {
-	if ad.Called() {
-		ad.Enter(&x, &y)
-	} else {
-		panic("vals called outside Observe.")
-	}
 	return x, y
 }
 

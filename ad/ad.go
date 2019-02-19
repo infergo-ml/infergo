@@ -1,8 +1,9 @@
 // Package ad implements automatic differentiation of a model.
 // A model is defined in it's own package. The model must
 // implement interface model.Model. In the model's source code:
-//   1. All methods on the type implementing model.Model
-//      are differentiated.
+//   1. Methods on the type implementing model.Model
+//	    returning a single float64 or nothing are
+//	    differentiated.
 //   2. Within the methods, the following is differentiated:
 //      a) assignments to float64 (including parallel
 //         assignments if all values are of type float64);
@@ -29,7 +30,7 @@
 // Derivatives do not propagate through a function that is not
 // an elemental or a call to a model method. If a derivative is
 // not registered for an elemental, calling the elemental in a
-// differentiated context will cause a run-time error.
+// Observe will cause a run-time error.
 //
 // The differentiated model is put into subpackage "ad" of the
 // model's package, with the same name as the original package.
@@ -274,7 +275,7 @@ func (m *model) collectMethods() (
 	for _, file := range m.pkg.Files {
 		for _, d := range file.Decls {
 			if d, ok := d.(*ast.FuncDecl); ok &&
-				m.isMethod(d) {
+				m.isMethodType(m.info.TypeOf(d.Name)) {
 				methods = append(methods, d)
 			}
 		}
@@ -283,16 +284,20 @@ func (m *model) collectMethods() (
 	return methods, err
 }
 
-// isMethod returns true iff the function declaration is a model
-// method.
-func (m *model) isMethod(
-	d *ast.FuncDecl,
-) bool {
-	if d.Recv == nil {
+// isMethodType returns true iff typ is a method type of the
+// Model interface.
+func (m *model) isMethodType(typ types.Type) bool {
+	sig, ok := typ.(*types.Signature)
+	if !ok {
 		return false
 	}
-	t := m.info.TypeOf(d.Name).(*types.Signature)
-	return m.isType(t.Recv().Type())
+	if sig.Recv() == nil || !m.isType(sig.Recv().Type()) {
+		return false
+	}
+	results := sig.Results()
+	return results == nil ||
+		results.Len() == 0 ||
+		results.Len() == 1 && isFloat(results.At(0).Type())
 }
 
 // isType returns true iff typ implements the Model interface.
@@ -627,19 +632,13 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					return false
 				}
 			case *ast.ReturnStmt: // if float64
+				if len(n.Results) != 1 {
+					return false
+				}
 				for _, r := range n.Results {
 					if !isFloat(m.info.TypeOf(r)) {
 						return false
 					}
-				}
-				if len(n.Results) != 1 {
-					pos := m.fset.Position(n.Pos())
-					log.Printf(
-						"WARNING: %v:%v:%v: cannot "+
-							"differentiate return with "+
-							"multiple values",
-						pos.Filename, pos.Line, pos.Column)
-					return false
 				}
 				ontape = true
 			case *ast.AssignStmt:
@@ -650,8 +649,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 						// The returned value is not a float,
 						// but it may be a tuple of floats. We
 						// cannot differentiate it, but since it
-						// appears counterintuitive, we need to
-						// issue a warning here.
+						// appears counterintuitive, we issue
+						// a warning here.
 						t, ok := t.(*types.Tuple)
 						if ok {
 							floats := true
@@ -898,10 +897,10 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 	// If we are differentiating Observe, the entry is different
 	// than for other methods. Depending on whether Observe was
 	// called from another model method (on the same or a
-	// different model), or from a undifferentiated context,
+	// different model), or from a unObserve,
 	// the prologue is either like of any other method (Enter)
 	// or the beginning of a tape frame (Setup). Any other
-	// method can only be called from differentiated context
+	// method can only be called from Observe
 	// and panicks otherwise.
 	var foreign ast.Stmt
 	if method.Name.Name == "Observe" {
@@ -1027,11 +1026,8 @@ func (m *model) isDifferentiated(call *ast.CallExpr) bool {
 	if !ok {
 		return ok
 	}
-	ok = t.Kind() == types.MethodVal
-	if !ok {
-		return ok
-	}
-	ok = t.Recv() != nil && m.isType(t.Recv())
+	ok = t.Kind() == types.MethodVal && m.isMethodType(t.Type())
+
 	if ok {
 		// Fix the import: if the import refers to the
 		// undifferentiated source, add the "/ad" suffix.
@@ -1062,6 +1058,7 @@ func (m *model) isDifferentiated(call *ast.CallExpr) bool {
 				return pkg.Path()
 			})
 	}
+
 	return ok
 }
 
