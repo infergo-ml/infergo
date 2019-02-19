@@ -393,7 +393,7 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 								// apparently a bug in Go, pull
 								// request 146657 with a fix was
 								// submitted.
-								decl.Lparen, decl.Rparen = 1, 1
+								decl.Lparen = 1
 							}
 						}
 					}
@@ -412,8 +412,12 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 					}
 
 					// Declaration.
+					specs := []ast.Spec{}
 					for _, l := range n.Lhs {
 						ident := l.(*ast.Ident)
+						if ident.Name == "_" {
+							continue
+						}
 
 						o := m.info.ObjectOf(ident)
 						if ident.Pos() != o.Pos() {
@@ -423,15 +427,19 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 
 						// Add declaration.
 						t := m.info.TypeOf(l)
-						spec := &ast.ValueSpec{
-							Names: []*ast.Ident{ident},
-							Type:  m.typeAst(t, n.Pos()),
-						}
-						c.InsertBefore(&ast.DeclStmt{
-							Decl: &ast.GenDecl{
-								Tok:   token.VAR,
-								Specs: []ast.Spec{spec}}})
+						specs = append(specs,
+							&ast.ValueSpec{
+								Names: []*ast.Ident{ident},
+								Type:  m.typeAst(t, n.Pos()),
+							})
 					}
+					decl := &ast.GenDecl{
+						Tok:   token.VAR,
+						Specs: specs}
+					if len(decl.Specs) > 1 {
+						decl.Lparen = 1
+					}
+					c.InsertBefore(&ast.DeclStmt{Decl: decl})
 
 					// Just patch the node to get the
 					// assignment.
@@ -621,19 +629,49 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					return false
 				}
 			case *ast.ReturnStmt: // if float64
-				if len(n.Results) != 1 {
-					return false
-				}
 				for _, r := range n.Results {
 					if !isFloat(m.info.TypeOf(r)) {
 						return false
 					}
 				}
+				if len(n.Results) != 1 {
+					pos := m.fset.Position(n.Pos())
+					log.Printf(
+						"WARNING: %v:%v:%v: cannot "+
+							"differentiate return with "+
+							"multiple values",
+						pos.Filename, pos.Line, pos.Column)
+					return false
+				}
 				ontape = true
 			case *ast.AssignStmt:
 				// All expressions are float64.
 				for _, r := range n.Rhs {
-					if !isFloat(m.info.TypeOf(r)) {
+					t := m.info.TypeOf(r)
+					if !isFloat(t) {
+						// The returned value is not a float,
+						// but it may be a tuple of floats. We
+						// cannot differentiate it, but since it
+						// appears counterintuitive, we need to
+						// issue a warning here.
+						t, ok := t.(*types.Tuple)
+						if ok {
+							floats := true
+							for i := 0; i != t.Len(); i++ {
+								if !isFloat(t.At(i).Type()) {
+									floats = false
+									break
+								}
+							}
+							if floats {
+								pos := m.fset.Position(n.Pos())
+								log.Printf(
+									"WARNING: %v:%v:%v: cannot "+
+										"differentiate assignment "+
+										"from multiple returned values",
+									pos.Filename, pos.Line, pos.Column)
+							}
+						}
 						return false
 					}
 				}
