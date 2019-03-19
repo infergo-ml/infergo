@@ -17,16 +17,16 @@ func FuncGrad(m model.Model) (
 	func(grad []float64, x []float64) []float64,
 ) {
 	Func := func(x []float64) float64 {
-		defer tapeMutex.Unlock()
 		tapeMutex.Lock()
+		defer tapeMutex.Unlock()
 		ll := m.Observe(x)
 		ad.Pop()
 		return -ll
 	}
 
 	Grad := func(grad []float64, x []float64) []float64 {
-		defer tapeMutex.Unlock()
 		tapeMutex.Lock()
+		defer tapeMutex.Unlock()
 		_, grad_ := m.Observe(x), ad.Gradient()
 		if grad == nil {
 			grad = grad_
