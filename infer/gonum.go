@@ -16,7 +16,7 @@ func FuncGrad(m model.Model) (
 	func(x []float64) float64,
 	func(grad []float64, x []float64) []float64,
 ) {
-	Func :=  func(x []float64) float64 {
+	Func := func(x []float64) float64 {
 		defer tapeMutex.Unlock()
 		tapeMutex.Lock()
 		ll := m.Observe(x)
