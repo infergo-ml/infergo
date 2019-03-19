@@ -209,9 +209,11 @@ func (m Model) Observe(x []float64) float64 {
 type Model float64
 
 func (m Model) Observe(x []float64) float64 {
-	var a float64
-	var c rune
-	var e int
+	var (
+		a float64
+		c rune
+	    e int
+	)
 	a, c, e = 0., 'c', 1
 	println(c, e)
 	return a
@@ -489,11 +491,6 @@ func (m Model) Observe(x []float64) float64 {
 }
 
 func (m Model) Count() int {
-	if ad.Called() {
-		ad.Enter()
-	} else {
-		panic("Count called outside Observe.")
-	}
 	return 0
 }`,
 		},
@@ -530,13 +527,7 @@ func (m Model) Observe(x []float64) float64 {
 }
 
 func (m Model) Count() int {
-	if ad.Called() {
-		ad.Enter()
-	} else {
-		panic("Count called outside Observe.")
-	}
-	var y int
-	y = 1
+	y := 1
 	return y
 }`,
 		},
@@ -612,7 +603,6 @@ func (m Model) Observe(x []float64) float64 {
 	var y float64
 	ad.Assignment(&y, ad.Value(1.))
 	var z float64
-	var _ float64
 	ad.ParallelAssignment(&z, ad.Value(0), ad.Value(2.), &y)
 	return ad.Return(&z)
 }`,
@@ -969,6 +959,45 @@ func (m Model) Observe(x []float64) float64 {
 	return ad.Return(ad.Call(func (_ []float64) {
 		m.sum(0, 0, 0)
 	}, 3, &x[0], &x[1], &x[2]))
+}`,
+		},
+		//====================================================
+		{`package multival
+
+type Model float64
+
+func (m Model) vals(x float64, y float64) (float64, float64) {
+	return x, y
+}
+
+func (m Model) Observe(x []float64) float64 {
+	y, z := m.vals(x[0], x[1])
+	return y + z
+}`,
+			//----------------------------------------------------
+			`package multival
+
+import "bitbucket.org/dtolpin/infergo/ad"
+
+type Model float64
+
+func (m Model) vals(x float64, y float64) (float64, float64) {
+	return x, y
+}
+
+func (m Model) Observe(x []float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
+	var (
+		y	float64
+		z	float64
+	)
+
+	y, z = m.vals(x[0], x[1])
+	return ad.Return(ad.Arithmetic(ad.OpAdd, &y, &z))
 }`,
 		},
 		//====================================================
