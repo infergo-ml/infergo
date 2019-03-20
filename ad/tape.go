@@ -29,8 +29,7 @@ func newTape() *adTape {
 	// see Call and Return below.
 	tape.values = append(tape.values, 0)
 	tape.places = append(tape.places, &tape.values[0])
-	tape.records = append(tape.records,
-		record{typ: typDummy})
+	tape.records = append(tape.records, record{typ: typDummy})
 	return &tape
 }
 
@@ -47,11 +46,7 @@ type tapeStore interface {
 // Tapes are maintained in a global store.
 var TapeStore tapeStore
 
-func init() {
-	// the tape store is by default single-threaded
-	TapeStore = newTape()
-}
-
+// A single tape is a single-threaded tape store
 func (tape *adTape) getTape() *adTape {
 	return tape
 }
@@ -60,6 +55,11 @@ func (tape *adTape) DropTape() {
 }
 
 func (tape *adTape) Clear() {
+}
+
+func init() {
+	// the tape store is single-threaded by default
+	TapeStore = newTape()
 }
 
 // record specifies the record type and indexes the tape memory
