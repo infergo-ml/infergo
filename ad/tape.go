@@ -34,12 +34,12 @@ func newTape() *adTape {
 }
 
 // Interface tapeStore defines operations performed on a tape
-// store. getTape() returns the pointer to the goroutine's tape.
-// dropTape() discards the goroutine's tape. clear() discards
-// all tapes.
+// store. get returns the pointer to the goroutine's tape.
+// drop discards the goroutine's tape. clear discards all
+// tapes.
 type tapeStore interface {
-	getTape() *adTape
-	dropTape()
+	get() *adTape
+	drop()
 	clear()
 }
 
@@ -48,7 +48,7 @@ var tapes tapeStore
 
 // DropTape discards the goroutine's tape.
 func DropTape() {
-	tapes.dropTape()
+	tapes.drop()
 }
 
 // DropAllTapes discards all tapes. Intended for use
@@ -58,19 +58,21 @@ func DropAllTapes() {
 	tapes.clear()
 }
 
-// A single tape is a single-threaded tape store
-func (tape *adTape) getTape() *adTape {
+// A single tape is a single-threaded tape store.  Automatic
+// differentiation in multiple goroutines with a single tape
+// requires a mutex on the forward-backward pass.
+
+func (tape *adTape) get() *adTape {
 	return tape
 }
 
-func (tape *adTape) dropTape() {
-}
+func (tape *adTape) drop()  {}
+func (tape *adTape) clear() {}
 
-func (tape *adTape) clear() {
-}
+// The tape store is single-threaded by default. As an option, a
+// multi-threaded tape store is provided in gls.go.
 
 func init() {
-	// the tape store is single-threaded by default
 	tapes = newTape()
 }
 
@@ -81,8 +83,8 @@ func init() {
 type record struct {
 	typ, op int //  record type and opcode*
 	p, v    int // indices of the first place and value
-	// * for elementals, op is the index of gradient
-	//   for assignments, op is the number of values
+	// *) for elementals, op is the index of gradient
+	//    for assignments, op is the number of values
 }
 
 // elemental stores information required to compute the
@@ -132,7 +134,7 @@ func Setup(x []float64) {
 // push pushes a counter frame to the counter stack. n is the
 // number of function parameters.
 func push(n int) {
-	tape := tapes.getTape()
+	tape := tapes.get()
 	c := counters{
 		n: n,
 		r: len(tape.records),
@@ -150,7 +152,7 @@ func push(n int) {
 // beginning of the current frame's places.  The places are then
 // used to collect the partial derivatives of the gradient.
 func register(x []float64) {
-	tape := tapes.getTape()
+	tape := tapes.get()
 	for i := range x {
 		tape.places = append(tape.places, &x[i])
 	}
@@ -159,14 +161,14 @@ func register(x []float64) {
 // Value adds value v to the memory and returns the location of
 // the value.
 func Value(v float64) *float64 {
-	tape := tapes.getTape()
+	tape := tapes.get()
 	tape.values = append(tape.values, v)
 	return &tape.values[len(tape.values)-1]
 }
 
 // Return returns the result of the differentiated function.
 func Return(px *float64) float64 {
-	tape := tapes.getTape()
+	tape := tapes.get()
 	// The returned value goes into the first place.
 	c := &tape.cstack[len(tape.cstack)-1]
 	tape.places[c.p] = px
@@ -176,7 +178,7 @@ func Return(px *float64) float64 {
 // Arithmetic encodes an arithmetic operation and returns the
 // location of the result.
 func Arithmetic(op int, px ...*float64) *float64 {
-	tape := tapes.getTape()
+	tape := tapes.get()
 	// Register
 	p := Value(0)
 	r := record{
@@ -207,7 +209,7 @@ func Arithmetic(op int, px ...*float64) *float64 {
 
 // ParallelAssigment encodes a parallel assignment.
 func ParallelAssignment(ppx ...*float64) {
-	tape := tapes.getTape()
+	tape := tapes.get()
 	// Register
 	p, px := ppx[:len(ppx)/2], ppx[len(ppx)/2:]
 	r := record{
@@ -236,7 +238,7 @@ func Assignment(p *float64, px *float64) {
 	// Can be just a call to ParallelAssignment.
 	// However most assignments are single-valued and
 	// we can avoid loops and extra allocation.
-	tape := tapes.getTape()
+	tape := tapes.get()
 	// Register
 	r := record{
 		typ: typAssignment,
@@ -256,7 +258,7 @@ func Assignment(p *float64, px *float64) {
 // argument values are copied to the tape memory.
 // Elemental returns the location of the result.
 func Elemental(f interface{}, px ...*float64) *float64 {
-	tape := tapes.getTape()
+	tape := tapes.get()
 	g, ok := ElementalGradient(f)
 	if !ok {
 		// No gradient attached, thus not an elemental.
@@ -307,7 +309,7 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 // A call record is added before a call to a differentiated
 // method from another differentiated method.
 func Called() bool {
-	tape := tapes.getTape()
+	tape := tapes.get()
 	return tape.records[len(tape.records)-1].typ == typCall
 }
 
@@ -318,7 +320,7 @@ func Call(
 	narg int,
 	px ...*float64,
 ) *float64 {
-	tape := tapes.getTape()
+	tape := tapes.get()
 	// Register function parameters. The function will assign
 	// the actual parameters to the formal parameters on entry.
 	var vararg []float64
@@ -347,7 +349,7 @@ func Call(
 // variadic wraps variadic arguments into a slice for passing to
 // the underlying call.
 func variadic(px []*float64) []float64 {
-	tape := tapes.getTape()
+	tape := tapes.get()
 	// In order to pass variadic float64 arguments to a
 	// differentiated method, we build a slice on the caller
 	// side and assign the arguments to the slice. We put the
@@ -367,7 +369,7 @@ func variadic(px []*float64) []float64 {
 
 // Enter copies the actual parameters to the formal parameters.
 func Enter(px ...*float64) {
-	tape := tapes.getTape()
+	tape := tapes.get()
 	p0 := len(tape.places) - len(px)
 	ParallelAssignment(append(px, tape.places[p0:p0+len(px)]...)...)
 }
@@ -389,7 +391,7 @@ func Gradient() []float64 {
 // Gradient calls Pop; when the gradient is not needed, Pop can
 // be called directly to skip gradient computation.
 func Pop() {
-	tape := tapes.getTape()
+	tape := tapes.get()
 	c := &tape.cstack[len(tape.cstack)-1]
 	tape.records = tape.records[:c.r]
 	tape.places = tape.places[:c.p]
@@ -402,7 +404,7 @@ func Pop() {
 // partial derivatives of the log-likelihood with respect to
 // the parameters of Observe.
 func backward() []float64 {
-	tape := tapes.getTape()
+	tape := tapes.get()
 	c := &tape.cstack[len(tape.cstack)-1]
 	// allocate enough place for all adjoints at once, avoids
 	// reallocation of map storage, which is slow.

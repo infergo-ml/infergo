@@ -34,7 +34,7 @@ func TestPop(t *testing.T) {
 }
 
 func shouldPop(t *testing.T, x []float64, f func(x []float64)) {
-	tape := tapes.getTape()
+	tape := tapes.get()
 	lr := len(tape.records)
 	lp := len(tape.places)
 	lv := len(tape.values)
