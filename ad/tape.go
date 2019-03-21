@@ -34,32 +34,44 @@ func newTape() *adTape {
 }
 
 // Interface tapeStore defines operations performed on a tape
-// store. getTape returns the pointer to the goroutine's tape.
-// DropTape discards the goroutine's tape. DropAllTapes discards
+// store. getTape() returns the pointer to the goroutine's tape.
+// dropTape() discards the goroutine's tape. clear() discards
 // all tapes.
 type tapeStore interface {
-	getTape() *adTape 
-	DropTape()
-	Clear() 
+	getTape() *adTape
+	dropTape()
+	clear()
 }
 
 // Tapes are maintained in a global store.
-var TapeStore tapeStore
+var tapes tapeStore
+
+// DropTape discards the goroutine's tape.
+func DropTape() {
+	tapes.dropTape()
+}
+
+// DropAllTapes discards all tapes. Intended for use
+// with third party inference algorithms which run
+// in multiple goroutines.
+func DropAllTapes() {
+	tapes.clear()
+}
 
 // A single tape is a single-threaded tape store
 func (tape *adTape) getTape() *adTape {
 	return tape
 }
 
-func (tape *adTape) DropTape() {
+func (tape *adTape) dropTape() {
 }
 
-func (tape *adTape) Clear() {
+func (tape *adTape) clear() {
 }
 
 func init() {
 	// the tape store is single-threaded by default
-	TapeStore = newTape()
+	tapes = newTape()
 }
 
 // record specifies the record type and indexes the tape memory
@@ -120,7 +132,7 @@ func Setup(x []float64) {
 // push pushes a counter frame to the counter stack. n is the
 // number of function parameters.
 func push(n int) {
-	tape := TapeStore.getTape()
+	tape := tapes.getTape()
 	c := counters{
 		n: n,
 		r: len(tape.records),
@@ -138,7 +150,7 @@ func push(n int) {
 // beginning of the current frame's places.  The places are then
 // used to collect the partial derivatives of the gradient.
 func register(x []float64) {
-	tape := TapeStore.getTape()
+	tape := tapes.getTape()
 	for i := range x {
 		tape.places = append(tape.places, &x[i])
 	}
@@ -147,14 +159,14 @@ func register(x []float64) {
 // Value adds value v to the memory and returns the location of
 // the value.
 func Value(v float64) *float64 {
-	tape := TapeStore.getTape()
+	tape := tapes.getTape()
 	tape.values = append(tape.values, v)
 	return &tape.values[len(tape.values)-1]
 }
 
 // Return returns the result of the differentiated function.
 func Return(px *float64) float64 {
-	tape := TapeStore.getTape()
+	tape := tapes.getTape()
 	// The returned value goes into the first place.
 	c := &tape.cstack[len(tape.cstack)-1]
 	tape.places[c.p] = px
@@ -164,7 +176,7 @@ func Return(px *float64) float64 {
 // Arithmetic encodes an arithmetic operation and returns the
 // location of the result.
 func Arithmetic(op int, px ...*float64) *float64 {
-	tape := TapeStore.getTape()
+	tape := tapes.getTape()
 	// Register
 	p := Value(0)
 	r := record{
@@ -195,7 +207,7 @@ func Arithmetic(op int, px ...*float64) *float64 {
 
 // ParallelAssigment encodes a parallel assignment.
 func ParallelAssignment(ppx ...*float64) {
-	tape := TapeStore.getTape()
+	tape := tapes.getTape()
 	// Register
 	p, px := ppx[:len(ppx)/2], ppx[len(ppx)/2:]
 	r := record{
@@ -224,7 +236,7 @@ func Assignment(p *float64, px *float64) {
 	// Can be just a call to ParallelAssignment.
 	// However most assignments are single-valued and
 	// we can avoid loops and extra allocation.
-	tape := TapeStore.getTape()
+	tape := tapes.getTape()
 	// Register
 	r := record{
 		typ: typAssignment,
@@ -244,7 +256,7 @@ func Assignment(p *float64, px *float64) {
 // argument values are copied to the tape memory.
 // Elemental returns the location of the result.
 func Elemental(f interface{}, px ...*float64) *float64 {
-	tape := TapeStore.getTape()
+	tape := tapes.getTape()
 	g, ok := ElementalGradient(f)
 	if !ok {
 		// No gradient attached, thus not an elemental.
@@ -295,7 +307,7 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 // A call record is added before a call to a differentiated
 // method from another differentiated method.
 func Called() bool {
-	tape := TapeStore.getTape()
+	tape := tapes.getTape()
 	return tape.records[len(tape.records)-1].typ == typCall
 }
 
@@ -306,7 +318,7 @@ func Call(
 	narg int,
 	px ...*float64,
 ) *float64 {
-	tape := TapeStore.getTape()
+	tape := tapes.getTape()
 	// Register function parameters. The function will assign
 	// the actual parameters to the formal parameters on entry.
 	var vararg []float64
@@ -335,7 +347,7 @@ func Call(
 // variadic wraps variadic arguments into a slice for passing to
 // the underlying call.
 func variadic(px []*float64) []float64 {
-	tape := TapeStore.getTape()
+	tape := tapes.getTape()
 	// In order to pass variadic float64 arguments to a
 	// differentiated method, we build a slice on the caller
 	// side and assign the arguments to the slice. We put the
@@ -355,7 +367,7 @@ func variadic(px []*float64) []float64 {
 
 // Enter copies the actual parameters to the formal parameters.
 func Enter(px ...*float64) {
-	tape := TapeStore.getTape()
+	tape := tapes.getTape()
 	p0 := len(tape.places) - len(px)
 	ParallelAssignment(append(px, tape.places[p0:p0+len(px)]...)...)
 }
@@ -377,7 +389,7 @@ func Gradient() []float64 {
 // Gradient calls Pop; when the gradient is not needed, Pop can
 // be called directly to skip gradient computation.
 func Pop() {
-	tape := TapeStore.getTape()
+	tape := tapes.getTape()
 	c := &tape.cstack[len(tape.cstack)-1]
 	tape.records = tape.records[:c.r]
 	tape.places = tape.places[:c.p]
@@ -390,7 +402,7 @@ func Pop() {
 // partial derivatives of the log-likelihood with respect to
 // the parameters of Observe.
 func backward() []float64 {
-	tape := TapeStore.getTape()
+	tape := tapes.getTape()
 	c := &tape.cstack[len(tape.cstack)-1]
 	// allocate enough place for all adjoints at once, avoids
 	// reallocation of map storage, which is slow.
