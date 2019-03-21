@@ -1,10 +1,9 @@
 package ad
 
-// Multi-threaded tape store, suitable for running 
+// Multi-threaded tape store, suitable for running
 // multiple goroutines with inference in parallel.
 
-import (
-)
+import ()
 
 type mtStore struct {
 }
