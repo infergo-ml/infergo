@@ -3,30 +3,35 @@ all: build
 TESTPACKAGES=ad model infer mathx dist cmd/deriv
 PACKAGES=$(TESTPACKAGES) dist/ad
 
-# By default, no GoID implementation is compiled. The source
-# code tree includes a fast implementation borrowed relying on
-# https://github.com/modern-go. To compile, run
-# 'make GOID=modern-go' or set GOID=modern-go. Only some
-# platfoms are supported.
-GOID=
+# Concurrent differentiation in multiple goroutines relies on Go
+# internals.  To enable, run
+#
+#     make gls+
+#     make
+#
+# Only some platfoms and Go versions are supported.
+gls+:
+	cp ad/gls.go+ ad/gls.go
+	cp ad/goid_test.go+ ad/goid_test.go
+	cp ad/goid.go+ ad/goid.go
+
+# To build without support for concurrency, run
+#
+#     make gls-
+#     make
+#
+# Will work on any platform and with all supported Go versions.
+gls-:
+	rm -f ad/goid.go ad/goid_test.go
+	cp ad/gls.go- ad/gls.go
+	go mod tidy
 
 EXAMPLES=hello gmm adapt schools ppv
 
 examples: build $(EXAMPLES)
 
-test: gls dist/ad/dist.go
+test: dist/ad/dist.go
 	for package in $(TESTPACKAGES); do go test ./$$package; done
-
-gls:
-	if [ $GOID != "" ] ; then \
-		cp ad/gls.go.goid ad/gls.go; \
-		cp ad/goid_test.go.goid ad/goid_test.go; \
-		cp ad/goid.go.$(GOID) ad/goid.go; \
-	else \
-		-rm -f ad/goid.go ad/goid_test.go; \
-		cp ad/gls.go. ad/gls.go; \
-	fi; \
-	go mod tidy
 
 dist/ad/dist.go: dist/dist.go
 	go build ./cmd/deriv

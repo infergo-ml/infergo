@@ -4,15 +4,15 @@ import (
 	"testing"
 )
 
-func TestGoID(t *testing.T) {
-	id0 := goID()
+func TestGoid(t *testing.T) {
+	id0 := goid()
 	ch1 := make(chan int64)
 	ch2 := make(chan int64)
 	go func () {
-		ch1<- goID()
+		ch1<- goid()
 	}()
 	go func () {
-		ch2<- goID()
+		ch2<- goid()
 	}()
 	id1 := <-ch1
 	id2 := <-ch2

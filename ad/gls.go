@@ -25,7 +25,7 @@ func MTSafeOn() {
 }
 
 func (tapes *mtStore) get() *adTape {
-	id := goID()
+	id := goid()
 	tapes.mutex.Lock()
 	tape, ok := tapes.store[id]
 	tapes.mutex.Unlock()
@@ -39,7 +39,7 @@ func (tapes *mtStore) get() *adTape {
 }
 
 func(tapes *mtStore) drop() {
-	id := goID()
+	id := goid()
 	tapes.mutex.Lock()
 	delete(tapes.store, id)
 	tapes.mutex.Unlock()
