@@ -1,3 +1,9 @@
+github.com/dtolpin/gls v0.0.0-20190329181201-2a02a84c3e6b h1:Bz51kr0uHHyEGdAqQkUPw3SNkFDTymnPTCRPj8BJeUM=
+github.com/dtolpin/gls v0.0.0-20190329181201-2a02a84c3e6b/go.mod h1:4CV7sMLpEWRS0lvhxwJD8YB9ZlHBLMByrMInnpGI6jY=
+github.com/dtolpin/gls v0.0.0-20190329182445-cbd566869cd9 h1:w5iCBRkdyG6CAn7ty3UPFZ8hxTrUVhG6J+Pih12KzFA=
+github.com/dtolpin/gls v0.0.0-20190329182445-cbd566869cd9/go.mod h1:4CV7sMLpEWRS0lvhxwJD8YB9ZlHBLMByrMInnpGI6jY=
+github.com/dtolpin/gls v0.0.0-20190329183044-9de345751622 h1:i7XZM85omvG+h1tc+FzvqNgsd+O2D47gJYbsD0IoIXw=
+github.com/dtolpin/gls v0.0.0-20190329183044-9de345751622/go.mod h1:4CV7sMLpEWRS0lvhxwJD8YB9ZlHBLMByrMInnpGI6jY=
 github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd h1:TRLaZ9cD/w8PVh93nsPXa1VrQ6jlwL5oN8l14QlcNfg=
 github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
 github.com/modern-go/gls v0.0.0-20180301095631-18e3a666c380 h1:P+Hg9II3T42anOEw6QW35bIIiWXA2YgkyPVTAAWymaI=

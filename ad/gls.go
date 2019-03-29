@@ -4,7 +4,7 @@ package ad
 // multiple goroutines with inference in parallel.
 
 import (
-	"github.com/modern-go/gls"
+	"github.com/dtolpin/gls"
 )
 
 type mtStore map[int64]*adTape
