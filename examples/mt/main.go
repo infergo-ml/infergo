@@ -5,7 +5,6 @@ import (
 	"bitbucket.org/dtolpin/infergo/ad"
 	"bitbucket.org/dtolpin/infergo/infer"
 	"encoding/csv"
-	"github.com/dtolpin/gls"
 	"flag"
 	"io"
 	"log"
@@ -133,9 +132,12 @@ func main() {
 	printState("Maximum likelihood")
 
 	// Now let's infer the posterior with HMC.
-	finished := make(chan int)
+	igos := make(chan int, NGO)
+	finished := make(chan int, NGO)
 	for igo := 0; igo != NGO; igo++ {
+		igos <- igo
 		go func () {
+			igo := <-igos
 			hmc := &infer.HMC{
 				L:   NSTEPS,
 				Eps: STEP / math.Sqrt(float64(len(m.Data))),
@@ -163,7 +165,7 @@ func main() {
 			x[0], x[1] = mean/n, math.Log(stddev/n)
 			ll = m.Observe(x)
 			if NGO != 1 {
-				log.Printf("\nGoroutine %v:", gls.GoID())
+				log.Printf("\nGoroutine %v:", igo + 1)
 			}
 			printState("Posterior means")
 			log.Printf(`HMC:
@@ -176,7 +178,10 @@ func main() {
 			finished <- igo
 		}()
 	}
-	for igo := 0; igo != NGO; igo++ {
-		<- finished
+	for jgo := 0; jgo != NGO; jgo++ {
+		igo := <-finished	
+		if NGO != 1 {
+			log.Printf("Goroutine %d finished.", igo + 1)
+		}
 	}
 }
