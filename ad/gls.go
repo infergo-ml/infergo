@@ -10,9 +10,40 @@ import (
 	"sync"
 )
 
-type mtStore struct {
+type mtStore map[string]*adTape
+
+// MTSafeOn makes differentiation thread safe at
+// the expense of a loss in performance. There is
+// no corresponding MTSafeOff, as once things are
+// safe they cannot safely become unsafe again.
+func MTSafeOn() {
+	tapes = &mtStore{}
+	mtSafe = true
 }
 
+func (tapes *mtStore) get() *adTape {
+	id := goID()
+	tape, ok := (*tapes)[id]
+	if !ok {
+		tape := newTape()
+		(*tapes)[id] = tape
+	}
+	return tape
+}
+
+func(tapes *mtStore) drop() {
+	id := goID()
+	delete(*tapes, id)
+}
+
+func(tapes *mtStore) clear() {
+	for key := range *tapes {
+		delete(*tapes, key)
+	}
+}
+
+// We need to obtain the goroutine id. The trick below works
+// with go 1.11, and will hopefully continue to work.
 var traceBuf = sync.Pool {
 	New: func() interface{} {
 		buf := make([]byte, 64)
