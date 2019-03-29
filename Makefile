@@ -3,12 +3,24 @@ all: build
 TESTPACKAGES=ad model infer mathx dist cmd/deriv
 PACKAGES=$(TESTPACKAGES) dist/ad
 
+# By default, no GoID implementation is compiled. The source
+# code tree includes a fast implementation borrowed relying on
+# https://github.com/modern-go. To compile, run
+# 'make GOID=modern-go' or set GOID=modern-go. Only some
+# platfoms are supported.
+GOID=
+
 EXAMPLES=hello gmm adapt schools ppv
 
 examples: build $(EXAMPLES)
 
-test: dist/ad/dist.go
+test: gls dist/ad/dist.go
 	for package in $(TESTPACKAGES); do go test ./$$package; done
+
+gls:
+	cp ad/gls.go.$(GOID) ad/gls.go
+	cp ad/gls_test.go.$(GOID) ad/gls_test.go
+	go mod tidy
 
 dist/ad/dist.go: dist/dist.go
 	go build ./cmd/deriv
