@@ -252,6 +252,9 @@ func TestNUTSDepth(t *testing.T) {
 
 const BenchmarkNiter = 100
 
+func init() {
+}
+
 func BenchmarkHmcL10Eps01(b *testing.B) {
 	for i := 0; i != b.N; i++ {
 		inferMeanStddev(
@@ -286,6 +289,17 @@ func BenchmarkNutsEps005(b *testing.B) {
 		inferMeanStddev(
 			&NUTS{
 				Eps: 0.05,
+			}, BenchmarkNiter)
+	}
+}
+
+func BenchmarkHmcL10Eps01MT(b *testing.B) {
+    ad.MTSafeOn()
+	for i := 0; i != b.N; i++ {
+		inferMeanStddev(
+			&HMC{
+				L:   10,
+				Eps: 0.1,
 			}, BenchmarkNiter)
 	}
 }

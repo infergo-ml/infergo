@@ -5,37 +5,52 @@ package ad
 
 import (
 	"github.com/dtolpin/gls"
+	"sync"
 )
 
-type mtStore map[int64]*adTape
+type mtStore struct {
+	store map[int64]*adTape
+	mutex sync.Mutex
+}
 
 // MTSafeOn makes differentiation thread safe at
 // the expense of a loss in performance. There is
 // no corresponding MTSafeOff, as once things are
 // safe they cannot safely become unsafe again.
 func MTSafeOn() {
-	tapes = &mtStore{}
+	tapes = &mtStore{
+		store: map[int64]*adTape{},
+		mutex: sync.Mutex{},
+	}
 	mtSafe = true
 }
 
 func (tapes *mtStore) get() *adTape {
 	id := goID()
-	tape, ok := (*tapes)[id]
+	tapes.mutex.Lock()
+	tape, ok := tapes.store[id]
+	tapes.mutex.Unlock()
 	if !ok {
 		tape = newTape()
-		(*tapes)[id] = tape
+		tapes.mutex.Lock()
+		tapes.store[id] = tape
+		tapes.mutex.Unlock()
 	}
 	return tape
 }
 
 func(tapes *mtStore) drop() {
 	id := goID()
-	delete(*tapes, id)
+	tapes.mutex.Lock()
+	delete(tapes.store, id)
+	tapes.mutex.Unlock()
 }
 
 func(tapes *mtStore) clear() {
-	for key := range *tapes {
-		delete(*tapes, key)
+	for key := range tapes.store {
+		tapes.mutex.Lock()
+		delete(tapes.store, key)
+		tapes.mutex.Unlock()
 	}
 }
 
