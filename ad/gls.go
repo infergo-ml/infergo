@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"fmt"
 	"runtime"
-	"sync"
 )
 
 type mtStore map[string]*adTape
@@ -25,7 +24,7 @@ func (tapes *mtStore) get() *adTape {
 	id := goID()
 	tape, ok := (*tapes)[id]
 	if !ok {
-		tape := newTape()
+		tape = newTape()
 		(*tapes)[id] = tape
 	}
 	return tape
@@ -42,25 +41,15 @@ func(tapes *mtStore) clear() {
 	}
 }
 
-// We need to obtain the goroutine id. The trick below works
-// with go 1.11, and will hopefully continue to work.
-var traceBuf = sync.Pool {
-	New: func() interface{} {
-		buf := make([]byte, 64)
-		return &buf
-	},
-}
-
 // goID returns the current goroutine id as a string.
 func goID() string {
-	bp := traceBuf.Get().(*[]byte)
-	defer traceBuf.Put(bp)
-	b := *bp
+	b := make([]byte, 64)
 	// b == "goroutine 1234 ..."
-	b = b[len("goroutine "):runtime.Stack(b, false)]
-	i := bytes.IndexByte(b, ' ')
+	id := b[len("goroutine "):runtime.Stack(b, false)]
+	i := bytes.IndexByte(id, ' ')
 	if i < 0 {
-		panic(fmt.Sprintf("Cannot extract goID from %q", *bp))
+		panic(fmt.Sprintf("Cannot extract goID from %q", b))
 	}
-	return string(b[:i])
+	id = id[:i]
+	return string(id)
 }
