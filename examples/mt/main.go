@@ -175,6 +175,7 @@ func main() {
 `,
 				hmc.NAcc, hmc.NRej,
 				float64(hmc.NAcc)/float64(hmc.NAcc+hmc.NRej))
+			ad.DropTape()
 			finished <- igo
 		}()
 	}
