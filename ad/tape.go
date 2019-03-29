@@ -8,11 +8,11 @@ import (
 )
 
 // There is one global tape.
-var tape oneGlobalTape
+var tape adTape
 
-// oneGlobalTape specifies the tape as a list of records and the
+// adTape specifies the tape as a list of records and the
 // memory.
-type oneGlobalTape struct {
+type adTape struct {
 	records    []record    // recorded instructions
 	places     []*float64  // variable places
 	values     []float64   // stored values
@@ -21,7 +21,7 @@ type oneGlobalTape struct {
 }
 
 func init() {
-	tape = oneGlobalTape{
+	tape = adTape{
 		records:    make([]record, 0),
 		places:     make([]*float64, 0),
 		values:     make([]float64, 0),
