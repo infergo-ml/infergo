@@ -5,7 +5,7 @@ import (
 	"bitbucket.org/dtolpin/infergo/ad"
 	"bitbucket.org/dtolpin/infergo/infer"
 	"encoding/csv"
-	"github.com/modern-go/gls"
+	"github.com/dtolpin/gls"
 	"flag"
 	"io"
 	"log"
