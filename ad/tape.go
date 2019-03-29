@@ -7,6 +7,14 @@ import (
 	"reflect"
 )
 
+var mtSafe = false
+
+// IsMTSafe returns true if multiple differentiations may
+// run in parallel.
+func IsMTSafe() bool {
+	return mtSafe
+}
+
 // adTape specifies the tape as a list of records and the
 // memory.
 type adTape struct {
