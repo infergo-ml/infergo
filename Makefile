@@ -18,8 +18,14 @@ test: gls dist/ad/dist.go
 	for package in $(TESTPACKAGES); do go test ./$$package; done
 
 gls:
-	cp ad/gls.go.$(GOID) ad/gls.go
-	cp ad/gls_test.go.$(GOID) ad/gls_test.go
+	if [ $GOID != "" ] ; then \
+		cp ad/gls.go.goid ad/gls.go; \
+		cp ad/goid_test.go.goid ad/goid_test.go; \
+		cp ad/goid.go.$(GOID) ad/goid.go; \
+	else \
+		-rm -f ad/goid.go ad/goid_test.go; \
+		cp ad/gls.go. ad/gls.go; \
+	fi; \
 	go mod tidy
 
 dist/ad/dist.go: dist/dist.go
@@ -75,3 +81,8 @@ schools:
 .PHONY: ppv
 ppv:
 	(cd examples/ppv && make)
+
+#  multi-threaded hello world
+.PHONY: mt
+mt:
+	(cd examples/mt && make)

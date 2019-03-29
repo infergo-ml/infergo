@@ -49,6 +49,12 @@ func init() {
 func main() {
 	flag.Parse()
 
+	if NGO > 1 && !ad.IsMTSafe() {
+		log.Printf("Multithreading not compiled in, "+
+			"forcing -ngo 1.")
+		NGO = 1
+	}
+
 	if flag.NArg() > 1 {
 		log.Fatalf("unexpected positional arguments: %v",
 			flag.Args()[1:])
