@@ -30,9 +30,9 @@ func init() {
 	}
 	// The returned value is in the first place;
 	// see Call and Return below.
-	tape.places = append(tape.places, Value(0))
-	tape.records = append(tape.records,
-		record{typ: typDummy})
+	tape.values = append(tape.values, 0)
+	tape.places = append(tape.places, &tape.values[0])
+	tape.records = append(tape.records, record{typ: typDummy})
 }
 
 // record specifies the record type and indexes the tape memory
