@@ -289,3 +289,48 @@ func BenchmarkNutsEps005(b *testing.B) {
 			}, BenchmarkNiter)
 	}
 }
+
+func BenchmarkHmcL10Eps01MTSafe(b *testing.B) {
+	ad.MTSafeOn()
+	BenchmarkHmcL10Eps01(b)
+}
+
+func BenchmarkHmcL20Eps005MTSafe(b *testing.B) {
+	ad.MTSafeOn()
+	BenchmarkHmcL20Eps005(b)
+}
+
+func BenchmarkNutsEps01MTSafe(b *testing.B) {
+	ad.MTSafeOn()
+	BenchmarkNutsEps01(b)
+}
+
+func BenchmarkNutsEps005MTSafe(b *testing.B) {
+	ad.MTSafeOn()
+	BenchmarkNutsEps005(b)
+}
+
+func BenchmarkHmcL10Eps01x16(b *testing.B) {
+	ad.MTSafeOn()
+	if !ad.IsMTSafe() {
+		b.Errorf("Multithreading not supported.")
+		return
+	}
+	N := 16
+	for j := 0; j != b.N; j++ {
+		finished := make(chan bool, N)
+		for i := 0; i != N; i++ {
+			go func() {
+				inferMeanStddev(
+					&HMC{
+						L:   10,
+						Eps: 0.1,
+					}, BenchmarkNiter)
+				finished <- true
+			}()
+		}
+		for i := 0; i != N; i++ {
+			<-finished
+		}
+	}
+}

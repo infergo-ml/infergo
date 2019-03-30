@@ -10,59 +10,56 @@ import (
 // suitable as fields for gonum optimize.Problem, corresponding
 // to maximization of the model's log-likelihood.
 func FuncGrad(m model.Model) (
-	func(x []float64) float64,
-	func(grad []float64, x []float64) []float64,
+	Func func(x []float64) float64,
+	Grad func(grad []float64, x []float64) []float64,
 ) {
-	Func := func(x []float64) float64 {
-		ll := m.Observe(x)
-		ad.Pop()
-		return -ll
-	}
+	if ad.IsMTSafe() {
+		// It is safe to run multiple differentiations in
+		// parallel, no locking.
 
-	Grad := func(grad []float64, x []float64) []float64 {
-		_, grad_ := m.Observe(x), ad.Gradient()
-		if grad == nil {
-			grad = grad_
+		Func = func(x []float64) float64 {
+			ll := m.Observe(x)
+			ad.Pop()
+			return -ll
 		}
-		for i := range grad_ {
-			grad[i] = -grad_[i]
+
+		Grad = func(grad []float64, x []float64) []float64 {
+			_, grad_ := m.Observe(x), ad.Gradient()
+			if grad == nil {
+				grad = grad_
+			}
+			for i := range grad_ {
+				grad[i] = -grad_[i]
+			}
+			return grad
 		}
-		return grad
+	} else {
+		// The tape must be locked.
+
+		Func = func(x []float64) float64 {
+			tapeMutex.Lock()
+			ll := m.Observe(x)
+			ad.Pop()
+			tapeMutex.Unlock()
+			return -ll
+		}
+
+		Grad = func(grad []float64, x []float64) []float64 {
+			tapeMutex.Lock()
+			_, grad_ := m.Observe(x), ad.Gradient()
+			tapeMutex.Unlock()
+			if grad == nil {
+				grad = grad_
+			}
+			for i := range grad_ {
+				grad[i] = -grad_[i]
+			}
+			return grad
+		}
 	}
 
 	return Func, Grad
 }
 
-// FuncGradM is a mutexed version of FuncGrad. Should be used
-// when the inference algorithm is parallelized. The model must
-// be immutable.
-func FuncGradM(m model.Model) (
-	func(x []float64) float64,
-	func(grad []float64, x []float64) []float64,
-) {
-	Func := func(x []float64) float64 {
-		tapeMutex.Lock()
-		defer tapeMutex.Unlock()
-		ll := m.Observe(x)
-		ad.Pop()
-		return -ll
-	}
-
-	Grad := func(grad []float64, x []float64) []float64 {
-		tapeMutex.Lock()
-		defer tapeMutex.Unlock()
-		_, grad_ := m.Observe(x), ad.Gradient()
-		if grad == nil {
-			grad = grad_
-		}
-		for i := range grad_ {
-			grad[i] = -grad_[i]
-		}
-		return grad
-	}
-
-	return Func, Grad
-}
-
-// Tape mutex for FuncGradM
+// Tape mutex is used if the tape is not thread-safe.
 var tapeMutex = sync.Mutex{}

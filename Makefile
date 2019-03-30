@@ -3,6 +3,29 @@ all: build
 TESTPACKAGES=ad model infer mathx dist cmd/deriv
 PACKAGES=$(TESTPACKAGES) dist/ad
 
+# Concurrent differentiation in multiple goroutines relies on Go
+# internals.  To enable, run
+#
+#     make mt+
+#     make
+#
+# Only some platfoms and Go versions are supported.
+mt+:
+	cp ad/mtstore.go+ ad/mtstore.go
+	cp ad/goid_test.go+ ad/goid_test.go
+	cp ad/goid.go+ ad/goid.go
+
+# To build without support for concurrency, run
+#
+#     make mt-
+#     make
+#
+# Will work on any platform and with all supported Go versions.
+mt-:
+	rm -f ad/goid.go ad/goid_test.go
+	cp ad/mtstore.go- ad/mtstore.go
+	go mod tidy
+
 EXAMPLES=hello gmm adapt schools ppv
 
 examples: build $(EXAMPLES)
@@ -63,3 +86,8 @@ schools:
 .PHONY: ppv
 ppv:
 	(cd examples/ppv && make)
+
+#  multi-threaded hello world
+.PHONY: mt
+mt:
+	(cd examples/mt && make)

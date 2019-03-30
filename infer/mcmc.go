@@ -114,9 +114,12 @@ func (hmc *HMC) Sample(
 	hmc.setDefaults()
 	hmc.samples = samples // Stop needs access to samples
 	go func() {
-		// Close samples on exit
+		// On exit:
+		// * drop the tape;
+		defer ad.DropTape()
+		// * close samples;
 		defer close(samples)
-		// Intercept errors deep inside the algorithm
+		// * intercept errors deep inside the algorithm
 		// and report them.
 		defer func() {
 			if r := recover(); r != nil {
@@ -192,9 +195,12 @@ func (nuts *NUTS) Sample(
 	nuts.samples = samples // Stop needs access to samples
 	nuts.x = nil           // invalidate gradient cache
 	go func() {
-		// Close samples on exit
+		// On exit:
+		// * drop the tape;
+		defer ad.DropTape()
+		// * close samples;
 		defer close(samples)
-		// Intercept errors deep inside the algorithm
+		// * intercept errors deep inside the algorithm
 		// and report them.
 		defer func() {
 			if r := recover(); r != nil {
