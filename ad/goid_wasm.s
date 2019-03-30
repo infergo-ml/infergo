@@ -5,5 +5,7 @@
 #include "go_asm.h"
 #include "textflag.h"
 
+// getg is not yet supported for WebAssembly.
+// I need to figure out how to implement it.
 TEXT ·getg(SB), NOSPLIT, $0-4
     RET
