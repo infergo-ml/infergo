@@ -8,8 +8,14 @@ import (
 )
 
 type mtStore struct {
+	sync.Mutex
 	store map[int64]*adTape
-	mutex sync.Mutex
+}
+
+func newStore() *mtStore {
+	return &mtStore{
+		store: map[int64]*adTape{},
+	}
 }
 
 // MTSafeOn makes differentiation thread safe at
@@ -17,38 +23,31 @@ type mtStore struct {
 // no corresponding MTSafeOff, as once things are
 // safe they cannot safely become unsafe again.
 func MTSafeOn() {
-	tapes = &mtStore{
-		store: map[int64]*adTape{},
-		mutex: sync.Mutex{},
-	}
+	tapes = newStore()
 	mtSafe = true
 }
 
 func (tapes *mtStore) get() *adTape {
 	id := goid()
-	tapes.mutex.Lock()
+	tapes.Lock()
 	tape, ok := tapes.store[id]
-	tapes.mutex.Unlock()
+	tapes.Unlock()
 	if !ok {
 		tape = newTape()
-		tapes.mutex.Lock()
+		tapes.Lock()
 		tapes.store[id] = tape
-		tapes.mutex.Unlock()
+		tapes.Unlock()
 	}
 	return tape
 }
 
 func(tapes *mtStore) drop() {
 	id := goid()
-	tapes.mutex.Lock()
+	tapes.Lock()
 	delete(tapes.store, id)
-	tapes.mutex.Unlock()
+	tapes.Unlock()
 }
 
-func(tapes *mtStore) clear() {
-	for key := range tapes.store {
-		tapes.mutex.Lock()
-		delete(tapes.store, key)
-		tapes.mutex.Unlock()
-	}
+func(_ *mtStore) clear() {
+	tapes = newStore()
 }
