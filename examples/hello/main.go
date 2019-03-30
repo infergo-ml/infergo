@@ -150,7 +150,7 @@ func main() {
 	hmc.Stop()
 	x[0], x[1] = mean/n, math.Log(stddev/n)
 	ll = m.Observe(x)
-	printState("Posterior means")
+	printState("Posterior")
 	log.Printf(`HMC:
 	accepted: %d
 	rejected: %d

@@ -167,7 +167,7 @@ func main() {
 			if NGO != 1 {
 				log.Printf("\nGoroutine %v:", igo+1)
 			}
-			printState("Posterior means")
+			printState("Posterior")
 			log.Printf(`HMC:
 	accepted: %d
 	rejected: %d
