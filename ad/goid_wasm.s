@@ -8,4 +8,6 @@
 // getg is not yet supported for WebAssembly.
 // I need to figure out how to implement it.
 TEXT ·getg(SB), NOSPLIT, $0-4
+    MOVW    g, R8
+    MOVW    R8, ret+0(FP)
     RET
