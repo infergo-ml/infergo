@@ -17,11 +17,13 @@ type mtStore struct {
 // no corresponding MTSafeOff, as once things are
 // safe they cannot safely become unsafe again.
 func MTSafeOn() {
-	tapes = &mtStore{
-		store: map[int64]*adTape{},
-		mutex: sync.Mutex{},
+	if !mtSafe {
+		tapes = &mtStore{
+			store: map[int64]*adTape{},
+			mutex: sync.Mutex{},
+		}
+		mtSafe = true
 	}
-	mtSafe = true
 }
 
 func (tapes *mtStore) get() *adTape {

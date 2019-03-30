@@ -294,12 +294,24 @@ func BenchmarkNutsEps005(b *testing.B) {
 }
 
 func BenchmarkHmcL10Eps01MT(b *testing.B) {
-    ad.MTSafeOn()
-	for i := 0; i != b.N; i++ {
-		inferMeanStddev(
-			&HMC{
-				L:   10,
-				Eps: 0.1,
-			}, BenchmarkNiter)
-	}
+	// Just turning on multithreading safety.
+	ad.MTSafeOn()
+
+	BenchmarkHmcL10Eps01(b)
+	ad.DropAllTapes()
+}
+
+func BenchmarkHmcL20Eps005MT(b *testing.B) {
+	BenchmarkHmcL20Eps005(b)
+	ad.DropAllTapes()
+}
+
+func BenchmarkNutsEps01MT(b *testing.B) {
+	BenchmarkNutsEps01(b)
+	ad.DropAllTapes()
+}
+
+func BenchmarkNutsEps005MT(b *testing.B) {
+	BenchmarkNutsEps005(b)
+	ad.DropAllTapes()
 }
