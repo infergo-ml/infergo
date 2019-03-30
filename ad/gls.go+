@@ -37,11 +37,11 @@ func (tapes *mtStore) get() *adTape {
 	return tape.(*adTape)
 }
 
-func(tapes *mtStore) drop() {
+func (tapes *mtStore) drop() {
 	id := goid()
 	tapes.Delete(id)
 }
 
-func(_ *mtStore) clear() {
+func (_ *mtStore) clear() {
 	tapes = newStore()
 }
