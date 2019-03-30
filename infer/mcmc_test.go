@@ -252,9 +252,6 @@ func TestNUTSDepth(t *testing.T) {
 
 const BenchmarkNiter = 100
 
-func init() {
-}
-
 func BenchmarkHmcL10Eps01(b *testing.B) {
 	for i := 0; i != b.N; i++ {
 		inferMeanStddev(
@@ -293,25 +290,43 @@ func BenchmarkNutsEps005(b *testing.B) {
 	}
 }
 
-func BenchmarkHmcL10Eps01MT(b *testing.B) {
-	// Just turning on multithreading safety.
+func BenchmarkHmcL10Eps01MTSafe(b *testing.B) {
 	ad.MTSafeOn()
-
 	BenchmarkHmcL10Eps01(b)
-	ad.DropAllTapes()
 }
 
-func BenchmarkHmcL20Eps005MT(b *testing.B) {
+func BenchmarkHmcL20Eps005MTSafe(b *testing.B) {
+	ad.MTSafeOn()
 	BenchmarkHmcL20Eps005(b)
-	ad.DropAllTapes()
 }
 
-func BenchmarkNutsEps01MT(b *testing.B) {
+func BenchmarkNutsEps01MTSafe(b *testing.B) {
+	ad.MTSafeOn()
 	BenchmarkNutsEps01(b)
-	ad.DropAllTapes()
 }
 
-func BenchmarkNutsEps005MT(b *testing.B) {
+func BenchmarkNutsEps005MTSafe(b *testing.B) {
+	ad.MTSafeOn()
 	BenchmarkNutsEps005(b)
-	ad.DropAllTapes()
+}
+
+func BenchmarkHmcL10Eps01x16(b *testing.B) {
+	N := 16
+	ad.MTSafeOn()
+	for j := 0; j != b.N; j++ {
+		finished := make(chan bool, N)
+		for i := 0; i != N; i++ {
+			go func() {
+				inferMeanStddev(
+					&HMC{
+						L:   10,
+						Eps: 0.1,
+					}, BenchmarkNiter)
+				finished <- true
+			}()
+		}
+		for i := 0; i != N; i++ {
+			<-finished
+		}
+	}
 }

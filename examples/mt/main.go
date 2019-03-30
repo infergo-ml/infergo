@@ -1,8 +1,8 @@
 package main
 
 import (
-	. "bitbucket.org/dtolpin/infergo/examples/mt/model/ad"
 	"bitbucket.org/dtolpin/infergo/ad"
+	. "bitbucket.org/dtolpin/infergo/examples/mt/model/ad"
 	"bitbucket.org/dtolpin/infergo/infer"
 	"encoding/csv"
 	"flag"
@@ -49,7 +49,7 @@ func main() {
 	flag.Parse()
 
 	if NGO > 1 && !ad.IsMTSafe() {
-		log.Printf("Multithreading not compiled in, "+
+		log.Printf("Multithreading not compiled in, " +
 			"forcing -ngo 1.")
 		NGO = 1
 	}
@@ -136,7 +136,7 @@ func main() {
 	finished := make(chan int, NGO)
 	for igo := 0; igo != NGO; igo++ {
 		igos <- igo
-		go func () {
+		go func() {
 			igo := <-igos
 			hmc := &infer.HMC{
 				L:   NSTEPS,
@@ -165,7 +165,7 @@ func main() {
 			x[0], x[1] = mean/n, math.Log(stddev/n)
 			ll = m.Observe(x)
 			if NGO != 1 {
-				log.Printf("\nGoroutine %v:", igo + 1)
+				log.Printf("\nGoroutine %v:", igo+1)
 			}
 			printState("Posterior means")
 			log.Printf(`HMC:
@@ -175,14 +175,13 @@ func main() {
 `,
 				hmc.NAcc, hmc.NRej,
 				float64(hmc.NAcc)/float64(hmc.NAcc+hmc.NRej))
-			ad.DropTape()
 			finished <- igo
 		}()
 	}
 	for jgo := 0; jgo != NGO; jgo++ {
-		igo := <-finished	
+		igo := <-finished
 		if NGO != 1 {
-			log.Printf("Goroutine %d finished.", igo + 1)
+			log.Printf("Goroutine %d finished.", igo+1)
 		}
 	}
 }

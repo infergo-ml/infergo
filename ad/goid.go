@@ -5,7 +5,7 @@ import (
 	"unsafe"
 )
 
-var goidOffset uintptr 
+var goidOffset uintptr
 
 func init() {
 	version := runtime.Version()

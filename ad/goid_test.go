@@ -8,11 +8,11 @@ func TestGoid(t *testing.T) {
 	id0 := goid()
 	ch1 := make(chan int64)
 	ch2 := make(chan int64)
-	go func () {
-		ch1<- goid()
+	go func() {
+		ch1 <- goid()
 	}()
-	go func () {
-		ch2<- goid()
+	go func() {
+		ch2 <- goid()
 	}()
 	id1 := <-ch1
 	id2 := <-ch2
