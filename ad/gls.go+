@@ -7,8 +7,9 @@ import (
 	"sync"
 )
 
-// sync.Map is slightly slower in a single thread, but much
-// better when multiple goroutines are running concurrently.
+// sync.Map is slightly slower than map and mutex in a single
+// goroutine, but much better when multiple goroutines are
+// running concurrently.
 type mtStore struct {
 	sync.Map
 }
