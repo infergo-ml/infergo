@@ -4,6 +4,7 @@ package ad
 // goroutines with inference in parallel.
 
 import (
+	"runtime"
 	"sync"
 )
 
@@ -22,7 +23,13 @@ func newStore() *mtStore {
 // a loss in performance. There is no corresponding MTSafeOff,
 // as once things are safe they cannot safely become unsafe
 // again.
+
+var supportedArch = map[string]bool{
+}
+
 func MTSafeOn() {
+	switch runtime.GOARCH {
+	}
 	tapes = newStore()
 	mtSafe = true
 }
