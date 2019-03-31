@@ -19,6 +19,14 @@ func newStore() *mtStore {
 	return &mtStore{}
 }
 
+var mtSafe = false
+
+// IsMTSafe returns true if multithreading support is turned on,
+// and multiple differentiations may run concurrently.
+func IsMTSafe() bool {
+	return mtSafe
+}
+
 // MTSafeOn makes differentiation thread safe at the expense of
 // a loss in performance. There is no corresponding MTSafeOff,
 // as once things are safe they cannot safely become unsafe
@@ -26,8 +34,8 @@ func newStore() *mtStore {
 //
 // MTSafeOn enables multithreading support on some versions and
 // architectures only. The caller should check the return value
-// (true if succeeded) if the code depends on the tape being
-// thread-safe.
+// (true if succeeded) or call IsMTSafe if the code depends on
+// the tape being thread-safe.
 func MTSafeOn() bool {
 	switch runtime.GOARCH {
 	case "386", "amd64p32", "amd64", "arm", "arm64", "wasm":
