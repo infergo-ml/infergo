@@ -28,10 +28,17 @@ var supportedArch = map[string]bool{
 }
 
 func MTSafeOn() {
-	switch runtime.GOARCH {
+	if runtime.Version() < "go1.10" {
+		// not supported
+		return
 	}
-	tapes = newStore()
-	mtSafe = true
+	switch runtime.GOARCH {
+	case "386", "amd64p32", "amd64", "arm", "arm64", "wasm":
+		tapes = newStore()
+		mtSafe = true
+	default:
+		// not supported
+	}
 }
 
 func (tapes *mtStore) get() *adTape {

@@ -5,6 +5,11 @@ import (
 )
 
 func TestGoid(t *testing.T) {
+	MTSafeOn()
+	if !IsMTSafe() {
+		t.Logf("Multithreading not supported.")
+		return
+	}
 	id0 := goid()
 	ch1 := make(chan int64)
 	ch2 := make(chan int64)
