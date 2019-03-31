@@ -312,7 +312,6 @@ func BenchmarkNutsEps005MTSafe(b *testing.B) {
 
 func BenchmarkHmcL10Eps01x16(b *testing.B) {
 	if !ad.MTSafeOn() {
-		b.Logf("Multithreading not supported.")
 		return
 	}
 	N := 16

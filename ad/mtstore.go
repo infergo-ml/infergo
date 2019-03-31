@@ -4,6 +4,7 @@ package ad
 // goroutines with inference in parallel.
 
 import (
+	"log"
 	"runtime"
 	"sync"
 )
@@ -27,6 +28,8 @@ func IsMTSafe() bool {
 	return mtSafe
 }
 
+var warnedNoMT = false
+
 // MTSafeOn makes differentiation thread safe at the expense of
 // a loss in performance. There is no corresponding MTSafeOff,
 // as once things are safe they cannot safely become unsafe
@@ -41,8 +44,21 @@ func MTSafeOn() bool {
 	case "386", "amd64p32", "amd64", "arm", "arm64", "wasm":
 		tapes = newStore()
 		mtSafe = true
+	case "mips", "mipsle", "mips64", "mips64le",
+		"ppc64", "ppc64le", "s390x":
+		if !warnedNoMT {
+			log.Printf("WARNING: multithreading was not tested "+
+				"on %s.", runtime.GOARCH)
+			warnedNoMT = true
+			tapes = newStore()
+			mtSafe = true
+		}
 	default:
-		// not supported
+		if !warnedNoMT {
+			log.Printf("WARNING: multithreading is not supported "+
+				"on %s.", runtime.GOARCH)
+			warnedNoMT = true
+		}
 	}
 
 	return mtSafe

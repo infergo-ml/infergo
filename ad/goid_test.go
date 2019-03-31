@@ -6,7 +6,6 @@ import (
 
 func TestGoid(t *testing.T) {
 	if !MTSafeOn() {
-		t.Logf("Multithreading not supported.")
 		return
 	}
 	id0 := goid()
