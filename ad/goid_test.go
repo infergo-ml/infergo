@@ -5,8 +5,7 @@ import (
 )
 
 func TestGoid(t *testing.T) {
-	MTSafeOn()
-	if !IsMTSafe() {
+	if !MTSafeOn() {
 		t.Logf("Multithreading not supported.")
 		return
 	}

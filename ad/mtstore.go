@@ -23,15 +23,12 @@ func newStore() *mtStore {
 // a loss in performance. There is no corresponding MTSafeOff,
 // as once things are safe they cannot safely become unsafe
 // again.
-
-var supportedArch = map[string]bool{
-}
-
-func MTSafeOn() {
-	if runtime.Version() < "go1.10" {
-		// not supported
-		return
-	}
+//
+// MTSafeOn enables multithreading support on some versions and
+// architectures only. The caller should check the return value
+// (true if succeeded) if the code depends on the tape being
+// thread-safe.
+func MTSafeOn() bool {
 	switch runtime.GOARCH {
 	case "386", "amd64p32", "amd64", "arm", "arm64", "wasm":
 		tapes = newStore()
@@ -39,6 +36,8 @@ func MTSafeOn() {
 	default:
 		// not supported
 	}
+
+	return mtSafe
 }
 
 func (tapes *mtStore) get() *adTape {
