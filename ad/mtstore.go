@@ -5,8 +5,11 @@ package ad
 
 import (
 	"log"
+	"regexp"
 	"runtime"
+	"strconv"
 	"sync"
+	"unsafe"
 )
 
 // sync.Map is slightly slower than map and mutex in a single
@@ -40,23 +43,31 @@ var warnedNoMT = false
 // (true if succeeded) or call IsMTSafe if the code depends on
 // the tape being thread-safe.
 func MTSafeOn() bool {
-	switch runtime.GOARCH {
-	case "386", "amd64p32", "amd64", "arm", "arm64", "wasm":
-		tapes = newStore()
-		mtSafe = true
-	case "mips", "mipsle", "mips64", "mips64le",
-		"ppc64", "ppc64le", "s390x":
-		if !warnedNoMT {
-			log.Printf("WARNING: multithreading was not tested "+
-				"on %s.", runtime.GOARCH)
-			warnedNoMT = true
+	if atleast(runtime.Version(), 1, 8, 0) {
+		switch runtime.GOARCH {
+		case "386", "amd64p32", "amd64", "arm", "arm64", "wasm":
 			tapes = newStore()
 			mtSafe = true
+			case "mips", "mipsle", "mips64", "mips64le",
+			"ppc64", "ppc64le", "s390x":
+			if !warnedNoMT {
+				log.Printf("WARNING: multithreading was not tested "+
+				"on %s.", runtime.GOARCH)
+				warnedNoMT = true
+				tapes = newStore()
+				mtSafe = true
+			}
+		default:
+			if !warnedNoMT {
+				log.Printf("WARNING: multithreading is not supported "+
+				"on %s.", runtime.GOARCH)
+				warnedNoMT = true
+			}
 		}
-	default:
+	} else {
 		if !warnedNoMT {
 			log.Printf("WARNING: multithreading is not supported "+
-				"on %s.", runtime.GOARCH)
+				"for Go version %s.", runtime.Version())
 			warnedNoMT = true
 		}
 	}
@@ -81,4 +92,50 @@ func (tapes *mtStore) drop() {
 
 func (_ *mtStore) clear() {
 	tapes = newStore()
+}
+
+var goidOffset uintptr
+
+func init() {
+	switch {
+	case atleast(runtime.Version(), 1, 9, 0):
+		goidOffset = 152
+	case atleast(runtime.Version(), 1, 8, 0):
+		goidOffset = 192
+	default:
+		// unsupported version
+	}
+}
+
+// goid returns the goroutine id of current goroutine
+func goid() int64 {
+	g := getg()
+	p_goid := (*int64)(unsafe.Pointer(g + goidOffset))
+	return *p_goid
+}
+
+// getg returns the g pointer and is implemented in Go assembly.
+func getg() uintptr
+
+// goMajorMinorPatch is a regular expression for the semantic versioning of Go releases
+var goMajorMinorPatch = regexp.MustCompile(`go([0-9]+)(?:\.([0-9]+)(?:\.([0-9]+))?)?.*`)
+
+// atleast returns true if version is at least major.minor.patch, false
+// otherwise.
+func atleast(goVersion string, major, minor, patch int) bool {
+	matches := goMajorMinorPatch.FindStringSubmatch(goVersion)
+	if matches == nil {
+		// Not a semantic version, an unreleased build is always
+		// the latest one.
+		return true
+	}
+
+	base := []int{major, minor, patch}
+	for i, s := range matches[1:] {
+		version, _ := strconv.Atoi(s)
+		if base[i] > version {
+			return false
+		}
+	}
+	return true
 }

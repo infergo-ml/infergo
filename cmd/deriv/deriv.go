@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 )
 
 const (
@@ -26,7 +27,7 @@ func init() {
 	flag.BoolVar(&ad.Fold, "fold", ad.Fold,
 		"fold constants")
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(),
+		fmt.Fprintf(os.Stderr,
 			`Generates a differentiated model. Usage:
     %s [flags] [path/to/model/directory/]
 If the path is omitted, the model in the current directory `+
@@ -42,8 +43,7 @@ If the path is omitted, the model in the current directory `+
 func main() {
 	flag.Parse()
 	if VERSION {
-		fmt.Fprintf(flag.CommandLine.Output(), "infergo %s v%s\n",
-			command, version)
+		fmt.Fprintf(os.Stderr, "infergo %s v%s\n", command, version)
 		return
 	}
 
