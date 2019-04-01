@@ -24,7 +24,7 @@ var (
 	NITER  = 1000
 	NSTEPS = 10
 	STEP   = 0.5
-	NGO    = 1
+	NGO    = 2
 )
 
 func init() {
@@ -49,7 +49,7 @@ func main() {
 	flag.Parse()
 
 	if NGO > 1 && !ad.IsMTSafe() {
-		log.Printf("Multithreading not compiled in, " +
+		log.Printf("Multithreading is not supported, " +
 			"forcing -ngo 1.")
 		NGO = 1
 	}
