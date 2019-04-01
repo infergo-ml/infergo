@@ -43,7 +43,7 @@ var warnedNoMT = false
 // (true if succeeded) or call IsMTSafe if the code depends on
 // the tape being thread-safe.
 func MTSafeOn() bool {
-	if atleast(runtime.Version(), 1, 8, 0) {
+	if atleast(runtime.Version(), 1, 9, 0) {
 		switch runtime.GOARCH {
 		case "386", "amd64p32", "amd64", "arm", "arm64", "wasm":
 			tapes = newStore()
@@ -100,8 +100,6 @@ func init() {
 	switch {
 	case atleast(runtime.Version(), 1, 9, 0):
 		goidOffset = 152
-	case atleast(runtime.Version(), 1, 8, 0):
-		goidOffset = 192
 	default:
 		// unsupported version
 	}
