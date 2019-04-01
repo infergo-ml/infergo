@@ -28,11 +28,11 @@ func TestGoid(t *testing.T) {
 }
 
 func TestAtleast(t *testing.T) {
-	for _, c := range []struct{
-		version string
+	for _, c := range []struct {
+		version             string
 		major, minor, patch int
-		answer bool
-	} {
+		answer              bool
+	}{
 		{"go1.2", 1, 1, 0, true},
 		{"go1.2", 1, 10, 0, false},
 		{"go1.2beta3", 1, 2, 0, true},
@@ -41,7 +41,7 @@ func TestAtleast(t *testing.T) {
 	} {
 		answer := atleast(c.version, c.major, c.minor, c.patch)
 		if answer != c.answer {
-			t.Errorf("wrong answer for version=%v, major=%v, minor=%v, patch=%v: " +
+			t.Errorf("wrong answer for version=%v, major=%v, minor=%v, patch=%v: "+
 				"got %v, want %v",
 				c.version, c.major, c.minor, c.patch,
 				answer, c.answer)
