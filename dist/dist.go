@@ -182,7 +182,7 @@ func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
 		sum += (alpha[j] - 1) * math.Log(y[j])
 	}
 
-	return  sum - dist.logZ(alpha)
+	return sum - dist.logZ(alpha)
 }
 
 // Logps computes logpdf of a vector of observations.
@@ -211,14 +211,14 @@ func (dist Dirichlet) logZ(alpha []float64) float64 {
 	return sumLogGammaAlpha - mathx.LogGamma(sumAlpha)
 }
 
-// the categorical distribution 
+// the categorical distribution
 type Categorical struct {
-	N int  // number of categories
+	N int // number of categories
 }
 
 // Observe implements the Model interface
 func (dist Categorical) Observe(x []float64) float64 {
-	if len(x) == dist.N + 1 {
+	if len(x) == dist.N+1 {
 		return dist.Logp(x[:dist.N], x[dist.N])
 	} else {
 		return dist.Logps(x[:dist.N], x[dist.N:]...)
@@ -259,7 +259,13 @@ func (dist Categorical) logZ(alpha []float64) float64 {
 
 // Type d is a placeholder for differentiated functions without
 // a model.
-type d struct {}
+type d struct{}
+
+// Method Observe implements the Model interface on d and
+// makes d's methods differentiable.
+func (_ d) Observe(_ []float64) float64 {
+	panic("should never be called")
+}
 
 // D is a singletone variable of type d. General log-likelihood
 // handling functions are dispatched on d.
@@ -268,7 +274,7 @@ var D d
 // SoftMax transforms unconstrained parameters to a point on the
 // unit hyperplane suitable to be observed from Dirichlet. x is
 // the original vector, p is a point on the unit hyperplane.
-func(_ d) SoftMax(x, p []float64) {
+func (_ d) SoftMax(x, p []float64) {
 	if len(x) != len(p) {
 		panic(fmt.Sprintf("lengths of x and p are different: "+
 			"got len(x)=%v, len(p)=%v", len(x), len(p)))

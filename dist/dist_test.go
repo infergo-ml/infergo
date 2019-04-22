@@ -272,4 +272,3 @@ func TestCategorical(t *testing.T) {
 		}
 	}
 }
-
