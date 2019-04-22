@@ -931,8 +931,12 @@ func (m Model) sum(x, _ float64, y float64) float64 {
 	return x + y
 }
 
+func (m Model) z(x []float64, y float64) float64 {
+	return y
+}
+
 func (m Model) Observe(x []float64) float64 {
-	return m.sum(x[0], x[1], x[2])
+	return m.sum(x[0], x[1], x[2]) - m.z(x[:2], x[2])
 }`,
 			//----------------------------------------------------
 			`package enter
@@ -950,15 +954,28 @@ func (m Model) sum(x, _ float64, y float64) float64 {
 	return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y))
 }
 
+func (m Model) z(x []float64, y float64) float64 {
+	if ad.Called() {
+		ad.Enter(&y)
+	} else {
+		panic("z called outside Observe.")
+	}
+	return ad.Return(&y)
+}
+
 func (m Model) Observe(x []float64) float64 {
 	if ad.Called() {
 		ad.Enter()
 	} else {
 		ad.Setup(x)
 	}
-	return ad.Return(ad.Call(func (_ []float64) {
-		m.sum(0, 0, 0)
-	}, 3, &x[0], &x[1], &x[2]))
+	return ad.Return(ad.Arithmetic(ad.OpSub,
+		ad.Call(func(_ []float64) {
+			m.sum(0, 0, 0)
+		}, 3, &x[0], &x[1], &x[2]),
+		ad.Call(func(_ []float64) {
+			m.z(x[:2], 0)
+		}, 1, &x[2])))
 }`,
 		},
 		//====================================================
