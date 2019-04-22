@@ -161,7 +161,7 @@ type Dirichlet struct {
 }
 
 // Observe implements the Model interface. The parameters are
-// alpha and observations,  flattened.
+// alpha and observations, flattened.
 func (dist Dirichlet) Observe(x []float64) float64 {
 	alpha := x[:dist.N]
 	if len(x[dist.N:]) == dist.N {
@@ -182,7 +182,7 @@ func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
 		sum += (alpha[j] - 1) * math.Log(y[j])
 	}
 
-	return dist.logZ(alpha) + sum
+	return  sum - dist.logZ(alpha)
 }
 
 // Logps computes logpdf of a vector of observations.
@@ -190,12 +190,11 @@ func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 	ll := 0.
 	logZ := dist.logZ(alpha)
 	for i := range y {
-		ll += logZ
 		sum := 0.
 		for j := range alpha {
 			sum += (alpha[j] - 1) * math.Log(y[i][j])
 		}
-		ll += sum
+		ll += sum - logZ
 	}
 	return ll
 }
@@ -239,7 +238,7 @@ func init() {
 	SoftMax = Dirichlet{}.SoftMax
 }
 
-// logZ computes normalization term independent of observations.
+// logZ computes the normalization constant.
 func (dist Dirichlet) logZ(alpha []float64) float64 {
 	sumAlpha := 0.
 	sumLogGammaAlpha := 0.
@@ -248,5 +247,49 @@ func (dist Dirichlet) logZ(alpha []float64) float64 {
 		sumLogGammaAlpha += mathx.LogGamma(alpha[i])
 	}
 
-	return mathx.LogGamma(sumAlpha) - sumLogGammaAlpha
+	return sumLogGammaAlpha - mathx.LogGamma(sumAlpha)
+}
+
+// the categorical distribution 
+type Categorical struct {
+	N int  // number of categories
+}
+
+// Observe implements the Model interface
+func (dist Categorical) Observe(x []float64) float64 {
+	if len(x) == dist.N + 1 {
+		return dist.Logp(x[:dist.N], x[dist.N])
+	} else {
+		return dist.Logps(x[:dist.N], x[dist.N:]...)
+	}
+}
+
+// Logp computes logpdf of a single observation.
+func (dist Categorical) Logp(
+	alpha []float64, y float64,
+) float64 {
+	i := int(y)
+	return math.Log(alpha[i]) - dist.logZ(alpha)
+}
+
+// Logps computes logpdf of a vector of observations.
+func (dist Categorical) Logps(
+	alpha []float64, ys ...float64,
+) float64 {
+	ll := 0.
+	logZ := dist.logZ(alpha)
+	for _, y := range ys {
+		i := int(y)
+		ll += math.Log(alpha[i]) - logZ
+	}
+	return ll
+}
+
+// logZ computes the normalization constant.
+func (dist Categorical) logZ(alpha []float64) float64 {
+	z := 0.
+	for _, a := range alpha {
+		z += a
+	}
+	return math.Log(z)
 }

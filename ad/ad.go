@@ -968,22 +968,21 @@ func (m *model) enterStmt(method *ast.FuncDecl) ast.Stmt {
 	iparam, ifield := 0, 0 // ast indices
 	for i := 0; i != n; i++ {
 		p := t.Params().At(i)
-		if !isFloat(p.Type()) {
-			continue
-		}
-		var expr ast.Expr
-		if p.Name() == "_" {
-			// There is no variable to copy the value to,
-			// create a dummy value.
-			expr = callExpr("Value", floatExpr(0))
-		} else {
-			expr = &ast.UnaryExpr{
-				Op: token.AND,
-				X: method.Type.Params.List[iparam].
-					Names[ifield],
+		if isFloat(p.Type()) {
+			var expr ast.Expr
+			if p.Name() == "_" {
+				// There is no variable to copy the value to,
+				// create a dummy value.
+				expr = callExpr("Value", floatExpr(0))
+			} else {
+				expr = &ast.UnaryExpr{
+					Op: token.AND,
+					X: method.Type.Params.List[iparam].
+						Names[ifield],
+				}
 			}
+			params = append(params, expr)
 		}
-		params = append(params, expr)
 		ifield++
 		if ifield == len(method.Type.Params.List[iparam].Names) {
 			iparam++

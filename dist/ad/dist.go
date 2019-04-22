@@ -1,8 +1,8 @@
 package dist
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	"bitbucket.org/dtolpin/infergo/mathx"
+	"bitbucket.org/dtolpin/infergo/ad"
 	"fmt"
 	"math"
 )
@@ -17,9 +17,13 @@ func (dist normal) Observe(x []float64) float64 {
 	} else {
 		ad.Setup(x)
 	}
-	var mu float64
-	var sigma float64
-	var y []float64
+	var (
+		mu	float64
+
+		sigma	float64
+
+		y	[]float64
+	)
 
 	mu, sigma, y = x[0], x[1], x[2:]
 	if len(y) == 1 {
@@ -84,8 +88,11 @@ func (dist expon) Observe(x []float64) float64 {
 	} else {
 		ad.Setup(x)
 	}
-	var lambda float64
-	var y []float64
+	var (
+		lambda	float64
+
+		y	[]float64
+	)
 
 	lambda, y = x[0], x[1:]
 	if len(y) == 1 {
@@ -136,9 +143,13 @@ func (dist gamma) Observe(x []float64) float64 {
 	} else {
 		ad.Setup(x)
 	}
-	var alpha float64
-	var beta float64
-	var y []float64
+	var (
+		alpha	float64
+
+		beta	float64
+
+		y	[]float64
+	)
 
 	alpha, beta, y = x[0], x[1], x[2:]
 	if len(y) == 1 {
@@ -185,9 +196,13 @@ func (dist beta) Observe(x []float64) float64 {
 	} else {
 		ad.Setup(x)
 	}
-	var alpha float64
-	var beta float64
-	var y []float64
+	var (
+		alpha	float64
+
+		beta	float64
+
+		y	[]float64
+	)
 
 	alpha, beta, y = x[0], x[1], x[2:]
 	if len(y) == 1 {
@@ -266,9 +281,9 @@ func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
 		ad.Assignment(&sum, ad.Arithmetic(ad.OpAdd, &sum, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha[j], ad.Value(1))), ad.Elemental(math.Log, &y[j]))))
 	}
 
-	return ad.Return(ad.Arithmetic(ad.OpAdd, ad.Call(func(_ []float64) {
+	return ad.Return(ad.Arithmetic(ad.OpSub, &sum, ad.Call(func(_ []float64) {
 		dist.logZ(alpha)
-	}, 0), &sum))
+	}, 0)))
 }
 
 func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
@@ -284,13 +299,12 @@ func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 		dist.logZ(alpha)
 	}, 0))
 	for i := range y {
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, &logZ))
 		var sum float64
 		ad.Assignment(&sum, ad.Value(0.))
 		for j := range alpha {
 			ad.Assignment(&sum, ad.Arithmetic(ad.OpAdd, &sum, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha[j], ad.Value(1))), ad.Elemental(math.Log, &y[i][j]))))
 		}
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, &sum))
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpSub, &sum, &logZ)))
 	}
 	return ad.Return(&ll)
 }
@@ -346,5 +360,79 @@ func (dist Dirichlet) logZ(alpha []float64) float64 {
 		ad.Assignment(&sumLogGammaAlpha, ad.Arithmetic(ad.OpAdd, &sumLogGammaAlpha, ad.Elemental(mathx.LogGamma, &alpha[i])))
 	}
 
-	return ad.Return(ad.Arithmetic(ad.OpSub, ad.Elemental(mathx.LogGamma, &sumAlpha), &sumLogGammaAlpha))
+	return ad.Return(ad.Arithmetic(ad.OpSub, &sumLogGammaAlpha, ad.Elemental(mathx.LogGamma, &sumAlpha)))
+}
+
+type Categorical struct {
+	N int
+}
+
+func (dist Categorical) Observe(x []float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
+	if len(x) == dist.N+1 {
+		return ad.Return(ad.Call(func(_ []float64) {
+			dist.Logp(x[:dist.N], 0)
+		}, 1, &x[dist.N]))
+	} else {
+		return ad.Return(ad.Call(func(_ []float64) {
+			dist.Logps(x[:dist.N], x[dist.N:]...)
+		}, 0))
+	}
+}
+
+func (dist Categorical) Logp(
+	alpha []float64, y float64,
+) float64 {
+	if ad.Called() {
+		ad.Enter(&y)
+	} else {
+		panic("Logp called outside Observe.")
+	}
+	var i int
+
+	i = int(y)
+	return ad.Return(ad.Arithmetic(ad.OpSub, ad.Elemental(math.Log, &alpha[i]), ad.Call(func(_ []float64) {
+		dist.logZ(alpha)
+	}, 0)))
+}
+
+func (dist Categorical) Logps(
+	alpha []float64, ys ...float64,
+) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		panic("Logps called outside Observe.")
+	}
+	var ll float64
+	ad.Assignment(&ll, ad.Value(0.))
+	var logZ float64
+	ad.Assignment(&logZ, ad.Call(func(_ []float64) {
+		dist.logZ(alpha)
+	}, 0))
+	for _, y := range ys {
+		var i int
+
+		i = int(y)
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpSub, ad.Elemental(math.Log, &alpha[i]), &logZ)))
+	}
+	return ad.Return(&ll)
+}
+
+func (dist Categorical) logZ(alpha []float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		panic("logZ called outside Observe.")
+	}
+	var z float64
+	ad.Assignment(&z, ad.Value(0.))
+	for _, a := range alpha {
+		ad.Assignment(&z, ad.Arithmetic(ad.OpAdd, &z, &a))
+	}
+	return ad.Return(ad.Elemental(math.Log, &z))
 }
