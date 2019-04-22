@@ -309,42 +309,6 @@ func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 	return ad.Return(&ll)
 }
 
-func (dist Dirichlet) SoftMax(x, p []float64) {
-	if ad.Called() {
-		ad.Enter()
-	} else {
-		panic("SoftMax called outside Observe.")
-	}
-	if len(x) != len(p) {
-		panic(fmt.Sprintf("lengths of x and p are different: "+
-			"got len(x)=%v, len(p)=%v", len(x), len(p)))
-	}
-	var xmax float64
-	ad.Assignment(&xmax, ad.Value(math.Inf(-1)))
-	for i := range x {
-		if x[i] > xmax {
-			ad.Assignment(&xmax, &x[i])
-		}
-	}
-	var z float64
-	ad.Assignment(&z, ad.Value(0.))
-	for i := range x {
-		var q float64
-		ad.Assignment(&q, ad.Elemental(math.Exp, ad.Arithmetic(ad.OpSub, &x[i], &xmax)))
-		ad.Assignment(&z, ad.Arithmetic(ad.OpAdd, &z, &q))
-		ad.Assignment(&p[i], &q)
-	}
-	for i := range p {
-		ad.Assignment(&p[i], ad.Arithmetic(ad.OpDiv, &p[i], &z))
-	}
-}
-
-var SoftMax func(x, p []float64)
-
-func init() {
-	SoftMax = Dirichlet{}.SoftMax
-}
-
 func (dist Dirichlet) logZ(alpha []float64) float64 {
 	if ad.Called() {
 		ad.Enter()
@@ -435,4 +399,60 @@ func (dist Categorical) logZ(alpha []float64) float64 {
 		ad.Assignment(&z, ad.Arithmetic(ad.OpAdd, &z, &a))
 	}
 	return ad.Return(ad.Elemental(math.Log, &z))
+}
+
+type d struct{}
+
+var D d
+
+func (_ d) SoftMax(x, p []float64) {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		panic("SoftMax called outside Observe.")
+	}
+	if len(x) != len(p) {
+		panic(fmt.Sprintf("lengths of x and p are different: "+
+			"got len(x)=%v, len(p)=%v", len(x), len(p)))
+	}
+	var max float64
+	ad.Assignment(&max, ad.Value(math.Inf(-1)))
+	for i := range x {
+		if x[i] > max {
+			ad.Assignment(&max, &x[i])
+		}
+	}
+	var z float64
+	ad.Assignment(&z, ad.Value(0.))
+	for i := range x {
+		var q float64
+		ad.Assignment(&q, ad.Elemental(math.Exp, ad.Arithmetic(ad.OpSub, &x[i], &max)))
+		ad.Assignment(&z, ad.Arithmetic(ad.OpAdd, &z, &q))
+		ad.Assignment(&p[i], &q)
+	}
+	for i := range p {
+		ad.Assignment(&p[i], ad.Arithmetic(ad.OpDiv, &p[i], &z))
+	}
+}
+
+func (_ d) LogSumExp(x []float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		panic("LogSumExp called outside Observe.")
+	}
+	var max float64
+	ad.Assignment(&max, ad.Value(math.Inf(-1)))
+	for i := range x {
+		if x[i] > max {
+			ad.Assignment(&max, &x[i])
+		}
+	}
+	var sumExp float64
+	ad.Assignment(&sumExp, ad.Value(0.))
+	for i := range x {
+		ad.Assignment(&sumExp, ad.Arithmetic(ad.OpAdd, &sumExp, ad.Elemental(math.Exp, ad.Arithmetic(ad.OpSub, &x[i], &max))))
+	}
+
+	return ad.Return(ad.Arithmetic(ad.OpAdd, &max, ad.Elemental(math.Log, &sumExp)))
 }

@@ -23,11 +23,11 @@ func init() {
 
 // LogSumExp computes log(exp(x) + exp(y)) robustly.
 func LogSumExp(x, y float64) float64 {
-	z := x
-	if y > z {
-		z = y
+	max := x
+	if y > max {
+		max = y
 	}
-	return z + math.Log(math.Exp(x-z)+math.Exp(y-z))
+	return max + math.Log(math.Exp(x-max)+math.Exp(y-max))
 }
 
 func init() {

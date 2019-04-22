@@ -208,14 +208,64 @@ func TestSoftMax(t *testing.T) {
 			[]float64{0.1, 0.3, 0.6},
 		},
 	} {
-		dist := Dirichlet{len(c.x)}
-		p := make([]float64, dist.N)
-		dist.SoftMax(c.x, p)
+		p := make([]float64, len(c.x))
+		D.SoftMax(c.x, p)
 		for i := range p {
 			if math.Abs(p[i]-c.p[i]) > 1E-6 {
 				t.Errorf("Wrong result of SoftMax(%v): "+
 					"got %v, want %v", c.x, p, c.p)
 				break
+			}
+		}
+	}
+}
+
+func TestCategorical(t *testing.T) {
+	for _, c := range []struct {
+		n	int
+		alpha	[]float64
+		y	[]float64
+		ll	float64
+	}{
+		{
+			2,
+			[]float64{1., 1.},
+			[]float64{0},
+			-0.6931471805599453,
+		},
+		{
+			3,
+			[]float64{0.5, 2.5, 2.},
+			[]float64{1},
+			-0.6931471805599453,
+		},
+		{
+			2,
+			[]float64{3., 1.},
+			[]float64{0, 1},
+			-1.6739764335716716,
+		},
+	} {
+		dist := Categorical{c.n}
+		ll := dist.Logps(c.alpha, c.y...)
+		if math.Abs(ll-c.ll) > 1E-6 {
+			t.Errorf("Wrong logpdf of Categorical(%v|%v): "+
+				"got %.4g, want %.4g",
+				c.y, c.alpha, ll, c.ll)
+		}
+		x := append(c.alpha, c.y...)
+		llo := dist.Observe(x)
+		if math.Abs(ll-llo) > 1E-6 {
+			t.Errorf("Wrong result of Observe(%v..., %v...): "+
+				"got %.4g, want %.4g",
+				c.alpha, c.y, llo, ll)
+		}
+		if len(c.y) == 1 {
+			ll1 := dist.Logp(c.alpha, c.y[0])
+			if math.Abs(ll-ll1) > 1E-6 {
+				t.Errorf("Wrong result of Logp(%v, %v): "+
+					"got %.4g, want %.4g",
+					c.alpha, c.y[0], ll1, ll)
 			}
 		}
 	}

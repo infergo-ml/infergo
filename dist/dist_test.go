@@ -210,9 +210,8 @@ func TestSoftMax(t *testing.T) {
 			[]float64{0.1, 0.3, 0.6},
 		},
 	} {
-		dist := Dirichlet{len(c.x)}
-		p := make([]float64, dist.N)
-		dist.SoftMax(c.x, p)
+		p := make([]float64, len(c.x))
+		D.SoftMax(c.x, p)
 		for i := range p {
 			if math.Abs(p[i]-c.p[i]) > 1E-6 {
 				t.Errorf("Wrong result of SoftMax(%v): "+

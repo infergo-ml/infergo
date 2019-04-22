@@ -199,45 +199,6 @@ func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 	return ll
 }
 
-// SoftMax transforms unconstrained parameters to a point on the
-// unit hyperplane suitable to be observed from Dirichlet. x is
-// the original vector, p is a point on the unit hyperplane.
-func (dist Dirichlet) SoftMax(x, p []float64) {
-	if len(x) != len(p) {
-		panic(fmt.Sprintf("lengths of x and p are different: "+
-			"got len(x)=%v, len(p)=%v", len(x), len(p)))
-	}
-
-	// For a more stable computation, first find max(x) and
-	// then divide both numerator and denominator of SoftMax
-	// by exp(xmax).
-	xmax := math.Inf(-1)
-	for i := range x {
-		if x[i] > xmax {
-			xmax = x[i]
-		}
-	}
-
-	// Transform and normalize components.
-	z := 0.
-	for i := range x {
-		q := math.Exp(x[i] - xmax)
-		z += q
-		p[i] = q
-	}
-	for i := range p {
-		p[i] /= z
-	}
-}
-
-// Outside of differentiated context, SoftMax can be used
-// without distribution.
-var SoftMax func(x, p []float64)
-
-func init() {
-	SoftMax = Dirichlet{}.SoftMax
-}
-
 // logZ computes the normalization constant.
 func (dist Dirichlet) logZ(alpha []float64) float64 {
 	sumAlpha := 0.
@@ -292,4 +253,62 @@ func (dist Categorical) logZ(alpha []float64) float64 {
 		z += a
 	}
 	return math.Log(z)
+}
+
+// Differentiable functions not belonging to a distribution
+
+// Type d is a placeholder for differentiated functions without
+// a model.
+type d struct {}
+
+// D is a singletone variable of type d. General log-likelihood
+// handling functions are dispatched on d.
+var D d
+
+// SoftMax transforms unconstrained parameters to a point on the
+// unit hyperplane suitable to be observed from Dirichlet. x is
+// the original vector, p is a point on the unit hyperplane.
+func(_ d) SoftMax(x, p []float64) {
+	if len(x) != len(p) {
+		panic(fmt.Sprintf("lengths of x and p are different: "+
+			"got len(x)=%v, len(p)=%v", len(x), len(p)))
+	}
+
+	// For a more stable computation, first find max(x) and
+	// then divide both numerator and denominator of SoftMax
+	// by exp(max).
+	max := math.Inf(-1)
+	for i := range x {
+		if x[i] > max {
+			max = x[i]
+		}
+	}
+
+	// Transform and normalize components.
+	z := 0.
+	for i := range x {
+		q := math.Exp(x[i] - max)
+		z += q
+		p[i] = q
+	}
+	for i := range p {
+		p[i] /= z
+	}
+}
+
+// LogSumExp computes log(sum(exp(x[0]) + exp(x[1]) + ...) robustly.
+func (_ d) LogSumExp(x []float64) float64 {
+	max := math.Inf(-1)
+	for i := range x {
+		if x[i] > max {
+			max = x[i]
+		}
+	}
+
+	sumExp := 0.
+	for i := range x {
+		sumExp += math.Exp(x[i] - max)
+	}
+
+	return max + math.Log(sumExp)
 }
