@@ -1,8 +1,8 @@
 package dist
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	"bitbucket.org/dtolpin/infergo/mathx"
+	"bitbucket.org/dtolpin/infergo/ad"
 	"fmt"
 	"math"
 )
@@ -18,11 +18,11 @@ func (dist normal) Observe(x []float64) float64 {
 		ad.Setup(x)
 	}
 	var (
-		mu float64
+		mu	float64
 
-		sigma float64
+		sigma	float64
 
-		y []float64
+		y	[]float64
 	)
 
 	mu, sigma, y = x[0], x[1], x[2:]
@@ -89,9 +89,9 @@ func (dist expon) Observe(x []float64) float64 {
 		ad.Setup(x)
 	}
 	var (
-		lambda float64
+		lambda	float64
 
-		y []float64
+		y	[]float64
 	)
 
 	lambda, y = x[0], x[1:]
@@ -144,11 +144,11 @@ func (dist gamma) Observe(x []float64) float64 {
 		ad.Setup(x)
 	}
 	var (
-		alpha float64
+		alpha	float64
 
-		beta float64
+		beta	float64
 
-		y []float64
+		y	[]float64
 	)
 
 	alpha, beta, y = x[0], x[1], x[2:]
@@ -197,11 +197,11 @@ func (dist beta) Observe(x []float64) float64 {
 		ad.Setup(x)
 	}
 	var (
-		alpha float64
+		alpha	float64
 
-		beta float64
+		beta	float64
 
-		y []float64
+		y	[]float64
 	)
 
 	alpha, beta, y = x[0], x[1], x[2:]

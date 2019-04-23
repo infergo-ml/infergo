@@ -923,6 +923,62 @@ func (m Model) Observe(x []float64) float64 {
 }`,
 		},
 		//====================================================
+		{`package opaque_arg
+
+type Model float64
+
+func count() int {
+	return 0
+}
+
+func (m Model) IntPow(a float64, n int) float64 {
+	pow := 1.
+	for i := 0; i != n; i++ {
+		pow *= a
+	}
+	return pow
+}
+
+func (m Model) Observe(x []float64) float64 {
+	return m.IntPow(x[0], count())
+}`,
+			//----------------------------------------------------
+			`package opaque_arg
+
+import "bitbucket.org/dtolpin/infergo/ad"
+
+type Model float64
+
+func count() int {
+	return 0
+}
+
+func (m Model) IntPow(a float64, n int) float64 {
+	if ad.Called() {
+		ad.Enter(&a)
+	} else {
+		panic("IntPow called outside Observe.")
+	}
+	var pow float64
+	ad.Assignment(&pow, ad.Value(1.))
+	for i := 0; i != n; i = i + 1 {
+		ad.Assignment(&pow, ad.Arithmetic(ad.OpMul, &pow, &a))
+	}
+	return ad.Return(&pow)
+}
+
+func (m Model) Observe(x []float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
+	return ad.Return(ad.Call(func(_ []float64) {
+		m.IntPow(0, count())
+	}, 1, &x[0]))
+}`,
+		},
+		//====================================================
 		{`package enter
 
 type Model float64

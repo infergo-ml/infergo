@@ -627,8 +627,10 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					// A function which is neither
 					// differentiated nor elemental is called
 					// with all their arguments unmodified.
-					value := callExpr("Value", n)
-					c.Replace(value)
+					if isFloat(m.info.TypeOf(n)) {
+						value := callExpr("Value", n)
+						c.Replace(value)
+					}
 					return false
 				}
 			case *ast.ReturnStmt: // if float64

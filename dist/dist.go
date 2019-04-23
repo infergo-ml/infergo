@@ -271,9 +271,8 @@ func (_ d) Observe(_ []float64) float64 {
 // handling functions are dispatched on d.
 var D d
 
-// SoftMax transforms unconstrained parameters to a point on the
-// unit hyperplane suitable to be observed from Dirichlet. x is
-// the original vector, p is a point on the unit hyperplane.
+// SoftMax transforms unconstrained parameters x to a point p on
+// the simplex.
 func (_ d) SoftMax(x, p []float64) {
 	if len(x) != len(p) {
 		panic(fmt.Sprintf("lengths of x and p are different: "+
