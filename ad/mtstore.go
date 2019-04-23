@@ -94,6 +94,14 @@ func (_ *mtStore) clear() {
 	tapes = newStore()
 }
 
+// Implementation of goid
+
+// Go assembly provides the 'g' register holding the pointer
+// to current goroutine's runtime.g. Function goid calls getg
+// (implemented for each supported architecture) and
+// adds the offset of the goid field. The offset depends
+// on the Go version.
+
 var goidOffset uintptr
 
 func init() {
@@ -104,14 +112,6 @@ func init() {
 		// unsupported version
 	}
 }
-
-// Implementation of goid
-
-// Go assembly provides the 'g' register holding the pointer
-// to current goroutine's runtime.g. Function goid calls getg
-// (implemented for each supported architecture) and
-// adds the offset of the goid field. The offset depends
-// on the Go version.
 
 // goid returns the goroutine id of current goroutine
 func goid() int64 {
