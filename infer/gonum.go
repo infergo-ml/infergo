@@ -11,7 +11,7 @@ import (
 // to maximization of the model's log-likelihood.
 func FuncGrad(m model.Model) (
 	Func func(x []float64) float64,
-	Grad func(grad []float64, x []float64) []float64,
+	Grad func(grad, x []float64),
 ) {
 	if ad.IsMTSafe() {
 		// It is safe to run multiple differentiations in
@@ -23,15 +23,11 @@ func FuncGrad(m model.Model) (
 			return -ll
 		}
 
-		Grad = func(grad []float64, x []float64) []float64 {
+		Grad = func(grad, x []float64) {
 			_, grad_ := m.Observe(x), ad.Gradient()
-			if grad == nil {
-				grad = grad_
-			}
 			for i := range grad_ {
 				grad[i] = -grad_[i]
 			}
-			return grad
 		}
 	} else {
 		// The tape must be locked.
@@ -44,17 +40,13 @@ func FuncGrad(m model.Model) (
 			return -ll
 		}
 
-		Grad = func(grad []float64, x []float64) []float64 {
+		Grad = func(grad, x []float64) {
 			tapeMutex.Lock()
 			_, grad_ := m.Observe(x), ad.Gradient()
 			tapeMutex.Unlock()
-			if grad == nil {
-				grad = grad_
-			}
 			for i := range grad_ {
 				grad[i] = -grad_[i]
 			}
-			return grad
 		}
 	}
 
