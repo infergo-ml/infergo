@@ -7,6 +7,16 @@ import (
 	"math"
 )
 
+var (
+	logpi, log2pi float64
+)
+
+func init() {
+	log2 := math.Log(2)
+	logpi = math.Log(math.Pi)
+	log2pi = log2 + logpi
+}
+
 type normal struct{}
 
 var Normal normal
@@ -37,12 +47,6 @@ func (dist normal) Observe(x []float64) float64 {
 	}
 }
 
-var log2pi float64
-
-func init() {
-	log2pi = math.Log(2. * math.Pi)
-}
-
 func (_ normal) Logp(mu, sigma float64, y float64) float64 {
 	if ad.Called() {
 		ad.Enter(&mu, &sigma, &y)
@@ -69,11 +73,72 @@ func (_ normal) Logps(mu, sigma float64, y ...float64) float64 {
 	var logv float64
 	ad.Assignment(&logv, ad.Elemental(math.Log, &vari))
 	var ll float64
-	ad.Assignment(&ll, ad.Value(0.))
+	ad.Assignment(&ll, ad.Arithmetic(ad.OpMul, ad.Arithmetic(ad.OpMul, ad.Value(-0.5), (ad.Arithmetic(ad.OpAdd, &logv, &log2pi))), ad.Value(float64(len(y)))))
 	for i := range y {
 		var d float64
 		ad.Assignment(&d, ad.Arithmetic(ad.OpSub, &y[i], &mu))
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpMul, ad.Value(-0.5), (ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpDiv, ad.Arithmetic(ad.OpMul, &d, &d), &vari), &logv), &log2pi)))))
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpSub, &ll, ad.Arithmetic(ad.OpDiv, ad.Arithmetic(ad.OpMul, ad.Arithmetic(ad.OpMul, ad.Value(0.5), &d), &d), &vari)))
+	}
+	return ad.Return(&ll)
+}
+
+type cauchy struct{}
+
+var Cauchy cauchy
+
+func (dist cauchy) Observe(x []float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
+	var (
+		mu	float64
+
+		sigma	float64
+
+		y	[]float64
+	)
+
+	mu, sigma, y = x[0], x[1], x[2:]
+	if len(y) == 1 {
+		return ad.Return(ad.Call(func(_ []float64) {
+			dist.Logp(0, 0, 0)
+		}, 3, &mu, &sigma, &y[0]))
+	} else {
+		return ad.Return(ad.Call(func(_ []float64) {
+			dist.Logps(0, 0, y...)
+		}, 2, &mu, &sigma))
+	}
+}
+
+func (_ cauchy) Logp(x0, gamma float64, y float64) float64 {
+	if ad.Called() {
+		ad.Enter(&x0, &gamma, &y)
+	} else {
+		panic("Logp called outside Observe.")
+	}
+	var logGamma float64
+	ad.Assignment(&logGamma, ad.Elemental(math.Log, &gamma))
+	var d float64
+	ad.Assignment(&d, ad.Arithmetic(ad.OpDiv, (ad.Arithmetic(ad.OpSub, &y, &x0)), &gamma))
+	return ad.Return(ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpNeg, &logGamma), &logpi), ad.Elemental(math.Log, ad.Arithmetic(ad.OpAdd, ad.Value(1), ad.Arithmetic(ad.OpMul, &d, &d)))))
+}
+
+func (_ cauchy) Logps(x0, gamma float64, y ...float64) float64 {
+	if ad.Called() {
+		ad.Enter(&x0, &gamma)
+	} else {
+		panic("Logps called outside Observe.")
+	}
+	var logGamma float64
+	ad.Assignment(&logGamma, ad.Elemental(math.Log, &gamma))
+	var ll float64
+	ad.Assignment(&ll, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpNeg, &logGamma), &logpi)), ad.Value(float64(len(y)))))
+	for i := range y {
+		var d float64
+		ad.Assignment(&d, ad.Arithmetic(ad.OpDiv, (ad.Arithmetic(ad.OpSub, &y[i], &x0)), &gamma))
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpSub, &ll, ad.Elemental(math.Log, ad.Arithmetic(ad.OpAdd, ad.Value(1), ad.Arithmetic(ad.OpMul, &d, &d)))))
 	}
 	return ad.Return(&ll)
 }
@@ -123,12 +188,12 @@ func (_ expon) Logps(lambda float64, y ...float64) float64 {
 	} else {
 		panic("Logps called outside Observe.")
 	}
-	var ll float64
-	ad.Assignment(&ll, ad.Value(0.))
 	var logl float64
 	ad.Assignment(&logl, ad.Elemental(math.Log, &lambda))
+	var ll float64
+	ad.Assignment(&ll, ad.Arithmetic(ad.OpMul, &logl, ad.Value(float64(len(y)))))
 	for i := range y {
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpSub, &logl, ad.Arithmetic(ad.OpMul, &lambda, &y[i]))))
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpSub, &ll, ad.Arithmetic(ad.OpMul, &lambda, &y[i])))
 	}
 	return ad.Return(&ll)
 }
@@ -179,9 +244,9 @@ func (_ gamma) Logps(alpha, beta float64, y ...float64) float64 {
 		panic("Logps called outside Observe.")
 	}
 	var ll float64
-	ad.Assignment(&ll, ad.Value(0.))
+	ad.Assignment(&ll, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpNeg, ad.Elemental(mathx.LogGamma, &alpha)), ad.Arithmetic(ad.OpMul, &alpha, ad.Elemental(math.Log, &beta)))), ad.Value(float64(len(y)))))
 	for i := range y {
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &y[i])), ad.Arithmetic(ad.OpMul, &beta, &y[i])), ad.Elemental(mathx.LogGamma, &alpha)), ad.Arithmetic(ad.OpMul, &alpha, ad.Elemental(math.Log, &beta)))))
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &y[i])), ad.Arithmetic(ad.OpMul, &beta, &y[i]))))
 	}
 	return ad.Return(&ll)
 }
@@ -232,9 +297,9 @@ func (_ beta) Logps(alpha, beta float64, y ...float64) float64 {
 		panic("Logps called outside Observe.")
 	}
 	var ll float64
-	ad.Assignment(&ll, ad.Value(0.))
+	ad.Assignment(&ll, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpNeg, ad.Elemental(mathx.LogGamma, &alpha)), ad.Elemental(mathx.LogGamma, &beta)), ad.Elemental(mathx.LogGamma, ad.Arithmetic(ad.OpAdd, &alpha, &beta)))), ad.Value(float64(len(y)))))
 	for i := range y {
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &y[i])), ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &beta, ad.Value(1))), ad.Elemental(math.Log, ad.Arithmetic(ad.OpSub, ad.Value(1), &y[i])))), ad.Elemental(mathx.LogGamma, &alpha)), ad.Elemental(mathx.LogGamma, &beta)), ad.Elemental(mathx.LogGamma, ad.Arithmetic(ad.OpAdd, &alpha, &beta)))))
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &y[i])), ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &beta, ad.Value(1))), ad.Elemental(math.Log, ad.Arithmetic(ad.OpSub, ad.Value(1), &y[i]))))))
 	}
 	return ad.Return(&ll)
 }
@@ -292,19 +357,16 @@ func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 	} else {
 		panic("Logps called outside Observe.")
 	}
-	var ll float64
-	ad.Assignment(&ll, ad.Value(0.))
 	var logZ float64
 	ad.Assignment(&logZ, ad.Call(func(_ []float64) {
 		dist.logZ(alpha)
 	}, 0))
+	var ll float64
+	ad.Assignment(&ll, ad.Arithmetic(ad.OpMul, ad.Arithmetic(ad.OpNeg, &logZ), ad.Value(float64(len(y)))))
 	for i := range y {
-		var sum float64
-		ad.Assignment(&sum, ad.Value(0.))
 		for j := range alpha {
-			ad.Assignment(&sum, ad.Arithmetic(ad.OpAdd, &sum, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha[j], ad.Value(1))), ad.Elemental(math.Log, &y[i][j]))))
+			ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha[j], ad.Value(1))), ad.Elemental(math.Log, &y[i][j]))))
 		}
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpSub, &sum, &logZ)))
 	}
 	return ad.Return(&ll)
 }
@@ -365,24 +427,21 @@ func (dist Categorical) Logp(
 }
 
 func (dist Categorical) Logps(
-	alpha []float64, ys ...float64,
+	alpha []float64, y ...float64,
 ) float64 {
 	if ad.Called() {
 		ad.Enter()
 	} else {
 		panic("Logps called outside Observe.")
 	}
-	var ll float64
-	ad.Assignment(&ll, ad.Value(0.))
 	var logZ float64
 	ad.Assignment(&logZ, ad.Call(func(_ []float64) {
 		dist.logZ(alpha)
 	}, 0))
-	for _, y := range ys {
-		var i int
-
-		i = int(y)
-		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Arithmetic(ad.OpSub, ad.Elemental(math.Log, &alpha[i]), &logZ)))
+	var ll float64
+	ad.Assignment(&ll, ad.Arithmetic(ad.OpMul, ad.Arithmetic(ad.OpNeg, &logZ), ad.Value(float64(len(y)))))
+	for i := range y {
+		ad.Assignment(&ll, ad.Arithmetic(ad.OpAdd, &ll, ad.Elemental(math.Log, &alpha[int(y[i])])))
 	}
 	return ad.Return(&ll)
 }
