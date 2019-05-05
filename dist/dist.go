@@ -21,7 +21,6 @@ func init() {
 	log2pi = log2 + logpi
 }
 
-
 // Normal distribution.
 type normal struct{}
 
@@ -54,7 +53,7 @@ func (_ normal) Logps(mu, sigma float64, y ...float64) float64 {
 	ll := -0.5 * (logv + log2pi) * float64(len(y))
 	for i := range y {
 		d := y[i] - mu
-		ll -= 0.5 * d*d/vari
+		ll -= 0.5 * d * d / vari
 	}
 	return ll
 }
@@ -80,20 +79,19 @@ func (dist cauchy) Observe(x []float64) float64 {
 func (_ cauchy) Logp(x0, gamma float64, y float64) float64 {
 	logGamma := math.Log(gamma)
 	d := (y - x0) / gamma
-	return - logGamma - logpi - math.Log(1 + d*d)
+	return -logGamma - logpi - math.Log(1+d*d)
 }
 
 // Logps computes the log pdf of a vector of observations.
 func (_ cauchy) Logps(x0, gamma float64, y ...float64) float64 {
 	logGamma := math.Log(gamma)
-	ll := (- logGamma - logpi)*float64(len(y))
+	ll := (-logGamma - logpi) * float64(len(y))
 	for i := range y {
 		d := (y[i] - x0) / gamma
 		ll -= math.Log(1 + d*d)
 	}
 	return ll
 }
-
 
 // Exponential distribution.
 type expon struct{}
@@ -121,9 +119,9 @@ func (_ expon) Logp(lambda float64, y float64) float64 {
 // Logps computes the log pdf of a vector of observations.
 func (_ expon) Logps(lambda float64, y ...float64) float64 {
 	logl := math.Log(lambda)
-	ll := logl*float64(len(y))
+	ll := logl * float64(len(y))
 	for i := range y {
-		ll -= lambda*y[i]
+		ll -= lambda * y[i]
 	}
 	return ll
 }
@@ -153,8 +151,8 @@ func (_ gamma) Logp(alpha, beta float64, y float64) float64 {
 
 // Logps computes the log pdf of a vector of observations.
 func (_ gamma) Logps(alpha, beta float64, y ...float64) float64 {
-	ll := (- mathx.LogGamma(alpha) +
-	  	   alpha*math.Log(beta))*float64(len(y))
+	ll := (-mathx.LogGamma(alpha) +
+		alpha*math.Log(beta)) * float64(len(y))
 	for i := range y {
 		ll += (alpha-1)*math.Log(y[i]) - beta*y[i]
 	}
@@ -188,8 +186,8 @@ func (_ beta) Logp(alpha, beta float64, y float64) float64 {
 
 // Logp computes the log pdf of a vector of observations.
 func (_ beta) Logps(alpha, beta float64, y ...float64) float64 {
-	ll := (- mathx.LogGamma(alpha) - mathx.LogGamma(beta) +
-     	   mathx.LogGamma(alpha+beta)) * float64(len(y))
+	ll := (-mathx.LogGamma(alpha) - mathx.LogGamma(beta) +
+		mathx.LogGamma(alpha+beta)) * float64(len(y))
 	for i := range y {
 		ll += (alpha-1)*math.Log(y[i]) +
 			(beta-1)*math.Log(1-y[i])

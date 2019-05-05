@@ -40,6 +40,39 @@ func TestNormal(t *testing.T) {
 	}
 }
 
+func TestCauchy(t *testing.T) {
+	for _, c := range []struct {
+		x0, gamma float64
+		y         []float64
+		ll        float64
+	}{
+		{0., 1., []float64{0.}, -1.1447298858494002},
+		{1., 2.5, []float64{2.}, -2.2094406228418286},
+		{0., 5, []float64{-1., 0.}, -5.5475563097202825},
+	} {
+		ll := Cauchy.Logps(c.x0, c.gamma, c.y...)
+		if math.Abs(ll-c.ll) > 1E-6 {
+			t.Errorf("Wrong logpdf of Normal(%.v|%.v, %.v): "+
+				"got %.4g, want %.4g",
+				c.y, c.x0, c.gamma, ll, c.ll)
+		}
+		llo := Cauchy.Observe(append([]float64{c.x0, c.gamma}, c.y...))
+		if math.Abs(ll-llo) > 1E-6 {
+			t.Errorf("Wrong result of Observe([%.4g, %.4g, %v...]): "+
+				"got %.4g, want %.4g",
+				c.x0, c.gamma, c.y, llo, ll)
+		}
+		if len(c.y) == 1 {
+			ll1 := Cauchy.Logp(c.x0, c.gamma, c.y[0])
+			if math.Abs(ll-ll1) > 1E-6 {
+				t.Errorf("Wrong result of Logp(%.4g, %.4g, %.4g): "+
+					"got %.4g, want %.4g",
+					c.x0, c.gamma, c.y[0], ll1, ll)
+			}
+		}
+	}
+}
+
 func TestExpon(t *testing.T) {
 	for _, c := range []struct {
 		lambda float64
