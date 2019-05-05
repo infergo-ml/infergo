@@ -21,10 +21,12 @@ func init() {
 	log2pi = log2 + logpi
 }
 
-// Normal distribution.
+// Unbounded distributions
+
+// Normal distribution
 type normal struct{}
 
-// Normal distribution, singleton instance.
+// Normal distribution, singleton instance
 var Normal normal
 
 // Observe implements the Model interface. The parameter
@@ -61,7 +63,7 @@ func (_ normal) Logps(mu, sigma float64, y ...float64) float64 {
 // Cauchy distribution
 type cauchy struct{}
 
-// Cauchy distribution, singleton instance.
+// Cauchy distribution, singleton instance
 var Cauchy cauchy
 
 // Observe implements the Model interface. The parameter
@@ -93,10 +95,12 @@ func (_ cauchy) Logps(x0, gamma float64, y ...float64) float64 {
 	return ll
 }
 
-// Exponential distribution.
+// Non-negative distributions
+
+// Exponential distribution
 type expon struct{}
 
-// Exponential distribution, singleton instance.
+// Exponential distribution, singleton instance
 var Expon expon
 
 // Observe implements the Model interface. The parameter
@@ -129,7 +133,7 @@ func (_ expon) Logps(lambda float64, y ...float64) float64 {
 // Gamma distribution
 type gamma struct{}
 
-// Gamma distribution, singleton instance.
+// Gamma distribution, singleton instance
 var Gamma gamma
 
 // Observe implements the Model interface. The parameter
@@ -159,10 +163,12 @@ func (_ gamma) Logps(alpha, beta float64, y ...float64) float64 {
 	return ll
 }
 
+// Bounded distributions
+
 // Beta distribution
 type beta struct{}
 
-// Beta distribution, singleton instance.
+// Beta distribution, singleton instance
 var Beta beta
 
 // Observe implements the Model interface. The parameter
@@ -195,10 +201,16 @@ func (_ beta) Logps(alpha, beta float64, y ...float64) float64 {
 	return ll
 }
 
+// Choice distributions
+
 // Dirichlet distribution
 type Dirichlet struct {
 	N int // number of dimensions
 }
+
+// Dirichlet distribution, singleton instance; Observe
+// cannot be called on this instance, but Logp and Logps can.
+var Dir Dirichlet
 
 // Observe implements the Model interface. The parameters are
 // alpha and observations, flattened.
@@ -249,10 +261,14 @@ func (dist Dirichlet) logZ(alpha []float64) float64 {
 	return sumLogGammaAlpha - mathx.LogGamma(sumAlpha)
 }
 
-// the categorical distribution
+// Categorical distribution
 type Categorical struct {
 	N int // number of categories
 }
+
+// Categorical distribution, singleton instance; Observe
+// cannot be called on this instance, but Logp and Logps can.
+var Cat Categorical
 
 // Observe implements the Model interface
 func (dist Categorical) Observe(x []float64) float64 {

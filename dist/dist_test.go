@@ -201,13 +201,13 @@ func TestDirichlet(t *testing.T) {
 			-0.6570081339440723,
 		},
 	} {
-		dist := Dirichlet{c.n}
-		ll := dist.Logps(c.alpha, c.y...)
+		ll := Dir.Logps(c.alpha, c.y...)
 		if math.Abs(ll-c.ll) > 1E-6 {
 			t.Errorf("Wrong logpdf of Dirichlet(%v|%v): "+
 				"got %.4g, want %.4g",
 				c.y, c.alpha, ll, c.ll)
 		}
+		dist := Dirichlet{c.n}
 		x := c.alpha
 		for _, y := range c.y {
 			x = append(x, y...)
@@ -219,7 +219,7 @@ func TestDirichlet(t *testing.T) {
 				c.alpha, c.y, llo, ll)
 		}
 		if len(c.y) == 1 {
-			ll1 := dist.Logp(c.alpha, c.y[0])
+			ll1 := Dir.Logp(c.alpha, c.y[0])
 			if math.Abs(ll-ll1) > 1E-6 {
 				t.Errorf("Wrong result of Logp(%v, %v): "+
 					"got %.4g, want %.4g",
@@ -255,13 +255,13 @@ func TestCategorical(t *testing.T) {
 			-1.6739764335716716,
 		},
 	} {
-		dist := Categorical{c.n}
-		ll := dist.Logps(c.alpha, c.y...)
+		ll := Cat.Logps(c.alpha, c.y...)
 		if math.Abs(ll-c.ll) > 1E-6 {
 			t.Errorf("Wrong logpdf of Categorical(%v|%v): "+
 				"got %.4g, want %.4g",
 				c.y, c.alpha, ll, c.ll)
 		}
+		dist := Categorical{c.n}
 		x := append(c.alpha, c.y...)
 		llo := dist.Observe(x)
 		if math.Abs(ll-llo) > 1E-6 {
@@ -270,7 +270,7 @@ func TestCategorical(t *testing.T) {
 				c.alpha, c.y, llo, ll)
 		}
 		if len(c.y) == 1 {
-			ll1 := dist.Logp(c.alpha, c.y[0])
+			ll1 := Cat.Logp(c.alpha, c.y[0])
 			if math.Abs(ll-ll1) > 1E-6 {
 				t.Errorf("Wrong result of Logp(%v, %v): "+
 					"got %.4g, want %.4g",
