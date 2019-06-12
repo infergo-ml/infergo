@@ -515,6 +515,9 @@ func (m *model) typeAst(t types.Type, p token.Pos) ast.Expr {
 		// We must qualify the package by name to yield
 		// a syntactically correct type ast.
 		func(pkg *types.Package) string {
+			if pkg.Path() == m.path {
+				return ""
+			}
 			pos := m.fset.Position(p)
 			file := m.pkg.Files[pos.Filename]
 			// If the package is not imported but the package
