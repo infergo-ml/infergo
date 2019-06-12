@@ -245,6 +245,28 @@ func (m Model) Observe(x []float64) float64 {
 }`,
 		},
 		//====================================================
+		{`package self
+type Model float64
+
+type Foo struct {y float64}
+
+func (m Model) Observe(x []float64) float64 {
+	foo := new(Foo)
+	return foo.y
+}`,
+			//----------------------------------------------------
+			`package self
+type Model float64
+
+type Foo struct {y float64}
+
+func (m Model) Observe(x []float64) float64 {
+	var foo *Foo
+	foo = new(Foo)
+	return foo.y
+}`,
+		},
+		//====================================================
 		{`package qualified
 import "go/ast"
 import tok "go/token"

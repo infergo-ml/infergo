@@ -515,6 +515,8 @@ func (m *model) typeAst(t types.Type, p token.Pos) ast.Expr {
 		// We must qualify the package by name to yield
 		// a syntactically correct type ast.
 		func(pkg *types.Package) string {
+			// If the type is declared in the model package,
+			// leave unqualified.
 			if pkg.Path() == m.path {
 				return ""
 			}
