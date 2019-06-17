@@ -45,6 +45,16 @@ func TestMathUnary(t *testing.T) {
 			math.Tan,
 			[][2]float64{{0, 1}, {0.25 * math.Pi, 2}},
 		},
+		{
+			"erf",
+			math.Erf,
+			[][2]float64{{0, 1.1283792}, {1, 0.4151075}},
+		},
+		{
+			"erfc",
+			math.Erfc,
+			[][2]float64{{0, -1.1283792}, {1, -0.4151075}},
+		},
 	} {
 		grad, ok := ElementalGradient(c.f)
 		if !ok {

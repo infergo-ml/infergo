@@ -68,4 +68,16 @@ func init() {
 		func(value float64, _ ...float64) []float64 {
 			return []float64{1 + value*value}
 		})
+
+	// Error function
+	RegisterElemental(math.Erf,
+		func(_ float64, params ...float64) []float64 {
+			return []float64{
+				2 / math.SqrtPi * math.Exp(-params[0]*params[0])}
+		})
+	RegisterElemental(math.Erfc,
+		func(_ float64, params ...float64) []float64 {
+			return []float64{
+				-2 / math.SqrtPi * math.Exp(-params[0]*params[0])}
+		})
 }
