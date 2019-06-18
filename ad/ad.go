@@ -611,6 +611,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				}
 			case *ast.Ident:
 				if n.Name == "_" {
+					// Dummy identifier, a new place will be
+					// allocated.
 					break
 				}
 				o := m.info.ObjectOf(n)
@@ -732,7 +734,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 			case *ast.Ident:
 				var place ast.Expr
 				if n.Name == "_" {
-					// Dummy identifier, assign to a new value.
+					// Dummy identifier, allocate a new place.
 					place = callExpr("Value", floatExpr(0))
 				} else {
 					if m.prefix != "" &&
