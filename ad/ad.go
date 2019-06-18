@@ -610,6 +610,9 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					return false
 				}
 			case *ast.Ident:
+				if n.Name == "_" {
+					break
+				}
 				o := m.info.ObjectOf(n)
 				if o == nil {
 					return false

@@ -607,6 +607,7 @@ type Model float64
 func (m Model) Observe(x []float64) float64 {
 	y := 1.
 	z, _ := 2., y
+	_ = y
 	return z
 }`,
 			//----------------------------------------------------
@@ -626,6 +627,7 @@ func (m Model) Observe(x []float64) float64 {
 	ad.Assignment(&y, ad.Value(1.))
 	var z float64
 	ad.ParallelAssignment(&z, ad.Value(0), ad.Value(2.), &y)
+	ad.Assignment(ad.Value(0), &y)
 	return ad.Return(&z)
 }`,
 		},
