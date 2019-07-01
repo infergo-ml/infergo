@@ -303,10 +303,10 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 	return p
 }
 
-// Vecemenal encodes a call to the vector elemental f.
+// Vlemental encodes a call to the vector elemental f.
 // To call gradient without allocation on backward pass,
 // argument values are copied to the tape memory.
-// Elemental returns the location of the result.
+// Vlemental returns the location of the result.
 func Vlemental(f func([]float64) float64, x []float64) *float64 {
 	tape := tapes.get()
 	g, ok := ElementalGradient(f)
