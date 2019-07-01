@@ -303,6 +303,42 @@ func Elemental(f interface{}, px ...*float64) *float64 {
 	return p
 }
 
+// Vecemenal encodes a call to the vector elemental f.
+// To call gradient without allocation on backward pass,
+// argument values are copied to the tape memory.
+// Elemental returns the location of the result.
+func Vlemental(f func([]float64) float64, x []float64) *float64 {
+	tape := tapes.get()
+	g, ok := ElementalGradient(f)
+	if !ok {
+		// No gradient attached, thus not an elemental.
+		panic("not an elemental")
+	}
+	// Register
+	p := Value(0)
+	r := record{
+		typ: typElemental,
+		op:  len(tape.elementals),
+		p:   len(tape.places),
+		v:   len(tape.values),
+	}
+	e := elemental{
+		n: len(x),
+		g: g,
+	}
+	tape.values = append(tape.values, x...)
+	tape.places = append(tape.places, p)
+	for i := range x {
+		tape.places = append(tape.places, &x[i])
+	}
+	tape.elementals = append(tape.elementals, e)
+	tape.records = append(tape.records, r)
+	// Run
+	*p = f(x)
+
+	return p
+}
+
 // Calling differentiated functions
 
 // True iff the last record on the tape is a Call record.

@@ -633,6 +633,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				switch {
 				case m.isDifferentiated(n):
 				case m.isElemental(n):
+				case m.isVlemental(n):
 				default:
 					// A function which is neither
 					// differentiated nor elemental is called
@@ -895,6 +896,10 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					elemental := callExpr("Elemental",
 						append([]ast.Expr{n.Fun}, n.Args...)...)
 					c.Replace(elemental)
+				case m.isVlemental(n):
+					vlemental := callExpr("Vlemental",
+						append([]ast.Expr{n.Fun}, n.Args...)...)
+					c.Replace(vlemental)
 				}
 			case *ast.ExprStmt:
 				ontape = false
@@ -1097,6 +1102,37 @@ func (m *model) isElemental(call *ast.CallExpr) bool {
 		if !isFloat(t.Params().At(i).Type()) {
 			return false
 		}
+	}
+
+	return true
+}
+
+// isVlemental returns true iff the call is of a vector
+// elemental function. An elemental function is a function with
+// one argument of []float64 type returning float64.
+// isVlemental does not check whether this is a differentiated
+// function instead and should be called after isDifferentiated.
+func (m *model) isVlemental(call *ast.CallExpr) bool {
+	t, ok := m.info.TypeOf(call.Fun).(*types.Signature)
+	if !ok { // a type cast rather than a call
+		return false
+	}
+	if t.Results().Len() != 1 || t.Variadic() {
+		return false
+	}
+	if !isFloat(t.Results().At(0).Type()) {
+		return false
+	}
+
+	if t.Params().Len() != 1 {
+		return false
+	}
+	st, ok := t.Params().At(0).Type().(*types.Slice)
+	if !ok {
+		return false
+	}
+	if !isFloat(st.Elem()) {
+		return false
 	}
 
 	return true

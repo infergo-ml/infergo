@@ -857,13 +857,14 @@ import "math"
 
 type Model float64
 
-func pi() float64 {
-	return 3.14159
+func first(x []float64) float64 {
+	return x[0]
 }
 
 func (m Model) Observe(x []float64) float64 {
 	y := math.Sin(x[0])
-	return y
+	z := first(x)
+	return y + z
 }`,
 			//----------------------------------------------------
 			`package elemental
@@ -875,8 +876,8 @@ import (
 
 type Model float64
 
-func pi() float64 {
-	return 3.14159
+func first(x []float64) float64 {
+	return x[0]
 }
 
 func (m Model) Observe(x []float64) float64 {
@@ -887,7 +888,9 @@ func (m Model) Observe(x []float64) float64 {
 	}
 	var y float64
 	ad.Assignment(&y, ad.Elemental(math.Sin, &x[0]))
-	return ad.Return(&y)
+	var z float64
+	ad.Assignment(&z, ad.Vlemental(first, x))
+	return ad.Return(ad.Arithmetic(ad.OpAdd, &y, &z))
 }`,
 		},
 		//====================================================

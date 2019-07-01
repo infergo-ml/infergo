@@ -308,8 +308,8 @@ func threeArgElemental(a, b, c float64) float64 {
 	return a + b + c
 }
 
-func variadicElemental(a ...float64) float64 {
-	return a[0] - a[1]
+func vlemental(a []float64) float64 {
+	return a[0] * a[1]
 }
 
 func init() {
@@ -321,9 +321,9 @@ func init() {
 		func(v float64, a ...float64) []float64 {
 			return []float64{1, 1, 1}
 		})
-	RegisterElemental(variadicElemental,
+	RegisterElemental(vlemental,
 		func(v float64, a ...float64) []float64 {
-			return []float64{1, -1}
+			return []float64{a[1], a[0]}
 		})
 }
 
@@ -344,13 +344,13 @@ func TestElemental(t *testing.T) {
 			[][][]float64{
 				{{0, 0, 0}, {1, 1, 1}},
 				{{1, 2, 3}, {1, 1, 1}}}},
-		{"variadicElemental(x, y)",
+		{"vlemental",
 			func(x []float64) {
-				Return(Elemental(variadicElemental, &x[0], &x[1]))
+				Return(Vlemental(vlemental, x))
 			},
 			[][][]float64{
-				{{0, 0}, {1, -1}},
-				{{1, 2}, {1, -1}}}},
+				{{0, 0}, {0, 0}},
+				{{1, 2}, {2, 1}}}},
 	})
 }
 
