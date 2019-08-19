@@ -40,6 +40,15 @@ func init() {
 		func(value float64, _ ...float64) []float64 {
 			return []float64{0.5 / value}
 		})
+	RegisterElemental(math.Abs,
+		func(value float64, params ...float64) []float64 {
+			deriv := 0.
+			switch {
+				case params[0] > 0: deriv = 1.
+				case params[0] < 0: deriv = -1.
+			}
+			return []float64{deriv}
+		})
 
 	// Exponential and logarithmic
 	RegisterElemental(math.Exp,
