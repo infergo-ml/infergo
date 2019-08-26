@@ -47,7 +47,7 @@ func (dist normal) Observe(x []float64) float64 {
 	}
 }
 
-func (_ normal) Logp(mu, sigma float64, y float64) float64 {
+func (normal) Logp(mu, sigma float64, y float64) float64 {
 	if ad.Called() {
 		ad.Enter(&mu, &sigma, &y)
 	} else {
@@ -62,7 +62,7 @@ func (_ normal) Logp(mu, sigma float64, y float64) float64 {
 	return ad.Return(ad.Arithmetic(ad.OpMul, ad.Value(-0.5), (ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpDiv, ad.Arithmetic(ad.OpMul, &d, &d), &vari), &logv), &log2pi))))
 }
 
-func (_ normal) Logps(mu, sigma float64, y ...float64) float64 {
+func (normal) Logps(mu, sigma float64, y ...float64) float64 {
 	if ad.Called() {
 		ad.Enter(&mu, &sigma)
 	} else {
@@ -112,7 +112,7 @@ func (dist cauchy) Observe(x []float64) float64 {
 	}
 }
 
-func (_ cauchy) Logp(x0, gamma float64, y float64) float64 {
+func (cauchy) Logp(x0, gamma float64, y float64) float64 {
 	if ad.Called() {
 		ad.Enter(&x0, &gamma, &y)
 	} else {
@@ -125,7 +125,7 @@ func (_ cauchy) Logp(x0, gamma float64, y float64) float64 {
 	return ad.Return(ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpNeg, &logGamma), &logpi), ad.Elemental(math.Log, ad.Arithmetic(ad.OpAdd, ad.Value(1), ad.Arithmetic(ad.OpMul, &d, &d)))))
 }
 
-func (_ cauchy) Logps(x0, gamma float64, y ...float64) float64 {
+func (cauchy) Logps(x0, gamma float64, y ...float64) float64 {
 	if ad.Called() {
 		ad.Enter(&x0, &gamma)
 	} else {
@@ -171,7 +171,7 @@ func (dist expon) Observe(x []float64) float64 {
 	}
 }
 
-func (_ expon) Logp(lambda float64, y float64) float64 {
+func (expon) Logp(lambda float64, y float64) float64 {
 	if ad.Called() {
 		ad.Enter(&lambda, &y)
 	} else {
@@ -182,7 +182,7 @@ func (_ expon) Logp(lambda float64, y float64) float64 {
 	return ad.Return(ad.Arithmetic(ad.OpSub, &logl, ad.Arithmetic(ad.OpMul, &lambda, &y)))
 }
 
-func (_ expon) Logps(lambda float64, y ...float64) float64 {
+func (expon) Logps(lambda float64, y ...float64) float64 {
 	if ad.Called() {
 		ad.Enter(&lambda)
 	} else {
@@ -228,7 +228,7 @@ func (dist gamma) Observe(x []float64) float64 {
 	}
 }
 
-func (_ gamma) Logp(alpha, beta float64, y float64) float64 {
+func (gamma) Logp(alpha, beta float64, y float64) float64 {
 	if ad.Called() {
 		ad.Enter(&alpha, &beta, &y)
 	} else {
@@ -237,7 +237,7 @@ func (_ gamma) Logp(alpha, beta float64, y float64) float64 {
 	return ad.Return(ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &y)), ad.Arithmetic(ad.OpMul, &beta, &y)), ad.Elemental(mathx.LogGamma, &alpha)), ad.Arithmetic(ad.OpMul, &alpha, ad.Elemental(math.Log, &beta))))
 }
 
-func (_ gamma) Logps(alpha, beta float64, y ...float64) float64 {
+func (gamma) Logps(alpha, beta float64, y ...float64) float64 {
 	if ad.Called() {
 		ad.Enter(&alpha, &beta)
 	} else {
@@ -281,7 +281,7 @@ func (dist beta) Observe(x []float64) float64 {
 	}
 }
 
-func (_ beta) Logp(alpha, beta float64, y float64) float64 {
+func (beta) Logp(alpha, beta float64, y float64) float64 {
 	if ad.Called() {
 		ad.Enter(&alpha, &beta, &y)
 	} else {
@@ -290,7 +290,7 @@ func (_ beta) Logp(alpha, beta float64, y float64) float64 {
 	return ad.Return(ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &y)), ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &beta, ad.Value(1))), ad.Elemental(math.Log, ad.Arithmetic(ad.OpSub, ad.Value(1), &y)))), ad.Elemental(mathx.LogGamma, &alpha)), ad.Elemental(mathx.LogGamma, &beta)), ad.Elemental(mathx.LogGamma, ad.Arithmetic(ad.OpAdd, &alpha, &beta))))
 }
 
-func (_ beta) Logps(alpha, beta float64, y ...float64) float64 {
+func (beta) Logps(alpha, beta float64, y ...float64) float64 {
 	if ad.Called() {
 		ad.Enter(&alpha, &beta)
 	} else {
@@ -466,7 +466,7 @@ func (dist Categorical) logZ(alpha []float64) float64 {
 
 type d struct{}
 
-func (_ d) Observe(_ []float64) float64 {
+func (d) Observe(_ []float64) float64 {
 	if ad.Called() {
 		ad.Enter()
 	} else {
@@ -477,7 +477,7 @@ func (_ d) Observe(_ []float64) float64 {
 
 var D d
 
-func (_ d) SoftMax(x, p []float64) {
+func (d) SoftMax(x, p []float64) {
 	if ad.Called() {
 		ad.Enter()
 	} else {
@@ -507,7 +507,7 @@ func (_ d) SoftMax(x, p []float64) {
 	}
 }
 
-func (_ d) LogSumExp(x []float64) float64 {
+func (d) LogSumExp(x []float64) float64 {
 	if ad.Called() {
 		ad.Enter()
 	} else {
