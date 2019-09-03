@@ -21,6 +21,11 @@ func TestMathUnary(t *testing.T) {
 			[][2]float64{{0.25, 1}, {4, 0.25}},
 		},
 		{
+			"abs",
+			math.Abs,
+			[][2]float64{{2, 1}, {-3, -1}, {0, 0}},
+		},
+		{
 			"exp",
 			math.Exp,
 			[][2]float64{{0, 1}, {2, math.Exp(2)}},

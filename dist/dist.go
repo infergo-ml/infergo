@@ -41,7 +41,7 @@ func (dist normal) Observe(x []float64) float64 {
 }
 
 // Logp computes the log pdf of a single observation.
-func (_ normal) Logp(mu, sigma float64, y float64) float64 {
+func (normal) Logp(mu, sigma float64, y float64) float64 {
 	vari := sigma * sigma
 	logv := math.Log(vari)
 	d := y - mu
@@ -49,7 +49,7 @@ func (_ normal) Logp(mu, sigma float64, y float64) float64 {
 }
 
 // Logps computes the log pdf of a vector of observations.
-func (_ normal) Logps(mu, sigma float64, y ...float64) float64 {
+func (normal) Logps(mu, sigma float64, y ...float64) float64 {
 	vari := sigma * sigma
 	logv := math.Log(vari)
 	ll := -0.5 * (logv + log2pi) * float64(len(y))
@@ -78,14 +78,14 @@ func (dist cauchy) Observe(x []float64) float64 {
 }
 
 // Logp computes the log pdf of a single observation.
-func (_ cauchy) Logp(x0, gamma float64, y float64) float64 {
+func (cauchy) Logp(x0, gamma float64, y float64) float64 {
 	logGamma := math.Log(gamma)
 	d := (y - x0) / gamma
 	return -logGamma - logpi - math.Log(1+d*d)
 }
 
 // Logps computes the log pdf of a vector of observations.
-func (_ cauchy) Logps(x0, gamma float64, y ...float64) float64 {
+func (cauchy) Logps(x0, gamma float64, y ...float64) float64 {
 	logGamma := math.Log(gamma)
 	ll := (-logGamma - logpi) * float64(len(y))
 	for i := range y {
@@ -115,13 +115,13 @@ func (dist expon) Observe(x []float64) float64 {
 }
 
 // Logp computes the log pdf of a single observation.
-func (_ expon) Logp(lambda float64, y float64) float64 {
+func (expon) Logp(lambda float64, y float64) float64 {
 	logl := math.Log(lambda)
 	return logl - lambda*y
 }
 
 // Logps computes the log pdf of a vector of observations.
-func (_ expon) Logps(lambda float64, y ...float64) float64 {
+func (expon) Logps(lambda float64, y ...float64) float64 {
 	logl := math.Log(lambda)
 	ll := logl * float64(len(y))
 	for i := range y {
@@ -148,13 +148,13 @@ func (dist gamma) Observe(x []float64) float64 {
 }
 
 // Logp computes the log pdf of a single observation.
-func (_ gamma) Logp(alpha, beta float64, y float64) float64 {
+func (gamma) Logp(alpha, beta float64, y float64) float64 {
 	return (alpha-1)*math.Log(y) - beta*y -
 		mathx.LogGamma(alpha) + alpha*math.Log(beta)
 }
 
 // Logps computes the log pdf of a vector of observations.
-func (_ gamma) Logps(alpha, beta float64, y ...float64) float64 {
+func (gamma) Logps(alpha, beta float64, y ...float64) float64 {
 	ll := (-mathx.LogGamma(alpha) +
 		alpha*math.Log(beta)) * float64(len(y))
 	for i := range y {
@@ -183,7 +183,7 @@ func (dist beta) Observe(x []float64) float64 {
 }
 
 // Logp computes the log pdf of a single observation.
-func (_ beta) Logp(alpha, beta float64, y float64) float64 {
+func (beta) Logp(alpha, beta float64, y float64) float64 {
 	return (alpha-1)*math.Log(y) +
 		(beta-1)*math.Log(1-y) -
 		mathx.LogGamma(alpha) - mathx.LogGamma(beta) +
@@ -191,7 +191,7 @@ func (_ beta) Logp(alpha, beta float64, y float64) float64 {
 }
 
 // Logp computes the log pdf of a vector of observations.
-func (_ beta) Logps(alpha, beta float64, y ...float64) float64 {
+func (beta) Logps(alpha, beta float64, y ...float64) float64 {
 	ll := (-mathx.LogGamma(alpha) - mathx.LogGamma(beta) +
 		mathx.LogGamma(alpha+beta)) * float64(len(y))
 	for i := range y {
@@ -316,7 +316,7 @@ type d struct{}
 
 // Method Observe implements the Model interface on d and
 // makes d's methods differentiable.
-func (_ d) Observe(_ []float64) float64 {
+func (d) Observe(_ []float64) float64 {
 	panic("should never be called")
 }
 
@@ -326,7 +326,7 @@ var D d
 
 // SoftMax transforms unconstrained parameters x to a point p on
 // the simplex.
-func (_ d) SoftMax(x, p []float64) {
+func (d) SoftMax(x, p []float64) {
 	if len(x) != len(p) {
 		panic(fmt.Sprintf("lengths of x and p are different: "+
 			"got len(x)=%v, len(p)=%v", len(x), len(p)))
@@ -355,7 +355,7 @@ func (_ d) SoftMax(x, p []float64) {
 }
 
 // LogSumExp computes log(sum(exp(x[0]) + exp(x[1]) + ...) robustly.
-func (_ d) LogSumExp(x []float64) float64 {
+func (d) LogSumExp(x []float64) float64 {
 	max := math.Inf(-1)
 	for i := range x {
 		if x[i] > max {
