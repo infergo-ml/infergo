@@ -4,6 +4,7 @@ package infer
 
 import (
 	"bitbucket.org/dtolpin/infergo/ad"
+	"bitbucket.org/dtolpin/infergo/model"
 	"math"
 	"testing"
 )
@@ -33,7 +34,7 @@ func TestModel(t *testing.T) {
 		grad: []float64{1, 2},
 	}
 	m.Observe([]float64{3, 1})
-	grad := ad.Gradient()
+	grad := model.Gradient(m)
 	for i := range grad {
 		if grad[i] != m.grad[i] {
 			t.Fatalf("wrong gradient: got %v, want %v",

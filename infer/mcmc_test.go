@@ -5,6 +5,7 @@ package infer
 import (
 	"bitbucket.org/dtolpin/infergo/ad"
 	. "bitbucket.org/dtolpin/infergo/dist/ad"
+	"bitbucket.org/dtolpin/infergo/model"
 	"math"
 	"math/rand"
 	"testing"
@@ -40,7 +41,7 @@ func TestLeapfrog(t *testing.T) {
 	}
 	x, r, eps := []float64{0, 0}, []float64{1, -1}, 0.5
 	m.Observe(x)
-	grad := ad.Gradient()
+	grad := model.Gradient(m)
 	_, grad = leapfrog(m, grad, x, r, eps)
 	xNext, rNext := []float64{0.5625, -0.3125}, []float64{1.25, -0.25}
 	for i := range x {

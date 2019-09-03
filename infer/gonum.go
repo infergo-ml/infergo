@@ -24,7 +24,7 @@ func FuncGrad(m model.Model) (
 		}
 
 		Grad = func(grad, x []float64) {
-			_, grad_ := m.Observe(x), ad.Gradient()
+			_, grad_ := m.Observe(x), model.Gradient(m)
 			for i := range grad_ {
 				grad[i] = -grad_[i]
 			}
@@ -42,7 +42,7 @@ func FuncGrad(m model.Model) (
 
 		Grad = func(grad, x []float64) {
 			tapeMutex.Lock()
-			_, grad_ := m.Observe(x), ad.Gradient()
+			_, grad_ := m.Observe(x), model.Gradient(m)
 			tapeMutex.Unlock()
 			for i := range grad_ {
 				grad[i] = -grad_[i]

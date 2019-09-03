@@ -3,7 +3,6 @@ package infer
 // Gradient ascent algorithms.
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	"bitbucket.org/dtolpin/infergo/model"
 	"math"
 )
@@ -34,7 +33,7 @@ func (opt *Momentum) Step(
 	ll float64,
 	grad []float64,
 ) {
-	ll, grad = m.Observe(x), ad.Gradient()
+	ll, grad = m.Observe(x), model.Gradient(m)
 	if opt.u == nil {
 		// u is initialized to zeros.
 		opt.u = make([]float64, len(x))
@@ -68,7 +67,7 @@ func (opt *Adam) Step(
 	ll float64,
 	grad []float64,
 ) {
-	ll, grad = m.Observe(x), ad.Gradient()
+	ll, grad = m.Observe(x), model.Gradient(m)
 
 	if opt.u == nil {
 		opt.setDefaults()

@@ -79,7 +79,7 @@ func leapfrog(
 		r[i] += 0.5 * eps * grad[i]
 		x[i] += eps * r[i]
 	}
-	l, grad = m.Observe(x), ad.Gradient()
+	l, grad = m.Observe(x), model.Gradient(m)
 	if math.IsNaN(l) {
 		panic("energy diverged")
 	}
@@ -136,7 +136,7 @@ func (hmc *HMC) Sample(
 				r[i] = rand.NormFloat64()
 			}
 
-			l0, grad := m.Observe(x), ad.Gradient()
+			l0, grad := m.Observe(x), model.Gradient(m)
 			e0 := energy(l0, r) // initial energy
 			var l float64
 			x_ := clone(x)
@@ -374,7 +374,8 @@ func (nuts *NUTS) observe(m model.Model, x []float64) (
 		}
 	}
 	if !cached {
-		nuts.x, nuts.l, nuts.grad = x, m.Observe(x), ad.Gradient()
+		nuts.x, nuts.l, nuts.grad = x,
+			m.Observe(x), model.Gradient(m)
 	}
 	return nuts.l, nuts.grad
 }
