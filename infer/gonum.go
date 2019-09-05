@@ -19,7 +19,7 @@ func FuncGrad(m model.Model) (
 
 		Func = func(x []float64) float64 {
 			ll := m.Observe(x)
-			ad.Pop()
+			model.DropGradient(m)
 			return -ll
 		}
 
@@ -35,7 +35,7 @@ func FuncGrad(m model.Model) (
 		Func = func(x []float64) float64 {
 			tapeMutex.Lock()
 			ll := m.Observe(x)
-			ad.Pop()
+			model.DropGradient(m)
 			tapeMutex.Unlock()
 			return -ll
 		}

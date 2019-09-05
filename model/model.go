@@ -30,12 +30,25 @@ func Shift(px *[]float64, n int) []float64 {
 }
 
 // Gradient automatically selects either supplied or automatic
-// gradient
+// gradient.
 func Gradient(m Model) []float64 {
 	switch m := m.(type) {
 	case ElementalModel:
 		return m.Gradient()
 	default:
 		return ad.Gradient()
+	}
+}
+
+// DropGradient can be called instead of Gradient when the gradient
+// is not required. For automaticall differentated models DropGradient
+// will pop the frame from the tape; for elemental models it will
+// do nothing.
+func DropGradient(m Model) {
+	switch m.(type) {
+	case ElementalModel:
+		// nothing has to be cleared
+	default:
+		ad.Pop()
 	}
 }

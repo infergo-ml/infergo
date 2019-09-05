@@ -1,9 +1,9 @@
 package main
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	. "bitbucket.org/dtolpin/infergo/examples/schools/model/ad"
 	"bitbucket.org/dtolpin/infergo/infer"
+	"bitbucket.org/dtolpin/infergo/model"
 	"flag"
 	"fmt"
 	"math"
@@ -68,7 +68,7 @@ func main() {
 	// Compute log-likelihood of the starting point,
 	// for comparison.
 	ll0 := m.Observe(x)
-	ad.Pop()
+	model.DropGradient(m)
 
 	// Create and run the optimizer
 	var opt infer.Grad
@@ -104,6 +104,6 @@ func main() {
 	}
 	fmt.Printf("\n")
 	ll := m.Observe(x)
-	ad.Pop()
+	model.DropGradient(m)
 	fmt.Printf("Log-likelihood: %.4g ⇒ %.4g\n", ll0, ll)
 }

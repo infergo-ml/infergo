@@ -1,9 +1,9 @@
 package main
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	. "bitbucket.org/dtolpin/infergo/examples/ppv/model/ad"
 	"bitbucket.org/dtolpin/infergo/infer"
+	"bitbucket.org/dtolpin/infergo/model"
 	"encoding/csv"
 	"flag"
 	"fmt"
@@ -119,7 +119,7 @@ func main() {
 		// Compute log-likelihood of the starting point,
 		// for comparison.
 		ll0 := m.Observe(x)
-		ad.Pop()
+		model.DropGradient(m)
 
 		// Run the optimizer
 		opt := &infer.Momentum{
