@@ -953,7 +953,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 func (m *model) setupStmt(method *ast.FuncDecl) ast.Stmt {
 	param := method.Type.Params.List[0]
 	var arg ast.Expr
-	if param.Names[0].Name == "_" {
+	if len(param.Names) == 0 || param.Names[0].Name == "_" {
 		// The parameter is _; the argument is an empty
 		// slice.
 		arg = &ast.CompositeLit{
