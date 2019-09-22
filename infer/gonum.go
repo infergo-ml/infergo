@@ -13,7 +13,8 @@ func FuncGrad(m model.Model) (
 	Func func(x []float64) float64,
 	Grad func(grad, x []float64),
 ) {
-	if ad.IsMTSafe() {
+	_, isElemental := m.(model.ElementalModel)
+	if ad.IsMTSafe() && !isElemental {
 		// It is safe to run multiple differentiations in
 		// parallel, no locking.
 
