@@ -31,7 +31,8 @@ func FuncGrad(m model.Model) (
 			}
 		}
 	} else {
-		// The tape must be locked.
+		// Either the tape must be locked or the model
+		// is elemental.
 
 		Func = func(x []float64) float64 {
 			tapeMutex.Lock()
