@@ -110,6 +110,6 @@ func (opt *Adam) setDefaults() {
 		opt.Beta2 = 0.999
 	}
 	if opt.Eps == 0 {
-		opt.Eps = 1E-8
+		opt.Eps = 1e-8
 	}
 }

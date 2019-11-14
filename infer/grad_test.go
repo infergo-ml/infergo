@@ -56,7 +56,7 @@ func TestMomentum(t *testing.T) {
 	xNext := []float64{0.1, 0.2}
 	opt.Step(m, x)
 	for i := range x {
-		if math.Abs(xNext[i]-x[i]) > 1E-6 {
+		if math.Abs(xNext[i]-x[i]) > 1e-6 {
 			t.Errorf("wrong first update: got x[%d] = %.6g, "+
 				"want %.6g", i, x[i], xNext[i])
 		}
@@ -65,7 +65,7 @@ func TestMomentum(t *testing.T) {
 	xNext = []float64{0.15, 0.3}
 	opt.Step(m, x)
 	for i := range x {
-		if math.Abs(xNext[i]-x[i]) > 1E-6 {
+		if math.Abs(xNext[i]-x[i]) > 1e-6 {
 			t.Errorf("wrong second update (decay): "+
 				"got x[%d] = %.6g, want %.6g",
 				i, x[i], xNext[i])
@@ -76,7 +76,7 @@ func TestMomentum(t *testing.T) {
 	xNext = []float64{0.1875, 0.375}
 	opt.Step(m, x)
 	for i := range x {
-		if math.Abs(xNext[i]-x[i]) > 1E-6 {
+		if math.Abs(xNext[i]-x[i]) > 1e-6 {
 			t.Errorf("wrong third update (momentum): "+
 				"got x[%d] = %.6g, want %.6g",
 				i, x[i], xNext[i])
@@ -95,7 +95,7 @@ func TestAdam(t *testing.T) {
 	xNext := []float64{0.1, 0.1}
 	opt.Step(m, x)
 	for i := range x {
-		if math.Abs(xNext[i]-x[i]) > 1E-6 {
+		if math.Abs(xNext[i]-x[i]) > 1e-6 {
 			t.Errorf("wrong first update: got x[%d] = %.6g, "+
 				"want %.6g", i, x[i], xNext[i])
 		}
@@ -103,7 +103,7 @@ func TestAdam(t *testing.T) {
 	opt.Step(m, x)
 	xNext = []float64{0.2, 0.2}
 	for i := range x {
-		if math.Abs(xNext[i]-x[i]) > 1E-6 {
+		if math.Abs(xNext[i]-x[i]) > 1e-6 {
 			t.Errorf("wrong second update (decay): "+
 				"got x[%d] = %.6g, want %.6g",
 				i, x[i], xNext[i])

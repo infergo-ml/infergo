@@ -27,7 +27,7 @@ func TestEnergy(t *testing.T) {
 		{1, []float64{0}, 1},
 		{1, []float64{1, 3}, -4},
 	} {
-		if e := energy(c.l, c.r); math.Abs(e-c.e) > 1E-6 {
+		if e := energy(c.l, c.r); math.Abs(e-c.e) > 1e-6 {
 			t.Errorf("incorrect energy for l=%v, r=%v: "+
 				"got=%.6g, want=%.6g", c.l, c.r, e, c.e)
 		}
@@ -45,13 +45,13 @@ func TestLeapfrog(t *testing.T) {
 	_, grad = leapfrog(m, grad, x, r, eps)
 	xNext, rNext := []float64{0.5625, -0.3125}, []float64{1.25, -0.25}
 	for i := range x {
-		if math.Abs(x[i]-xNext[i]) > 1E-6 {
+		if math.Abs(x[i]-xNext[i]) > 1e-6 {
 			t.Errorf("wrong leapfrog step: got x[%d] = %.6g, "+
 				"want %.6g", i, x[i], xNext[i])
 		}
 	}
 	for i := range x {
-		if math.Abs(r[i]-rNext[i]) > 1E-6 {
+		if math.Abs(r[i]-rNext[i]) > 1e-6 {
 			t.Errorf("wrong leapfrog step: got r[%d] = %.6g, "+
 				"want %.6g", i, r[i], rNext[i])
 		}
@@ -192,7 +192,7 @@ func TestUTurn(t *testing.T) {
 func TestSamplers(t *testing.T) {
 	nattempts := 10
 	niter := 100
-	prec := 1E-1
+	prec := 1e-1
 	for _, c := range []struct {
 		sampler func() MCMC
 	}{

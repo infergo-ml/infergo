@@ -18,20 +18,20 @@ func TestNormal(t *testing.T) {
 		{0., 1., []float64{-1., 0.}, -2.3378770664093453},
 	} {
 		ll := Normal.Logps(c.mu, c.sigma, c.y...)
-		if math.Abs(ll-c.ll) > 1E-6 {
+		if math.Abs(ll-c.ll) > 1e-6 {
 			t.Errorf("Wrong logpdf of Normal(%.v|%.v, %.v): "+
 				"got %.4g, want %.4g",
 				c.y, c.mu, c.sigma, ll, c.ll)
 		}
 		llo := Normal.Observe(append([]float64{c.mu, c.sigma}, c.y...))
-		if math.Abs(ll-llo) > 1E-6 {
+		if math.Abs(ll-llo) > 1e-6 {
 			t.Errorf("Wrong result of Observe([%.4g, %.4g, %v...]): "+
 				"got %.4g, want %.4g",
 				c.mu, c.sigma, c.y, llo, ll)
 		}
 		if len(c.y) == 1 {
 			ll1 := Normal.Logp(c.mu, c.sigma, c.y[0])
-			if math.Abs(ll-ll1) > 1E-6 {
+			if math.Abs(ll-ll1) > 1e-6 {
 				t.Errorf("Wrong result of Logp(%.4g, %.4g, %.4g): "+
 					"got %.4g, want %.4g",
 					c.mu, c.sigma, c.y[0], ll1, ll)
@@ -51,20 +51,20 @@ func TestCauchy(t *testing.T) {
 		{0., 5, []float64{-1., 0.}, -5.5475563097202825},
 	} {
 		ll := Cauchy.Logps(c.x0, c.gamma, c.y...)
-		if math.Abs(ll-c.ll) > 1E-6 {
+		if math.Abs(ll-c.ll) > 1e-6 {
 			t.Errorf("Wrong logpdf of Normal(%.v|%.v, %.v): "+
 				"got %.4g, want %.4g",
 				c.y, c.x0, c.gamma, ll, c.ll)
 		}
 		llo := Cauchy.Observe(append([]float64{c.x0, c.gamma}, c.y...))
-		if math.Abs(ll-llo) > 1E-6 {
+		if math.Abs(ll-llo) > 1e-6 {
 			t.Errorf("Wrong result of Observe([%.4g, %.4g, %v...]): "+
 				"got %.4g, want %.4g",
 				c.x0, c.gamma, c.y, llo, ll)
 		}
 		if len(c.y) == 1 {
 			ll1 := Cauchy.Logp(c.x0, c.gamma, c.y[0])
-			if math.Abs(ll-ll1) > 1E-6 {
+			if math.Abs(ll-ll1) > 1e-6 {
 				t.Errorf("Wrong result of Logp(%.4g, %.4g, %.4g): "+
 					"got %.4g, want %.4g",
 					c.x0, c.gamma, c.y[0], ll1, ll)
@@ -84,20 +84,20 @@ func TestExpon(t *testing.T) {
 		{1., []float64{1., 2.}, -3},
 	} {
 		ll := Expon.Logps(c.lambda, c.y...)
-		if math.Abs(ll-c.ll) > 1E-6 {
+		if math.Abs(ll-c.ll) > 1e-6 {
 			t.Errorf("Wrong logpdf of Expon(%.v|%.v): "+
 				"got %.4g, want %.4g",
 				c.y, c.lambda, ll, c.ll)
 		}
 		llo := Expon.Observe(append([]float64{c.lambda}, c.y...))
-		if math.Abs(ll-llo) > 1E-6 {
+		if math.Abs(ll-llo) > 1e-6 {
 			t.Errorf("Wrong result of Observe([%.4g, %v...]): "+
 				"got %.4g, want %.4g",
 				c.lambda, c.y, llo, ll)
 		}
 		if len(c.y) == 1 {
 			ll1 := Expon.Logp(c.lambda, c.y[0])
-			if math.Abs(ll-ll1) > 1E-6 {
+			if math.Abs(ll-ll1) > 1e-6 {
 				t.Errorf("Wrong result of Logp(%.4g, %.4g): "+
 					"got %.4g, want %.4g",
 					c.lambda, c.y[0], ll1, ll)
@@ -117,20 +117,20 @@ func TestGamma(t *testing.T) {
 		{1., 1., []float64{2., 3.}, -5},
 	} {
 		ll := Gamma.Logps(c.alpha, c.beta, c.y...)
-		if math.Abs(ll-c.ll) > 1E-6 {
+		if math.Abs(ll-c.ll) > 1e-6 {
 			t.Errorf("Wrong logpdf of Gamma(%.v|%.v,%.v): "+
 				"got %.4g, want %.4g",
 				c.y, c.alpha, c.beta, ll, c.ll)
 		}
 		llo := Gamma.Observe(append([]float64{c.alpha, c.beta}, c.y...))
-		if math.Abs(ll-llo) > 1E-6 {
+		if math.Abs(ll-llo) > 1e-6 {
 			t.Errorf("Wrong result of Observe([%.4g, %.4g, %v...]): "+
 				"got %.4g, want %.4g",
 				c.alpha, c.beta, c.y, llo, ll)
 		}
 		if len(c.y) == 1 {
 			ll1 := Gamma.Logp(c.alpha, c.beta, c.y[0])
-			if math.Abs(ll-ll1) > 1E-6 {
+			if math.Abs(ll-ll1) > 1e-6 {
 				t.Errorf("Wrong result of Logp(%.4g, %.4g, %.4g): "+
 					"got %.4g, want %.4g",
 					c.beta, c.alpha, c.y[0], ll1, ll)
@@ -150,20 +150,20 @@ func TestBeta(t *testing.T) {
 		{3., 1., []float64{0.3, 0.6}, -1.2323722788476341},
 	} {
 		ll := Beta.Logps(c.alpha, c.beta, c.y...)
-		if math.Abs(ll-c.ll) > 1E-6 {
+		if math.Abs(ll-c.ll) > 1e-6 {
 			t.Errorf("Wrong logpdf of Beta(%.v|%.v,%.v): "+
 				"got %.4g, want %.4g",
 				c.y, c.alpha, c.beta, ll, c.ll)
 		}
 		llo := Beta.Observe(append([]float64{c.alpha, c.beta}, c.y...))
-		if math.Abs(ll-llo) > 1E-6 {
+		if math.Abs(ll-llo) > 1e-6 {
 			t.Errorf("Wrong result of Observe([%.4g, %.4g, %v...]): "+
 				"got %.4g, want %.4g",
 				c.alpha, c.beta, c.y, llo, ll)
 		}
 		if len(c.y) == 1 {
 			ll1 := Beta.Logp(c.alpha, c.beta, c.y[0])
-			if math.Abs(ll-ll1) > 1E-6 {
+			if math.Abs(ll-ll1) > 1e-6 {
 				t.Errorf("Wrong result of Logp(%.4g, %.4g, %.4g): "+
 					"got %.4g, want %.4g",
 					c.alpha, c.beta, c.y[0], ll1, ll)
@@ -202,7 +202,7 @@ func TestDirichlet(t *testing.T) {
 		},
 	} {
 		ll := Dir.Logps(c.alpha, c.y...)
-		if math.Abs(ll-c.ll) > 1E-6 {
+		if math.Abs(ll-c.ll) > 1e-6 {
 			t.Errorf("Wrong logpdf of Dirichlet(%v|%v): "+
 				"got %.4g, want %.4g",
 				c.y, c.alpha, ll, c.ll)
@@ -213,14 +213,14 @@ func TestDirichlet(t *testing.T) {
 			x = append(x, y...)
 		}
 		llo := dist.Observe(x)
-		if math.Abs(ll-llo) > 1E-6 {
+		if math.Abs(ll-llo) > 1e-6 {
 			t.Errorf("Wrong result of Observe(%v..., %v...): "+
 				"got %.4g, want %.4g",
 				c.alpha, c.y, llo, ll)
 		}
 		if len(c.y) == 1 {
 			ll1 := Dir.Logp(c.alpha, c.y[0])
-			if math.Abs(ll-ll1) > 1E-6 {
+			if math.Abs(ll-ll1) > 1e-6 {
 				t.Errorf("Wrong result of Logp(%v, %v): "+
 					"got %.4g, want %.4g",
 					c.alpha, c.y[0], ll1, ll)
@@ -256,7 +256,7 @@ func TestCategorical(t *testing.T) {
 		},
 	} {
 		ll := Cat.Logps(c.alpha, c.y...)
-		if math.Abs(ll-c.ll) > 1E-6 {
+		if math.Abs(ll-c.ll) > 1e-6 {
 			t.Errorf("Wrong logpdf of Categorical(%v|%v): "+
 				"got %.4g, want %.4g",
 				c.y, c.alpha, ll, c.ll)
@@ -264,14 +264,14 @@ func TestCategorical(t *testing.T) {
 		dist := Categorical{c.n}
 		x := append(c.alpha, c.y...)
 		llo := dist.Observe(x)
-		if math.Abs(ll-llo) > 1E-6 {
+		if math.Abs(ll-llo) > 1e-6 {
 			t.Errorf("Wrong result of Observe(%v..., %v...): "+
 				"got %.4g, want %.4g",
 				c.alpha, c.y, llo, ll)
 		}
 		if len(c.y) == 1 {
 			ll1 := Cat.Logp(c.alpha, c.y[0])
-			if math.Abs(ll-ll1) > 1E-6 {
+			if math.Abs(ll-ll1) > 1e-6 {
 				t.Errorf("Wrong result of Logp(%v, %v): "+
 					"got %.4g, want %.4g",
 					c.alpha, c.y[0], ll1, ll)
@@ -297,7 +297,7 @@ func TestSoftMax(t *testing.T) {
 		p := make([]float64, len(c.x))
 		D.SoftMax(c.x, p)
 		for i := range p {
-			if math.Abs(p[i]-c.p[i]) > 1E-6 {
+			if math.Abs(p[i]-c.p[i]) > 1e-6 {
 				t.Errorf("Wrong result of SoftMax(%v): "+
 					"got %v, want %v", c.x, p, c.p)
 				break
@@ -317,7 +317,7 @@ func TestLogSumExp(t *testing.T) {
 		{[]float64{1, 0, -1}, 1.407605964},
 	} {
 		y := D.LogSumExp(c.x)
-		if math.Abs(y-c.y) > 1E-6 {
+		if math.Abs(y-c.y) > 1e-6 {
 			t.Errorf("Wrong LogSumExp(%v): "+
 				"got %.4g, want %.4g", c.x, y, c.y)
 		}
