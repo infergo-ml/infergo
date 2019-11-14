@@ -105,7 +105,7 @@ func TestMathBinary(t *testing.T) {
 				math.Abs(g[1]-xg[3]) > 1e-6 {
 				t.Errorf("Wrong gradient of %v(%.4g, %.4g): "+
 					"got %.4g, want %.4g",
-					c.s, xg[0], xg[1], g, xg[2])
+					c.s, xg[0], xg[1], g, xg[2:])
 			}
 		}
 	}
