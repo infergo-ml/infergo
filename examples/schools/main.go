@@ -37,7 +37,7 @@ func init() {
 	flag.Float64Var(&SETA, "seta", SETA, "sigma of eta priors")
 	flag.StringVar(&OPTIMIZER, "optimizer", OPTIMIZER,
 		"optimizer (Gradient, Momentum or Adam)")
-	rand.Seed(time.Now().UTC().UnixNano())
+	rand.Seed(time.Now().UnixNano())
 }
 
 func main() {

@@ -33,7 +33,7 @@ var (
 )
 
 func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
+	rand.Seed(time.Now().UnixNano())
 	flag.Usage = func() {
 		fmt.Printf(`Inferring best bandwidth. Usage:
 		goppv [OPTIONS]` + "\n")
