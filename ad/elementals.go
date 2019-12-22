@@ -63,7 +63,10 @@ func init() {
 		})
 	RegisterElemental(math.Pow,
 		func(value float64, params ...float64) []float64 {
-			return []float64{value * math.Log(params[0])}
+			return []float64{
+				params[1] * value / params[0],
+				value * math.Log(params[0]),
+			}
 		})
 
 	// Trigonometric

@@ -383,7 +383,7 @@ func (nuts *NUTS) observe(m model.Model, x []float64) (
 // setDefaults sets the default value for auxiliary parameters.
 func (nuts *NUTS) setDefaults() {
 	if nuts.Delta == 0 {
-		nuts.Delta = 1E3
+		nuts.Delta = 1e3
 	}
 }
 
