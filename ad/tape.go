@@ -521,6 +521,11 @@ func backward() []float64 {
 				// Parameters must be copied to tape.values
 				// during the forward pass.
 				tape.values[r.v:r.v+e.n]...)
+			if len(d) != e.n {
+				panic(fmt.Sprintf(
+					"wrong gradient size: got %d, want %d",
+					len(d), e.n))
+			}
 			for i := 0; i != e.n; i++ {
 				adjoints[tape.places[r.p+1+i]] += a * d[i]
 			}

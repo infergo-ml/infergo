@@ -24,7 +24,7 @@ var (
 	RATE  = 0.01
 	DECAY = 0.998
 	GAMMA = 0.9
-	EPS   = 1E-6
+	EPS   = 1e-6
 	STEP  = 0.1
 	NBURN = 0
 	NITER = 100
@@ -33,7 +33,7 @@ var (
 )
 
 func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
+	rand.Seed(time.Now().UnixNano())
 	flag.Usage = func() {
 		fmt.Printf(`Inferring best bandwidth. Usage:
 		goppv [OPTIONS]` + "\n")

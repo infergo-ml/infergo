@@ -17,7 +17,7 @@ func TestDualAveraging(t *testing.T) {
 	} {
 		da := DualAveraging{Rate: c.Rate}
 		xnext := da.Step(c.t, c.x, c.gradSum)
-		if math.Abs(xnext-c.xnext) > 1E-6 {
+		if math.Abs(xnext-c.xnext) > 1e-6 {
 			t.Errorf("wrong update for %+v: got %.4g, want %.4g",
 				c, xnext, c.xnext)
 		}

@@ -27,7 +27,7 @@ var (
 )
 
 func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
+	rand.Seed(time.Now().UnixNano())
 	flag.Usage = func() {
 		log.Printf(`Gaussian mixture model:
 		gmm [OPTIONS]` + "\n")
