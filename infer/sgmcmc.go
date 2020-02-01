@@ -16,6 +16,8 @@ type SgHMC struct {
 	sampler
 	// Parameters
 	L     int     // number of steps
+	// The parameterization follows Equation (15) in
+	// https://arxiv.org/abs/1402.4102
 	Eta   float64 // learning rate
 	Alpha float64 // friction (1 - momentum)
 	V     float64 // diffusion
@@ -42,8 +44,16 @@ func (sghmc *SgHMC) Sample(
 			}
 		}()
 
-		beta := math.Min(0.5*sghmc.Eta*sghmc.V, sghmc.Alpha)
-		sigma := math.Sqrt(2 * sghmc.Eta * (sghmc.Alpha - beta))
+		var sigma float64
+		{
+			beta := 0.5*sghmc.Eta*sghmc.V
+			if beta > sghmc.Alpha {
+				// Eta is too large, SgHMC reduces to SGD with
+				// momentum.
+				beta = sghmc.Alpha
+			}
+			sigma = math.Sqrt(2 * sghmc.Eta * (sghmc.Alpha - beta))
+		}
 
 		r := make([]float64, len(x))
 		for {
@@ -69,8 +79,8 @@ func (sghmc *SgHMC) Sample(
 }
 
 // setDefaults sets the default value for auxiliary parameters.
-func (mahmc *SgHMC) setDefaults() {
-	if mahmc.L == 0 {
-		mahmc.L = 10
+func (sghmc *SgHMC) setDefaults() {
+	if sghmc.L == 0 {
+		sghmc.L = 10
 	}
 }
