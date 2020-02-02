@@ -37,8 +37,8 @@ type sampler struct {
 // to differentiated code. A part of the MCMC interface.
 func (s *sampler) Stop() {
 	s.stop = true
-	// The differentiated code is not thread-safe, hence
-	// we must exhaust samples before returning from Stop,
+	// The differentiated code is not necessarily thread-safe,
+	// hence we must exhaust samples before returning from Stop,
 	// so that an Observe called afterwards does not overlap
 	// with an Observe called in the sampler.
 	for {
