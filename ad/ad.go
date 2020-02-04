@@ -1046,10 +1046,14 @@ func (m *model) isDifferentiated(call *ast.CallExpr) bool {
 
 	if ok {
 		// Fix the import: if the import refers to the
-		// undifferentiated source, add the "/ad" suffix.
+		// undifferentiated package, add the "/ad" suffix
+		// to the first import of the package. Remaining
+		// imports of the same package, with different
+		// names, can be used to access the undifferentiated
+		// version of the package.
 
 		// We are using TypeString with a custom qualifier here
-		// to get access to the receive type's package. This is
+		// to get access to the receiver type's package. This is
 		// slightly perversive, but does the job.
 		types.TypeString(t.Recv(),
 			func(pkg *types.Package) string {
@@ -1058,16 +1062,21 @@ func (m *model) isDifferentiated(call *ast.CallExpr) bool {
 					// model, do nothing.
 					return pkg.Path()
 				}
+				adPath := pkg.Path() + "/ad"
 				pos := m.fset.Position(call.Pos())
 				file := m.pkg.Files[pos.Filename]
+				// Traverse the list of imports to find the
+				// name of the file.
 				for _, is := range file.Imports {
 					// Remove quotes from the literal value.
 					path := is.Path.Value[1 : len(is.Path.Value)-1]
-					// Traverse the list of imports to find the
-					// name of the file.
+					if  adPath == path {
+						// Prefix already added, stop.
+						break
+					}
 					if pkg.Path() == path {
 						// Found, add the /ad suffix.
-						is.Path.Value = fmt.Sprintf(`"%s/ad"`, path)
+						is.Path.Value = `"` + adPath + `"`
 						break
 					}
 				}

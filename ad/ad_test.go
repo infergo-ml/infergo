@@ -1132,9 +1132,21 @@ func (m Model) Observe(x []float64) float64 {
 		},
 		//====================================================
 		{`package importautoad
-import "bitbucket.org/dtolpin/infergo/dist"
+import (
+	"bitbucket.org/dtolpin/infergo/dist"
+	// "ad/" is added to the first import of each package, 
+	// the remaining import (with different names) are 
+	// left unmodified and can be used to access
+	// undifferentiated versions of the package
+	ud "bitbucket.org/dtolpin/infergo/dist"
+)
 
 type Model float64
+
+func foo() float64 {
+	// Normal is used in undifferentiated context
+	return ud.Normal.Logp(0, 1, 0)
+}
 
 func (m Model) Observe(x []float64) float64 {
 	return dist.Normal.Observe(x)
@@ -1145,9 +1157,14 @@ func (m Model) Observe(x []float64) float64 {
 import (
 	"bitbucket.org/dtolpin/infergo/dist/ad"
 	"bitbucket.org/dtolpin/infergo/ad"
+	ud "bitbucket.org/dtolpin/infergo/dist"
 )
 
 type Model float64
+
+func foo() float64 {
+	return ud.Normal.Logp(0, 1, 0)
+}
 
 func (m Model) Observe(x []float64) float64 {
 	if ad.Called() {
