@@ -1070,7 +1070,7 @@ func (m *model) isDifferentiated(call *ast.CallExpr) bool {
 				for _, is := range file.Imports {
 					// Remove quotes from the literal value.
 					path := is.Path.Value[1 : len(is.Path.Value)-1]
-					if  adPath == path {
+					if adPath == path {
 						// Prefix already added, stop.
 						break
 					}

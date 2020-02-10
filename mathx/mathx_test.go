@@ -88,8 +88,8 @@ func TestLogSumExpGrad(t *testing.T) {
 		}
 		zs := LogSumExps([]float64{c.x, c.y})
 		gs := grads(z, c.x, c.y)
-		if math.Abs(zs - zs) > 1e-6 {
-			t.Errorf("LogSumExps(%.4g, %.4g) != " + 
+		if math.Abs(zs-zs) > 1e-6 {
+			t.Errorf("LogSumExps(%.4g, %.4g) != "+
 				"LogSumExp(%.4g, %.4g): %.4g vs %.4g",
 				c.x, c.y, c.x, c.y, zs, z)
 		}
@@ -98,13 +98,13 @@ func TestLogSumExpGrad(t *testing.T) {
 			gok = false
 		}
 		for i := range g {
-			if math.Abs(g[i] - gs[i]) > 1e-6 {
+			if math.Abs(g[i]-gs[i]) > 1e-6 {
 				gok = false
 				break
 			}
 		}
 		if !gok {
-			t.Errorf("\u2027 LogSumExps(%.4g, %.4g) != " + 
+			t.Errorf("\u2027 LogSumExps(%.4g, %.4g) != "+
 				"\u2027 LogSumExp(%.4g, %.4g): %.4g vs %.4g",
 				c.x, c.y, c.x, c.y, gs, g)
 		}

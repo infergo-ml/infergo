@@ -10,12 +10,11 @@ import (
 	"math/rand"
 )
 
-
 // Stochastic gradient Hamiltonian Monte Carlo
 type SgHMC struct {
 	sampler
 	// Parameters
-	L     int     // number of steps
+	L int // number of steps
 	// The parameterization follows Equation (15) in
 	// https://arxiv.org/abs/1402.4102
 	Eta   float64 // learning rate
@@ -46,7 +45,7 @@ func (sghmc *SgHMC) Sample(
 
 		var sigma float64
 		{
-			beta := 0.5*sghmc.Eta*sghmc.V
+			beta := 0.5 * sghmc.Eta * sghmc.V
 			if beta > sghmc.Alpha {
 				// Eta is too large, SgHMC reduces to SGD with
 				// momentum.

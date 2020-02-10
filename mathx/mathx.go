@@ -59,8 +59,8 @@ func init() {
 			return []float64{t, t * z}
 		})
 
-   // d lses(xs, x) / dx = exp(x - lses(xs, x))
-   ad.RegisterElemental(LogSumExps,
+	// d lses(xs, x) / dx = exp(x - lses(xs, x))
+	ad.RegisterElemental(LogSumExps,
 		func(z float64, params ...float64) []float64 {
 			g := make([]float64, len(params))
 			for i := range params {
