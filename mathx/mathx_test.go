@@ -65,10 +65,6 @@ func TestLogSumExpGrad(t *testing.T) {
 	if !ok {
 		t.Errorf("No gradient for LogSumExp")
 	}
-	grads, ok := ad.ElementalGradient(LogSumExps)
-	if !ok {
-		t.Errorf("No gradient for LogSumExps")
-	}
 	for _, c := range []struct {
 		x, y float64
 		g    [2]float64
@@ -85,28 +81,6 @@ func TestLogSumExpGrad(t *testing.T) {
 			t.Errorf("Wrong gradient of LogSumExp(%.4g, %.4g): "+
 				"got (%.4g, %.4g), want (%.4g, %.4g)",
 				c.x, c.y, g[0], g[1], c.g[0], c.g[1])
-		}
-		zs := LogSumExps([]float64{c.x, c.y})
-		gs := grads(z, c.x, c.y)
-		if math.Abs(zs-zs) > 1e-6 {
-			t.Errorf("LogSumExps(%.4g, %.4g) != "+
-				"LogSumExp(%.4g, %.4g): %.4g vs %.4g",
-				c.x, c.y, c.x, c.y, zs, z)
-		}
-		gok := true
-		if len(g) != len(gs) {
-			gok = false
-		}
-		for i := range g {
-			if math.Abs(g[i]-gs[i]) > 1e-6 {
-				gok = false
-				break
-			}
-		}
-		if !gok {
-			t.Errorf("\u2027 LogSumExps(%.4g, %.4g) != "+
-				"\u2027 LogSumExp(%.4g, %.4g): %.4g vs %.4g",
-				c.x, c.y, c.x, c.y, gs, g)
 		}
 	}
 }

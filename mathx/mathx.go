@@ -30,23 +30,6 @@ func LogSumExp(x, y float64) float64 {
 	return max + math.Log(math.Exp(x-max)+math.Exp(y-max))
 }
 
-// LogSumExps computes log(sum(exp(x[0]) + exp(x[1]) + ...) robustly.
-func LogSumExps(x []float64) float64 {
-	max := math.Inf(-1)
-	for i := range x {
-		if x[i] > max {
-			max = x[i]
-		}
-	}
-
-	sumExp := 0.
-	for i := range x {
-		sumExp += math.Exp(x[i] - max)
-	}
-
-	return max + math.Log(sumExp)
-}
-
 func init() {
 	// d lse(x, y) / dx = exp(x) / exp(x) + exp(y)
 	//                  = 1 / 1 + exp(y - x)
@@ -57,16 +40,6 @@ func init() {
 			z := math.Exp(params[1] - params[0])
 			t := 1 / (1 + z)
 			return []float64{t, t * z}
-		})
-
-	// d lses(xs, x) / dx = exp(x - lses(xs, x))
-	ad.RegisterElemental(LogSumExps,
-		func(z float64, params ...float64) []float64 {
-			g := make([]float64, len(params))
-			for i := range params {
-				g[i] = math.Exp(params[i] - z)
-			}
-			return g
 		})
 }
 
