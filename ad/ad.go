@@ -81,6 +81,7 @@ func init() {
 					false)),
 		},
 		nil)
+	modelInterface.Complete()
 }
 
 // Structure model contains shared data structures for
