@@ -9,7 +9,7 @@ import (
 
 const (
 	command = "deriv"
-	version = "0.8.0-pre"
+	version = "0.8.0"
 )
 
 var (
