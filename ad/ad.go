@@ -50,6 +50,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 )
 
@@ -1241,6 +1242,10 @@ func (m *model) write() (err error) {
 
 	// Write files to the ad subpackage under the same names.
 	for fpath, file := range m.pkg.Files {
+		// Go path.Split does not work with Windows paths
+		if runtime.GOOS == "windows" {
+			fpath = strings.ReplaceAll(fpath, "\\", "/")
+		}
 		_, fname := path.Split(fpath)
 		f, err := os.Create(path.Join(admpath, fname))
 		defer f.Close()
