@@ -1234,7 +1234,7 @@ func (m *model) write() (err error) {
 		// The only error we can tolerate is that the directory
 		// already exists (for example from an earlier
 		// differentiation).
-		!strings.Contains(err.Error(), "file exists") {
+		!os.IsExist(err) {
 		return err
 	}
 	err = nil
