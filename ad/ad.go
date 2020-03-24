@@ -49,8 +49,7 @@ import (
 	"golang.org/x/tools/go/packages"
 	"log"
 	"os"
-	"path"
-	"runtime"
+	"path/filepath"
 	"strings"
 )
 
@@ -1228,7 +1227,7 @@ func callWrapper(
 
 // write writes the differentiated model as a Go package source.
 func (m *model) write() (err error) {
-	admpath := path.Join(m.path, "ad")
+	admpath := filepath.Join(m.path, "ad")
 	// Create the directory for the differentiated model.
 	err = os.Mkdir(admpath, os.ModePerm)
 	if err != nil &&
@@ -1242,12 +1241,8 @@ func (m *model) write() (err error) {
 
 	// Write files to the ad subpackage under the same names.
 	for fpath, file := range m.pkg.Files {
-		// Go path.Split does not work with Windows paths
-		if runtime.GOOS == "windows" {
-			fpath = strings.ReplaceAll(fpath, "\\", "/")
-		}
-		_, fname := path.Split(fpath)
-		f, err := os.Create(path.Join(admpath, fname))
+		_, fname := filepath.Split(fpath)
+		f, err := os.Create(filepath.Join(admpath, fname))
 		defer f.Close()
 		if err != nil {
 			return err
