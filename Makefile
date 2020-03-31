@@ -1,5 +1,7 @@
 all: build
 
+GO=go
+
 TESTPACKAGES=ad model infer mathx dist cmd/deriv
 PACKAGES=$(TESTPACKAGES) dist/ad
 
@@ -11,21 +13,21 @@ test: dist/ad/dist.go
 	for package in $(TESTPACKAGES); do go test ./$$package; done
 
 dist/ad/dist.go: dist/dist.go
-	go build ./cmd/deriv
+	$(GO) build ./cmd/deriv
 	./deriv dist
 
 build: test
-	for package in $(PACKAGES); do go build ./$$package; done
+	for package in $(PACKAGES); do $(GO) build ./$$package; done
 
 benchmark: test
-	for package in $(TESTPACKAGES); do go test -bench . ./$$package; done
+	for package in $(TESTPACKAGES); do $(GO) test -bench . ./$$package; done
 
 GOFILES=ad/ad.go ad/elementals.go ad/tape.go \
 	model/model.go \
 	infer/infer.go
 
 install: all test
-	for package in $(PACKAGES); do go install ./$$package; done
+	for package in $(PACKAGES); do $(GO) install ./$$package; done
 
 push:
 	for repo in origin ssh://git@github.com/infergo-ml/infergo; do git push $$repo; git push --tags $$repo; done
