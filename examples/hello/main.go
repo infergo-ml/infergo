@@ -1,7 +1,7 @@
 package main
 
 import (
-	. "bitbucket.org/dtolpin/infergo/examples/hello/model/ad"
+	. "bitbucket.org/dtolpin/infergo/examples/hello/model"
 	"bitbucket.org/dtolpin/infergo/infer"
 	"encoding/csv"
 	"flag"

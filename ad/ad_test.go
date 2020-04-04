@@ -594,7 +594,7 @@ func (m Model) Pi () float64 {
 	if ad.Called() {
 		ad.Enter()
 	} else {
-		panic("Pi called outside Observe.")
+		panic("Pi called outside Observe")
 	}
 	return ad.Return(ad.Value(math.Pi))
 }`,
@@ -984,7 +984,7 @@ func (m Model) IntPow(a float64, n int) float64 {
 	if ad.Called() {
 		ad.Enter(&a)
 	} else {
-		panic("IntPow called outside Observe.")
+		panic("IntPow called outside Observe")
 	}
 	var pow float64
 	ad.Assignment(&pow, ad.Value(1.))
@@ -1032,7 +1032,7 @@ func (m Model) sum(x, _ float64, y float64) float64 {
 	if ad.Called() {
 		ad.Enter(&x, ad.Value(0), &y)
 	} else {
-		panic("sum called outside Observe.")
+		panic("sum called outside Observe")
 	}
 	return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y))
 }
@@ -1041,7 +1041,7 @@ func (m Model) z(x []float64, y float64) float64 {
 	if ad.Called() {
 		ad.Enter(&y)
 	} else {
-		panic("z called outside Observe.")
+		panic("z called outside Observe")
 	}
 	return ad.Return(&y)
 }
@@ -1204,7 +1204,7 @@ func (m Model) sum(x ...float64) float64 {
 	if ad.Called() {
 		ad.Enter()
 	} else {
-		panic("sum called outside Observe.")
+		panic("sum called outside Observe")
 	}
 	return ad.Return(&x[0])
 }
@@ -1213,7 +1213,7 @@ func (m Model) Sum(x ...float64) float64 {
 	if ad.Called() {
 		ad.Enter()
 	} else {
-		panic("Sum called outside Observe.")
+		panic("Sum called outside Observe")
 	}
 	return ad.Return(ad.Call(func (_ []float64) {
 		m.sum(x...)
@@ -1254,7 +1254,7 @@ func (m Model) sum(x float64, y ...float64) float64 {
 	if ad.Called() {
 		ad.Enter(&x)
 	} else {
-		panic("sum called outside Observe.")
+		panic("sum called outside Observe")
 	}
 	return ad.Return(ad.Arithmetic(ad.OpAdd, &x, &y[0]))
 }

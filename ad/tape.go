@@ -441,6 +441,9 @@ func Pop() {
 // the parameters of Observe.
 func backward() []float64 {
 	tape := tapes.get()
+	if len(tape.cstack) == 0 {
+		panic("Gradient() called with empty tape")
+	}
 	c := &tape.cstack[len(tape.cstack)-1]
 	// allocate enough place for all adjoints at once, avoids
 	// reallocation of map storage, which is slow.

@@ -930,7 +930,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				Args: []ast.Expr{
 					&ast.BasicLit{
 						Value: fmt.Sprintf(
-							"\"%v called outside Observe.\"",
+							"\"%v called outside Observe\"",
 							method.Name.Name),
 						Kind: token.STRING,
 					}}}}
