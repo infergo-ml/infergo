@@ -179,7 +179,13 @@ func (importer *tImporter) Import(path string) (
 	err error,
 ) {
 	pkgs, err := packages.Load((*packages.Config)(importer), path)
-	return pkgs[0].Types, err
+	if len(pkgs) == 1 {
+		// Load on import should return exactly one package,
+		// unless there is an error.
+		pkg = pkgs[0].Types
+	}
+
+	return pkg, err
 }
 
 // check typechecks the model and builds the info structure.

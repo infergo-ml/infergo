@@ -1,8 +1,8 @@
 package dist
 
 import (
-	"bitbucket.org/dtolpin/infergo/ad"
 	"bitbucket.org/dtolpin/infergo/mathx"
+	"bitbucket.org/dtolpin/infergo/ad"
 	"fmt"
 	"math"
 )
@@ -28,11 +28,11 @@ func (dist normal) Observe(x []float64) float64 {
 		ad.Setup(x)
 	}
 	var (
-		mu float64
+		mu	float64
 
-		sigma float64
+		sigma	float64
 
-		y []float64
+		y	[]float64
 	)
 
 	mu, sigma, y = x[0], x[1], x[2:]
@@ -51,7 +51,7 @@ func (normal) Logp(mu, sigma float64, y float64) float64 {
 	if ad.Called() {
 		ad.Enter(&mu, &sigma, &y)
 	} else {
-		panic("Logp called outside Observe.")
+		panic("Logp called outside Observe")
 	}
 	var vari float64
 	ad.Assignment(&vari, ad.Arithmetic(ad.OpMul, &sigma, &sigma))
@@ -66,7 +66,7 @@ func (normal) Logps(mu, sigma float64, y ...float64) float64 {
 	if ad.Called() {
 		ad.Enter(&mu, &sigma)
 	} else {
-		panic("Logps called outside Observe.")
+		panic("Logps called outside Observe")
 	}
 	var vari float64
 	ad.Assignment(&vari, ad.Arithmetic(ad.OpMul, &sigma, &sigma))
@@ -93,11 +93,11 @@ func (dist cauchy) Observe(x []float64) float64 {
 		ad.Setup(x)
 	}
 	var (
-		mu float64
+		mu	float64
 
-		sigma float64
+		sigma	float64
 
-		y []float64
+		y	[]float64
 	)
 
 	mu, sigma, y = x[0], x[1], x[2:]
@@ -116,7 +116,7 @@ func (cauchy) Logp(x0, gamma float64, y float64) float64 {
 	if ad.Called() {
 		ad.Enter(&x0, &gamma, &y)
 	} else {
-		panic("Logp called outside Observe.")
+		panic("Logp called outside Observe")
 	}
 	var logGamma float64
 	ad.Assignment(&logGamma, ad.Elemental(math.Log, &gamma))
@@ -129,7 +129,7 @@ func (cauchy) Logps(x0, gamma float64, y ...float64) float64 {
 	if ad.Called() {
 		ad.Enter(&x0, &gamma)
 	} else {
-		panic("Logps called outside Observe.")
+		panic("Logps called outside Observe")
 	}
 	var logGamma float64
 	ad.Assignment(&logGamma, ad.Elemental(math.Log, &gamma))
@@ -154,9 +154,9 @@ func (dist expon) Observe(x []float64) float64 {
 		ad.Setup(x)
 	}
 	var (
-		lambda float64
+		lambda	float64
 
-		y []float64
+		y	[]float64
 	)
 
 	lambda, y = x[0], x[1:]
@@ -175,7 +175,7 @@ func (expon) Logp(lambda float64, y float64) float64 {
 	if ad.Called() {
 		ad.Enter(&lambda, &y)
 	} else {
-		panic("Logp called outside Observe.")
+		panic("Logp called outside Observe")
 	}
 	var logl float64
 	ad.Assignment(&logl, ad.Elemental(math.Log, &lambda))
@@ -186,7 +186,7 @@ func (expon) Logps(lambda float64, y ...float64) float64 {
 	if ad.Called() {
 		ad.Enter(&lambda)
 	} else {
-		panic("Logps called outside Observe.")
+		panic("Logps called outside Observe")
 	}
 	var logl float64
 	ad.Assignment(&logl, ad.Elemental(math.Log, &lambda))
@@ -209,11 +209,11 @@ func (dist gamma) Observe(x []float64) float64 {
 		ad.Setup(x)
 	}
 	var (
-		alpha float64
+		alpha	float64
 
-		beta float64
+		beta	float64
 
-		y []float64
+		y	[]float64
 	)
 
 	alpha, beta, y = x[0], x[1], x[2:]
@@ -232,7 +232,7 @@ func (gamma) Logp(alpha, beta float64, y float64) float64 {
 	if ad.Called() {
 		ad.Enter(&alpha, &beta, &y)
 	} else {
-		panic("Logp called outside Observe.")
+		panic("Logp called outside Observe")
 	}
 	return ad.Return(ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &y)), ad.Arithmetic(ad.OpMul, &beta, &y)), ad.Elemental(mathx.LogGamma, &alpha)), ad.Arithmetic(ad.OpMul, &alpha, ad.Elemental(math.Log, &beta))))
 }
@@ -241,7 +241,7 @@ func (gamma) Logps(alpha, beta float64, y ...float64) float64 {
 	if ad.Called() {
 		ad.Enter(&alpha, &beta)
 	} else {
-		panic("Logps called outside Observe.")
+		panic("Logps called outside Observe")
 	}
 	var ll float64
 	ad.Assignment(&ll, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpNeg, ad.Elemental(mathx.LogGamma, &alpha)), ad.Arithmetic(ad.OpMul, &alpha, ad.Elemental(math.Log, &beta)))), ad.Value(float64(len(y)))))
@@ -262,11 +262,11 @@ func (dist beta) Observe(x []float64) float64 {
 		ad.Setup(x)
 	}
 	var (
-		alpha float64
+		alpha	float64
 
-		beta float64
+		beta	float64
 
-		y []float64
+		y	[]float64
 	)
 
 	alpha, beta, y = x[0], x[1], x[2:]
@@ -285,7 +285,7 @@ func (beta) Logp(alpha, beta float64, y float64) float64 {
 	if ad.Called() {
 		ad.Enter(&alpha, &beta, &y)
 	} else {
-		panic("Logp called outside Observe.")
+		panic("Logp called outside Observe")
 	}
 	return ad.Return(ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &alpha, ad.Value(1))), ad.Elemental(math.Log, &y)), ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpSub, &beta, ad.Value(1))), ad.Elemental(math.Log, ad.Arithmetic(ad.OpSub, ad.Value(1), &y)))), ad.Elemental(mathx.LogGamma, &alpha)), ad.Elemental(mathx.LogGamma, &beta)), ad.Elemental(mathx.LogGamma, ad.Arithmetic(ad.OpAdd, &alpha, &beta))))
 }
@@ -294,7 +294,7 @@ func (beta) Logps(alpha, beta float64, y ...float64) float64 {
 	if ad.Called() {
 		ad.Enter(&alpha, &beta)
 	} else {
-		panic("Logps called outside Observe.")
+		panic("Logps called outside Observe")
 	}
 	var ll float64
 	ad.Assignment(&ll, ad.Arithmetic(ad.OpMul, (ad.Arithmetic(ad.OpAdd, ad.Arithmetic(ad.OpSub, ad.Arithmetic(ad.OpNeg, ad.Elemental(mathx.LogGamma, &alpha)), ad.Elemental(mathx.LogGamma, &beta)), ad.Elemental(mathx.LogGamma, ad.Arithmetic(ad.OpAdd, &alpha, &beta)))), ad.Value(float64(len(y)))))
@@ -340,7 +340,7 @@ func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
 	if ad.Called() {
 		ad.Enter()
 	} else {
-		panic("Logp called outside Observe.")
+		panic("Logp called outside Observe")
 	}
 	var sum float64
 	ad.Assignment(&sum, ad.Value(0.))
@@ -357,7 +357,7 @@ func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 	if ad.Called() {
 		ad.Enter()
 	} else {
-		panic("Logps called outside Observe.")
+		panic("Logps called outside Observe")
 	}
 	var logZ float64
 	ad.Assignment(&logZ, ad.Call(func(_ []float64) {
@@ -377,7 +377,7 @@ func (dist Dirichlet) logZ(alpha []float64) float64 {
 	if ad.Called() {
 		ad.Enter()
 	} else {
-		panic("logZ called outside Observe.")
+		panic("logZ called outside Observe")
 	}
 	var sumAlpha float64
 	ad.Assignment(&sumAlpha, ad.Value(0.))
@@ -420,7 +420,7 @@ func (dist Categorical) Logp(
 	if ad.Called() {
 		ad.Enter(&y)
 	} else {
-		panic("Logp called outside Observe.")
+		panic("Logp called outside Observe")
 	}
 	var i int
 
@@ -436,7 +436,7 @@ func (dist Categorical) Logps(
 	if ad.Called() {
 		ad.Enter()
 	} else {
-		panic("Logps called outside Observe.")
+		panic("Logps called outside Observe")
 	}
 	var logZ float64
 	ad.Assignment(&logZ, ad.Call(func(_ []float64) {
@@ -454,7 +454,7 @@ func (dist Categorical) logZ(alpha []float64) float64 {
 	if ad.Called() {
 		ad.Enter()
 	} else {
-		panic("logZ called outside Observe.")
+		panic("logZ called outside Observe")
 	}
 	var z float64
 	ad.Assignment(&z, ad.Value(0.))
@@ -481,7 +481,7 @@ func (d) SoftMax(x, p []float64) {
 	if ad.Called() {
 		ad.Enter()
 	} else {
-		panic("SoftMax called outside Observe.")
+		panic("SoftMax called outside Observe")
 	}
 	if len(x) != len(p) {
 		panic(fmt.Sprintf("lengths of x and p are different: "+
@@ -511,7 +511,7 @@ func (d) LogSumExp(x []float64) float64 {
 	if ad.Called() {
 		ad.Enter()
 	} else {
-		panic("LogSumExp called outside Observe.")
+		panic("LogSumExp called outside Observe")
 	}
 	var max float64
 	ad.Assignment(&max, ad.Value(math.Inf(-1)))
