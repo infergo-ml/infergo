@@ -808,7 +808,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 					}
 					c.Replace(neg)
 				case token.ARROW:
-					// keep as is
+					arrow := callExpr("Value", n)
+					c.Replace(arrow)
 				default:
 					panic(fmt.Sprintf(
 						"cannot rewrite unary %v", n.Op))
