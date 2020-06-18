@@ -807,6 +807,8 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 							n.X)
 					}
 					c.Replace(neg)
+				case token.ARROW:
+					// keep as is
 				default:
 					panic(fmt.Sprintf(
 						"cannot rewrite unary %v", n.Op))
