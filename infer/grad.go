@@ -143,6 +143,7 @@ func Optimize(
 		if ll_-llprev <= eps {
 			plateau++
 			if plateau == nplateau {
+				iter++
 				break
 			}
 		} else {
