@@ -113,3 +113,44 @@ func (opt *Adam) setDefaults() {
 		opt.Eps = 1e-8
 	}
 }
+
+// Optimize wraps a gradient-based optimizer into
+// an optimization loop with early stopping if a
+// plateau is reached.
+func Optimize(
+	opt Grad,
+	m model.Model, theta []float64, 
+	niter, nplateau int,
+	eps float64,
+) (
+	ll0, ll float64,
+	iter int,
+) {
+	ll0, _ = opt.Step(m, theta)
+	ll, llprev := ll0, ll0
+	iter = 0
+	plateau := 0
+	// Evolve x_, keep x_ with the highest log-likelihood in x
+	theta_ := make([]float64, len(theta))
+	copy(theta_, theta)
+	for ; iter != niter; iter++ {
+		ll_, _ := opt.Step(m, theta_)
+		// Store theta_ in theta if log-likelihood increased
+		if ll_ > ll {
+			copy(theta, theta_)
+			ll = ll_
+		}
+		// Stop early if the optimization is stuck
+		if ll_-llprev <= eps {
+			plateau++
+			if plateau == nplateau {
+				break
+			}
+		} else {
+			plateau = 0
+		}
+		llprev = ll_
+	}
+
+	return ll0, ll, iter
+}
