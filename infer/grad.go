@@ -132,7 +132,8 @@ func Optimize(
 	// Evolve x_, keep x_ with the highest log-likelihood in x
 	x_ := make([]float64, len(x))
 	copy(x_, x)
-	for ; iter != niter; iter++ {
+	for iter != niter {
+		iter++
 		ll_, _ := opt.Step(m, x_)
 		// Store x_ in x if log-likelihood increased
 		if ll_ > ll {
@@ -143,7 +144,6 @@ func Optimize(
 		if ll_-llprev <= eps {
 			plateau++
 			if plateau == nplateau {
-				iter++
 				break
 			}
 		} else {
