@@ -662,6 +662,10 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				}
 				ontape = true
 			case *ast.AssignStmt:
+				// Plain or desugared assignment
+				if n.Tok != token.ASSIGN {
+					return false
+				}
 				// All expressions are float64.
 				for _, r := range n.Rhs {
 					t := m.info.TypeOf(r)
