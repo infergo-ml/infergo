@@ -416,8 +416,9 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 					// Split into declaration and assignment.
 					_, ok := c.Parent().(*ast.BlockStmt)
 					if !ok {
-						// We can't do it for simple statement,
-						// but we do not care either.
+						// We can't desugar defining assignment
+						// not in block context, but we do not
+						// care either.
 						return false
 					}
 
@@ -662,10 +663,12 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				}
 				ontape = true
 			case *ast.AssignStmt:
-				// Plain or desugared assignment
-				if n.Tok != token.ASSIGN {
+				// Block context
+				_, ok := c.Parent().(*ast.BlockStmt)
+				if !ok {
 					return false
 				}
+
 				// All expressions are float64.
 				for _, r := range n.Rhs {
 					t := m.info.TypeOf(r)
