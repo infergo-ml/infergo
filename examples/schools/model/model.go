@@ -42,6 +42,7 @@ func (m *Model) Observe(x []float64) float64 {
 	eta := x[2:]
 
 	ll := Normal.Logp(0, m.Stau, x[1])
+	ll = Cauchy.Logp(0, 10, tau)
 	ll += Normal.Logps(0, m.Seta, eta...)
 	for i, y := range m.Y {
 		theta := mu + tau*eta[i]
