@@ -44,29 +44,29 @@ clean: clean-examples
 # distribution
 .PHONY: hello
 hello:
-	(cd examples/hello && make)
+	(cd examples/hello && make GO=$(GO))
 
 # Gaussian mixture model
 .PHONY: gmm
 gmm:
-	(cd examples/gmm && make)
+	(cd examples/gmm && make GO=$(GO))
 
 # NUTS Step adaptation 
 .PHONY: adapt
 adapt:
-	(cd examples/adapt && make)
+	(cd examples/adapt && make GO=$(GO))
 
 #  8 schools
 .PHONY: schools
 schools:
-	(cd examples/schools && make)
+	(cd examples/schools && make GO=$(G0))
 
 #  pages per visit
 .PHONY: ppv
 ppv:
-	(cd examples/ppv && make)
+	(cd examples/ppv && make GO=$(GO))
 
 #  multi-threaded hello world
 .PHONY: mt
 mt:
-	(cd examples/mt && make)
+	(cd examples/mt && make GO=$(GO))

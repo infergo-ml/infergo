@@ -417,8 +417,7 @@ func (m *model) desugar(method *ast.FuncDecl) (err error) {
 					_, ok := c.Parent().(*ast.BlockStmt)
 					if !ok {
 						// We can't desugar defining assignment
-						// not in block context, but we do not
-						// care either.
+						// not in block context.
 						return false
 					}
 
@@ -663,7 +662,7 @@ func (m *model) rewrite(method *ast.FuncDecl) (err error) {
 				}
 				ontape = true
 			case *ast.AssignStmt:
-				// Block context
+				// The assignment is in block context.
 				_, ok := c.Parent().(*ast.BlockStmt)
 				if !ok {
 					return false

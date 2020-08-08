@@ -632,6 +632,38 @@ func (m Model) Observe(x []float64) float64 {
 }`,
 		},
 		//====================================================
+		{`package assignhead
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	var z float64
+	for i := 0.; i != 1; i++ {
+		z += i
+	}
+	return z
+}`,
+			//----------------------------------------------------
+			`package assignhead
+
+import "bitbucket.org/dtolpin/infergo/ad"
+
+type Model float64
+
+func (m Model) Observe(x []float64) float64 {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		ad.Setup(x)
+	}
+	var z float64
+	for i := 0.; i != 1; i = i + 1 {
+		ad.Assignment(&z, ad.Arithmetic(ad.OpAdd, &z, &i))
+	}
+	return ad.Return(&z)
+}`,
+		},
+		//====================================================
 		{`package index
 
 type Model float64
