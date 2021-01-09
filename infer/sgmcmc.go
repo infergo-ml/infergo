@@ -12,7 +12,7 @@ import (
 
 // Stochastic gradient Hamiltonian Monte Carlo
 type SgHMC struct {
-	sampler
+	Sampler
 	// Parameters
 	L int // number of steps
 	// The parameterization follows Equation (15) in
@@ -28,7 +28,7 @@ func (sghmc *SgHMC) Sample(
 	samples chan []float64,
 ) {
 	sghmc.setDefaults()
-	sghmc.samples = samples // Stop needs access to samples
+	sghmc.Samples = samples // Stop needs access to samples
 	go func() {
 		// On exit:
 		// * drop the tape;
@@ -56,7 +56,7 @@ func (sghmc *SgHMC) Sample(
 
 		r := make([]float64, len(x))
 		for {
-			if sghmc.stop {
+			if sghmc.Stopped {
 				break
 			}
 			// For compatibility with HMC, we advance L steps

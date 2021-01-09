@@ -21,11 +21,11 @@ type MCMC interface {
 	Stop()
 }
 
-// sampler is the structure for embedding into concrete
+// Sampler is the structure for embedding into concrete
 // samplers.
-type sampler struct {
-	stop    bool
-	samples chan []float64
+type Sampler struct {
+	Stopped bool
+	Samples chan []float64
 	// Statistics
 	NAcc, NRej int // the number of accepted and rejected samples
 }
@@ -35,15 +35,15 @@ type sampler struct {
 // Stop stops a sampler gracefully, using the samples channel
 // for synchronization. Stop must be called before further calls
 // to differentiated code. A part of the MCMC interface.
-func (s *sampler) Stop() {
-	s.stop = true
+func (s *Sampler) Stop() {
+	s.Stopped = true
 	// The differentiated code is not necessarily thread-safe,
 	// hence we must exhaust samples before returning from Stop,
 	// so that an Observe called afterwards does not overlap
 	// with an Observe called in the sampler.
 	for {
 		select {
-		case _, ok := <-s.samples:
+		case _, ok := <-s.Samples:
 			if !ok { // channel closed, safe to leave
 				return
 			}
@@ -100,7 +100,7 @@ func clone(x []float64) []float64 {
 
 // Vanilla Hamiltonian Monte Carlo Sampler.
 type HMC struct {
-	sampler
+	Sampler
 	// Parameters
 	L   int     // number of leapfrog steps
 	Eps float64 // leapfrog step size
@@ -112,7 +112,7 @@ func (hmc *HMC) Sample(
 	samples chan []float64,
 ) {
 	hmc.setDefaults()
-	hmc.samples = samples // Stop needs access to samples
+	hmc.Samples = samples // Stop needs access to samples
 	go func() {
 		// On exit:
 		// * drop the tape;
@@ -128,7 +128,7 @@ func (hmc *HMC) Sample(
 		}()
 		r := make([]float64, len(x))
 		for {
-			if hmc.stop {
+			if hmc.Stopped {
 				break
 			}
 			// Sample the next r.
@@ -169,7 +169,7 @@ func (hmc *HMC) setDefaults() {
 
 // No U-Turn Sampler (https://arxiv.org/abs/1111.4246).
 type NUTS struct {
-	sampler
+	Sampler
 	// Parameters
 	Eps      float64 // step size
 	Delta    float64 // lower bound on energy for doubling
@@ -192,7 +192,7 @@ func (nuts *NUTS) Sample(
 	samples chan []float64,
 ) {
 	nuts.setDefaults()
-	nuts.samples = samples // Stop needs access to samples
+	nuts.Samples = samples // Stop needs access to samples
 	nuts.x = nil           // invalidate gradient cache
 	go func() {
 		// On exit:
@@ -210,7 +210,7 @@ func (nuts *NUTS) Sample(
 
 		r := make([]float64, len(x))
 		for {
-			if nuts.stop {
+			if nuts.Stopped {
 				break
 			}
 
