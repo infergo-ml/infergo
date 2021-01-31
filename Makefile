@@ -10,7 +10,7 @@ EXAMPLES=hello gmm adapt schools ppv
 examples: build $(EXAMPLES)
 
 test: dist/ad/dist.go
-	for package in $(TESTPACKAGES); do go test ./$$package; done
+	for package in $(TESTPACKAGES); do $(GO) test ./$$package; done
 
 dist/ad/dist.go: dist/dist.go
 	$(GO) build ./cmd/deriv
@@ -59,7 +59,7 @@ adapt:
 #  8 schools
 .PHONY: schools
 schools:
-	(cd examples/schools && make GO=$(G0))
+	(cd examples/schools && make GO=$(GO))
 
 #  pages per visit
 .PHONY: ppv

@@ -1,9 +1,10 @@
 all: hello
 
+GO=go
 DERIV="../../deriv"
 
 hello: model/ad/model.go main.go
-	go build .
+	$(GO) build .
 	./hello
 
 model/ad/model.go: model/model.go

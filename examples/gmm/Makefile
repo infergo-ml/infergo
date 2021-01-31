@@ -1,9 +1,10 @@
 all: gmm
 
+GO=go
 DERIV="../../deriv"
 
 gmm: model/ad/model.go main.go
-	go build .
+	$(GO) build .
 	./gmm
 
 model/ad/model.go: model/model.go

@@ -1,9 +1,10 @@
 all: schools
 
+GO=go
 DERIV="../../deriv"
 
 schools: model/ad/model.go main.go
-	go build .
+	$(GO) build .
 	./schools
 
 model/ad/model.go: model/model.go

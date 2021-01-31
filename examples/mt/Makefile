@@ -1,9 +1,10 @@
 all: mt
 
+GO=go
 DERIV="../../deriv"
 
 mt: model/ad/model.go main.go
-	go build .
+	$(GO) build .
 	./mt
 
 model/ad/model.go: model/model.go

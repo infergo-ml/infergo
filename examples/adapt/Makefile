@@ -1,10 +1,11 @@
 all: adapt
 
+GO=go
 DERIV="../../deriv"
 
 adapt: main.go
 	(cd ../gmm && make)
-	go build .
+	$(GO) build .
 	./adapt
 
 clean:

@@ -1,9 +1,10 @@
 all: ppv
 
+GO=go
 DERIV="../../deriv"
 
 ppv: model/ad/model.go main.go
-	go build .
+	$(GO) build .
 	./ppv
 
 model/ad/model.go: model/model.go
