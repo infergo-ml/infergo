@@ -15,7 +15,7 @@ func Sigm(x float64) float64 {
 // LogDSigm is log d Sigm(x) / dx, used for computing log
 // probability in the presence of sigmoid-transformed variables.
 func LogDSigm(x float64) float64 {
-	return x - 2*math.Log(1 + math.Exp(x))
+	return x - 2*math.Log(1+math.Exp(x))
 }
 
 func init() {
