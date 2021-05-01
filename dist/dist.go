@@ -52,12 +52,12 @@ func (normal) Logp(mu, sigma float64, y float64) float64 {
 func (normal) Logps(mu, sigma float64, y ...float64) float64 {
 	vari := sigma * sigma
 	logv := math.Log(vari)
-	ll := -0.5 * (logv + log2pi) * float64(len(y))
+	lp := -0.5 * (logv + log2pi) * float64(len(y))
 	for i := range y {
 		d := y[i] - mu
-		ll -= 0.5 * d * d / vari
+		lp -= 0.5 * d * d / vari
 	}
-	return ll
+	return lp
 }
 
 // Cauchy distribution
@@ -87,12 +87,12 @@ func (cauchy) Logp(x0, gamma float64, y float64) float64 {
 // Logps computes the log pdf of a vector of observations.
 func (cauchy) Logps(x0, gamma float64, y ...float64) float64 {
 	logGamma := math.Log(gamma)
-	ll := (-logGamma - logpi) * float64(len(y))
+	lp := (-logGamma - logpi) * float64(len(y))
 	for i := range y {
 		d := (y[i] - x0) / gamma
-		ll -= math.Log(1 + d*d)
+		lp -= math.Log(1 + d*d)
 	}
-	return ll
+	return lp
 }
 
 // Non-negative distributions
@@ -123,11 +123,11 @@ func (expon) Logp(lambda float64, y float64) float64 {
 // Logps computes the log pdf of a vector of observations.
 func (expon) Logps(lambda float64, y ...float64) float64 {
 	logl := math.Log(lambda)
-	ll := logl * float64(len(y))
+	lp := logl * float64(len(y))
 	for i := range y {
-		ll -= lambda * y[i]
+		lp -= lambda * y[i]
 	}
-	return ll
+	return lp
 }
 
 // Gamma distribution
@@ -155,12 +155,12 @@ func (gamma) Logp(alpha, beta float64, y float64) float64 {
 
 // Logps computes the log pdf of a vector of observations.
 func (gamma) Logps(alpha, beta float64, y ...float64) float64 {
-	ll := (-mathx.LogGamma(alpha) +
+	lp := (-mathx.LogGamma(alpha) +
 		alpha*math.Log(beta)) * float64(len(y))
 	for i := range y {
-		ll += (alpha-1)*math.Log(y[i]) - beta*y[i]
+		lp += (alpha-1)*math.Log(y[i]) - beta*y[i]
 	}
-	return ll
+	return lp
 }
 
 // Bounded distributions
@@ -192,16 +192,14 @@ func (beta) Logp(alpha, beta float64, y float64) float64 {
 
 // Logp computes the log pdf of a vector of observations.
 func (beta) Logps(alpha, beta float64, y ...float64) float64 {
-	ll := (-mathx.LogGamma(alpha) - mathx.LogGamma(beta) +
+	lp := (-mathx.LogGamma(alpha) - mathx.LogGamma(beta) +
 		mathx.LogGamma(alpha+beta)) * float64(len(y))
 	for i := range y {
-		ll += (alpha-1)*math.Log(y[i]) +
+		lp += (alpha-1)*math.Log(y[i]) +
 			(beta-1)*math.Log(1-y[i])
 	}
-	return ll
+	return lp
 }
-
-// Choice distributions
 
 // Dirichlet distribution
 type Dirichlet struct {
@@ -240,13 +238,13 @@ func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
 // Logps computes logpdf of a vector of observations.
 func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 	logZ := dist.logZ(alpha)
-	ll := -logZ * float64(len(y))
+	lp := -logZ * float64(len(y))
 	for i := range y {
 		for j := range alpha {
-			ll += (alpha[j] - 1) * math.Log(y[i][j])
+			lp += (alpha[j] - 1) * math.Log(y[i][j])
 		}
 	}
-	return ll
+	return lp
 }
 
 // logZ computes the normalization constant.
@@ -259,6 +257,46 @@ func (dist Dirichlet) logZ(alpha []float64) float64 {
 	}
 
 	return sumLogGammaAlpha - mathx.LogGamma(sumAlpha)
+}
+
+// Choice distributions
+
+
+// Bernoulli distribution
+type bernoulli struct {}
+
+var Bernoulli bernoulli
+
+// Observe implements the Model interface
+func(dist bernoulli) Observe(x []float64) float64 {
+	p, y := x[0], x[1:]
+	if len(y) == 1 {
+		return dist.Logp(p, y[0])
+	} else {
+		return dist.Logps(p, y...)
+	}
+}
+
+// Logp computes the log pmf of a single observation.
+func (bernoulli) Logp(p float64, y float64) float64 {
+	if y >= 0.5 {
+		return math.Log(p)
+	} else {
+		return math.Log(1-p)
+	}
+}
+
+// Logps computes the log pmf of a vector of observations.
+func (bernoulli) Logps(p float64, y ...float64) float64 {
+	lp := 0.
+	for i := range y {
+		if y[i] >= 0.5 {
+			lp += math.Log(p)
+		} else {
+			lp += math.Log(1-p)
+		}
+	}
+	return lp
 }
 
 // Categorical distribution
@@ -292,11 +330,11 @@ func (dist Categorical) Logps(
 	alpha []float64, y ...float64,
 ) float64 {
 	logZ := dist.logZ(alpha)
-	ll := -logZ * float64(len(y))
+	lp := -logZ * float64(len(y))
 	for i := range y {
-		ll += math.Log(alpha[int(y[i])])
+		lp += math.Log(alpha[int(y[i])])
 	}
-	return ll
+	return lp
 }
 
 // logZ computes the normalization constant.
