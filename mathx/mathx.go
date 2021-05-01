@@ -12,12 +12,23 @@ func Sigm(x float64) float64 {
 	return 1. / (1. + math.Exp(-x))
 }
 
+// LogDSigm is log d Sigm(x) / dx, used for computing log
+// probability in the presence of sigmoid-transformed variables.
+func LogDSigm(x float64) float64 {
+	return x - 2*math.Log(1 + math.Exp(x))
+}
+
 func init() {
 	ad.RegisterElemental(Sigm,
 		// dSigm / dx = Exp(-x) / (1 + Exp(-x))^2
 		//            = Sigm(x) * (1 - Sigm(x))
 		func(value float64, _ ...float64) []float64 {
 			return []float64{value * (1. - value)}
+		})
+
+	ad.RegisterElemental(LogDSigm,
+		func(_ float64, params ...float64) []float64 {
+			return []float64{1 - 2*Sigm(params[0])}
 		})
 }
 
