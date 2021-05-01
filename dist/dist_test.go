@@ -174,9 +174,9 @@ func TestBeta(t *testing.T) {
 
 func TestBinomial(t *testing.T) {
 	for _, c := range []struct {
-		n, p 		float64
-		y           []float64
-		lp          float64
+		n, p float64
+		y    []float64
+		lp   float64
 	}{
 		{1., 0.5, []float64{1.}, -0.6931471805599453},
 		{5, 0.3, []float64{3}, -2.022683207861227},
@@ -264,8 +264,8 @@ func TestDirichlet(t *testing.T) {
 
 func TestBernoulli(t *testing.T) {
 	for _, c := range []struct {
-		p float64
-		y []float64
+		p  float64
+		y  []float64
 		lp float64
 	}{
 		{
@@ -307,7 +307,6 @@ func TestBernoulli(t *testing.T) {
 		}
 	}
 }
-
 
 func TestCategorical(t *testing.T) {
 	for _, c := range []struct {

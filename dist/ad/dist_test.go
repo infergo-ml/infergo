@@ -7,9 +7,9 @@ import (
 
 func TestNormal(t *testing.T) {
 	for _, c := range []struct {
-		mu, sigma	float64
-		y		[]float64
-		lp		float64
+		mu, sigma float64
+		y         []float64
+		lp        float64
 	}{
 		{0., 1., []float64{0.}, -0.9189385332046727},
 		{1., 2., []float64{2.}, -1.737085713764618},
@@ -40,9 +40,9 @@ func TestNormal(t *testing.T) {
 
 func TestCauchy(t *testing.T) {
 	for _, c := range []struct {
-		x0, gamma	float64
-		y		[]float64
-		lp		float64
+		x0, gamma float64
+		y         []float64
+		lp        float64
 	}{
 		{0., 1., []float64{0.}, -1.1447298858494002},
 		{1., 2.5, []float64{2.}, -2.2094406228418286},
@@ -73,9 +73,9 @@ func TestCauchy(t *testing.T) {
 
 func TestExponential(t *testing.T) {
 	for _, c := range []struct {
-		lambda	float64
-		y	[]float64
-		lp	float64
+		lambda float64
+		y      []float64
+		lp     float64
 	}{
 		{1., []float64{1.}, -1},
 		{2., []float64{2.}, -3.3068528194400546},
@@ -106,9 +106,9 @@ func TestExponential(t *testing.T) {
 
 func TestGamma(t *testing.T) {
 	for _, c := range []struct {
-		alpha, beta	float64
-		y		[]float64
-		lp		float64
+		alpha, beta float64
+		y           []float64
+		lp          float64
 	}{
 		{1., 1., []float64{1.}, -1},
 		{2., 2., []float64{2.}, -1.9205584583201638},
@@ -139,9 +139,9 @@ func TestGamma(t *testing.T) {
 
 func TestBeta(t *testing.T) {
 	for _, c := range []struct {
-		alpha, beta	float64
-		y		[]float64
-		lp		float64
+		alpha, beta float64
+		y           []float64
+		lp          float64
 	}{
 		{1., 1., []float64{0.5}, 0},
 		{2., 3., []float64{.25}, 0.523248143764548},
@@ -172,9 +172,9 @@ func TestBeta(t *testing.T) {
 
 func TestBinomial(t *testing.T) {
 	for _, c := range []struct {
-		n, p	float64
-		y	[]float64
-		lp	float64
+		n, p float64
+		y    []float64
+		lp   float64
 	}{
 		{1., 0.5, []float64{1.}, -0.6931471805599453},
 		{5, 0.3, []float64{3}, -2.022683207861227},
@@ -205,10 +205,10 @@ func TestBinomial(t *testing.T) {
 
 func TestDirichlet(t *testing.T) {
 	for _, c := range []struct {
-		n	int
-		alpha	[]float64
-		y	[][]float64
-		lp	float64
+		n     int
+		alpha []float64
+		y     [][]float64
+		lp    float64
 	}{
 		{
 			2,
@@ -262,9 +262,9 @@ func TestDirichlet(t *testing.T) {
 
 func TestBernoulli(t *testing.T) {
 	for _, c := range []struct {
-		p	float64
-		y	[]float64
-		lp	float64
+		p  float64
+		y  []float64
+		lp float64
 	}{
 		{
 			0.5,
@@ -308,10 +308,10 @@ func TestBernoulli(t *testing.T) {
 
 func TestCategorical(t *testing.T) {
 	for _, c := range []struct {
-		n	int
-		alpha	[]float64
-		y	[]float64
-		lp	float64
+		n     int
+		alpha []float64
+		y     []float64
+		lp    float64
 	}{
 		{
 			2,
@@ -359,8 +359,8 @@ func TestCategorical(t *testing.T) {
 
 func TestSoftMax(t *testing.T) {
 	for _, c := range []struct {
-		x	[]float64
-		p	[]float64
+		x []float64
+		p []float64
 	}{
 		{
 			[]float64{0., 0.},
@@ -385,8 +385,8 @@ func TestSoftMax(t *testing.T) {
 
 func TestLogSumExp(t *testing.T) {
 	for _, c := range []struct {
-		x	[]float64
-		y	float64
+		x []float64
+		y float64
 	}{
 		{[]float64{0, 0}, 0.693147181},
 		{[]float64{-1, -1}, -0.306852819},

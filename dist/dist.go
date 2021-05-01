@@ -297,12 +297,12 @@ func (dist Dirichlet) logZ(alpha []float64) float64 {
 // Choice distributions
 
 // Bernoulli distribution
-type bernoulli struct {}
+type bernoulli struct{}
 
 var Bernoulli bernoulli
 
 // Observe implements the Model interface
-func(dist bernoulli) Observe(x []float64) float64 {
+func (dist bernoulli) Observe(x []float64) float64 {
 	p, y := x[0], x[1:]
 	if len(y) == 1 {
 		return dist.Logp(p, y[0])
@@ -316,7 +316,7 @@ func (bernoulli) Logp(p float64, y float64) float64 {
 	if y >= 0.5 {
 		return math.Log(p)
 	} else {
-		return math.Log(1-p)
+		return math.Log(1 - p)
 	}
 }
 
@@ -327,7 +327,7 @@ func (bernoulli) Logps(p float64, y ...float64) float64 {
 		if y[i] >= 0.5 {
 			lp += math.Log(p)
 		} else {
-			lp += math.Log(1-p)
+			lp += math.Log(1 - p)
 		}
 	}
 	return lp
