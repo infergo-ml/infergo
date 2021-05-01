@@ -98,14 +98,15 @@ func (cauchy) Logps(x0, gamma float64, y ...float64) float64 {
 // Non-negative distributions
 
 // Exponential distribution
-type expon struct{}
+type exponential struct{}
 
-// Exponential distribution, singleton instance
-var Expon expon
+// Exponential distribution, singleton instance (Expon is kept for
+// backward compatibility)
+var Exponential, Expon exponential
 
 // Observe implements the Model interface. The parameter
 // vector is lambda, observations.
-func (dist expon) Observe(x []float64) float64 {
+func (dist exponential) Observe(x []float64) float64 {
 	lambda, y := x[0], x[1:]
 	if len(y) == 1 {
 		return dist.Logp(lambda, y[0])
@@ -115,13 +116,13 @@ func (dist expon) Observe(x []float64) float64 {
 }
 
 // Logp computes the log pdf of a single observation.
-func (expon) Logp(lambda float64, y float64) float64 {
+func (exponential) Logp(lambda float64, y float64) float64 {
 	logl := math.Log(lambda)
 	return logl - lambda*y
 }
 
 // Logps computes the log pdf of a vector of observations.
-func (expon) Logps(lambda float64, y ...float64) float64 {
+func (exponential) Logps(lambda float64, y ...float64) float64 {
 	logl := math.Log(lambda)
 	lp := logl * float64(len(y))
 	for i := range y {
@@ -201,6 +202,40 @@ func (beta) Logps(alpha, beta float64, y ...float64) float64 {
 	return lp
 }
 
+type binomial struct{}
+
+var Binomial binomial
+
+// Observe implements the Model interface. The parameter
+// vector is n, p, observations.
+func (dist binomial) Observe(x []float64) float64 {
+	n, p, y := x[0], x[1], x[2:]
+	if len(y) == 1 {
+		return dist.Logp(n, p, y[0])
+	} else {
+		return dist.Logps(n, p, y...)
+	}
+}
+
+// Logp computes the log pmf of a single observation.
+func (binomial) Logp(n, p float64, y float64) float64 {
+	return y*math.Log(p) +
+		(n-y)*math.Log(1-p) -
+		mathx.LogGamma(y+1) - mathx.LogGamma(n-y+1) +
+		mathx.LogGamma(n+1)
+}
+
+// Logp computes the log pmf of a vector of observations.
+func (binomial) Logps(n, p float64, y ...float64) float64 {
+	lp := mathx.LogGamma(n+1) * float64(len(y))
+	for i := range y {
+		lp += y[i]*math.Log(p) +
+			(n-y[i])*math.Log(1-p) -
+			mathx.LogGamma(y[i]+1) - mathx.LogGamma(n-y[i]+1)
+	}
+	return lp
+}
+
 // Dirichlet distribution
 type Dirichlet struct {
 	N int // number of dimensions
@@ -225,7 +260,7 @@ func (dist Dirichlet) Observe(x []float64) float64 {
 	}
 }
 
-// Logp computes logpdf of a single observation.
+// Logp computes log pdf of a single observation.
 func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
 	sum := 0.
 	for j := range y {
@@ -235,7 +270,7 @@ func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
 	return sum - dist.logZ(alpha)
 }
 
-// Logps computes logpdf of a vector of observations.
+// Logps computes log pdf of a vector of observations.
 func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 	logZ := dist.logZ(alpha)
 	lp := -logZ * float64(len(y))
@@ -260,7 +295,6 @@ func (dist Dirichlet) logZ(alpha []float64) float64 {
 }
 
 // Choice distributions
-
 
 // Bernoulli distribution
 type bernoulli struct {}
@@ -317,7 +351,7 @@ func (dist Categorical) Observe(x []float64) float64 {
 	}
 }
 
-// Logp computes logpdf of a single observation.
+// Logp computes log pmf of a single observation.
 func (dist Categorical) Logp(
 	alpha []float64, y float64,
 ) float64 {
@@ -325,7 +359,7 @@ func (dist Categorical) Logp(
 	return math.Log(alpha[i]) - dist.logZ(alpha)
 }
 
-// Logps computes logpdf of a vector of observations.
+// Logps computes log pmf of a vector of observations.
 func (dist Categorical) Logps(
 	alpha []float64, y ...float64,
 ) float64 {

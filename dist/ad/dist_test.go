@@ -17,9 +17,9 @@ func TestNormal(t *testing.T) {
 	} {
 		lp := Normal.Logps(c.mu, c.sigma, c.y...)
 		if math.Abs(lp-c.lp) > 1e-6 {
-			t.Errorf("Wrong logpdf of Logps(%.v|%.v, %.v): "+
+			t.Errorf("Wrong logpdf of Logps(%.v, %.v, %.v...): "+
 				"got %.4g, want %.4g",
-				c.y, c.mu, c.sigma, lp, c.lp)
+				c.mu, c.sigma, c.y, lp, c.lp)
 		}
 		lpo := Normal.Observe(append([]float64{c.mu, c.sigma}, c.y...))
 		if math.Abs(lp-lpo) > 1e-6 {
@@ -50,9 +50,9 @@ func TestCauchy(t *testing.T) {
 	} {
 		lp := Cauchy.Logps(c.x0, c.gamma, c.y...)
 		if math.Abs(lp-c.lp) > 1e-6 {
-			t.Errorf("Wrong logpdf of Logps(%.v|%.v, %.v): "+
+			t.Errorf("Wrong logpdf of Logps(%.v, %.v, %.v...): "+
 				"got %.4g, want %.4g",
-				c.y, c.x0, c.gamma, lp, c.lp)
+				c.x0, c.gamma, c.y, lp, c.lp)
 		}
 		lpo := Cauchy.Observe(append([]float64{c.x0, c.gamma}, c.y...))
 		if math.Abs(lp-lpo) > 1e-6 {
@@ -71,7 +71,7 @@ func TestCauchy(t *testing.T) {
 	}
 }
 
-func TestExpon(t *testing.T) {
+func TestExponential(t *testing.T) {
 	for _, c := range []struct {
 		lambda	float64
 		y	[]float64
@@ -81,20 +81,20 @@ func TestExpon(t *testing.T) {
 		{2., []float64{2.}, -3.3068528194400546},
 		{1., []float64{1., 2.}, -3},
 	} {
-		lp := Expon.Logps(c.lambda, c.y...)
+		lp := Exponential.Logps(c.lambda, c.y...)
 		if math.Abs(lp-c.lp) > 1e-6 {
-			t.Errorf("Wrong logpdf of Logps(%.v|%.v): "+
+			t.Errorf("Wrong logpdf of Logps(%.v, %.v...): "+
 				"got %.4g, want %.4g",
-				c.y, c.lambda, lp, c.lp)
+				c.lambda, c.y, lp, c.lp)
 		}
-		lpo := Expon.Observe(append([]float64{c.lambda}, c.y...))
+		lpo := Exponential.Observe(append([]float64{c.lambda}, c.y...))
 		if math.Abs(lp-lpo) > 1e-6 {
 			t.Errorf("Wrong result of Observe([%.4g, %v...]): "+
 				"got %.4g, want %.4g",
 				c.lambda, c.y, lpo, lp)
 		}
 		if len(c.y) == 1 {
-			lp1 := Expon.Logp(c.lambda, c.y[0])
+			lp1 := Exponential.Logp(c.lambda, c.y[0])
 			if math.Abs(lp-lp1) > 1e-6 {
 				t.Errorf("Wrong result of Logp(%.4g, %.4g): "+
 					"got %.4g, want %.4g",
@@ -116,9 +116,9 @@ func TestGamma(t *testing.T) {
 	} {
 		lp := Gamma.Logps(c.alpha, c.beta, c.y...)
 		if math.Abs(lp-c.lp) > 1e-6 {
-			t.Errorf("Wrong logpdf of Logps(%.v|%.v,%.v): "+
+			t.Errorf("Wrong logpdf of Logps(%.v,%.v, %.v...): "+
 				"got %.4g, want %.4g",
-				c.y, c.alpha, c.beta, lp, c.lp)
+				c.alpha, c.beta, c.y, lp, c.lp)
 		}
 		lpo := Gamma.Observe(append([]float64{c.alpha, c.beta}, c.y...))
 		if math.Abs(lp-lpo) > 1e-6 {
@@ -149,9 +149,9 @@ func TestBeta(t *testing.T) {
 	} {
 		lp := Beta.Logps(c.alpha, c.beta, c.y...)
 		if math.Abs(lp-c.lp) > 1e-6 {
-			t.Errorf("Wrong logpdf of Logps(%.v|%.v,%.v): "+
+			t.Errorf("Wrong logpdf of Logps(%.v,%.v, %.v...): "+
 				"got %.4g, want %.4g",
-				c.y, c.alpha, c.beta, lp, c.lp)
+				c.alpha, c.beta, c.y, lp, c.lp)
 		}
 		lpo := Beta.Observe(append([]float64{c.alpha, c.beta}, c.y...))
 		if math.Abs(lp-lpo) > 1e-6 {
@@ -165,6 +165,39 @@ func TestBeta(t *testing.T) {
 				t.Errorf("Wrong result of Logp(%.4g, %.4g, %.4g): "+
 					"got %.4g, want %.4g",
 					c.alpha, c.beta, c.y[0], lp1, lp)
+			}
+		}
+	}
+}
+
+func TestBinomial(t *testing.T) {
+	for _, c := range []struct {
+		n, p	float64
+		y	[]float64
+		lp	float64
+	}{
+		{1., 0.5, []float64{1.}, -0.6931471805599453},
+		{5, 0.3, []float64{3}, -2.022683207861227},
+		{10, 0.7, []float64{3, 8}, -6.1650253897071146},
+	} {
+		lp := Binomial.Logps(c.n, c.p, c.y...)
+		if math.Abs(lp-c.lp) > 1e-6 {
+			t.Errorf("Wrong logpdf of Logps(%.v, %.v, %.v...): "+
+				"got %.4g, want %.4g",
+				c.n, c.p, c.y, lp, c.lp)
+		}
+		lpo := Binomial.Observe(append([]float64{c.n, c.p}, c.y...))
+		if math.Abs(lp-lpo) > 1e-6 {
+			t.Errorf("Wrong result of Observe([%.4g, %.4g, %v...]): "+
+				"got %.4g, want %.4g",
+				c.n, c.p, c.y, lpo, lp)
+		}
+		if len(c.y) == 1 {
+			lp1 := Binomial.Logp(c.n, c.p, c.y[0])
+			if math.Abs(lp-lp1) > 1e-6 {
+				t.Errorf("Wrong result of Logp(%.4g, %.4g, %.4g): "+
+					"got %.4g, want %.4g",
+					c.n, c.p, c.y[0], lp1, lp)
 			}
 		}
 	}
@@ -201,9 +234,9 @@ func TestDirichlet(t *testing.T) {
 	} {
 		lp := Dir.Logps(c.alpha, c.y...)
 		if math.Abs(lp-c.lp) > 1e-6 {
-			t.Errorf("Wrong logpdf of Logps(%v|%v): "+
+			t.Errorf("Wrong logpdf of Logps(%v, %v...): "+
 				"got %.4g, want %.4g",
-				c.y, c.alpha, lp, c.lp)
+				c.alpha, c.y, lp, c.lp)
 		}
 		dist := Dirichlet{c.n}
 		x := c.alpha
@@ -251,9 +284,9 @@ func TestBernoulli(t *testing.T) {
 	} {
 		lp := Bernoulli.Logps(c.p, c.y...)
 		if math.Abs(lp-c.lp) > 1e-6 {
-			t.Errorf("Wrong logpdf of Logps(%v|%v): "+
+			t.Errorf("Wrong logpdf of Logps(%v, %v...): "+
 				"got %.4g, want %.4g",
-				c.y, c.p, lp, c.lp)
+				c.p, c.y, lp, c.lp)
 		}
 		x := append([]float64{c.p}, c.y...)
 		lpo := Bernoulli.Observe(x)
@@ -301,9 +334,9 @@ func TestCategorical(t *testing.T) {
 	} {
 		lp := Cat.Logps(c.alpha, c.y...)
 		if math.Abs(lp-c.lp) > 1e-6 {
-			t.Errorf("Wrong logpdf of Logps(%v|%v): "+
+			t.Errorf("Wrong logpdf of Logps(%v, %v...): "+
 				"got %.4g, want %.4g",
-				c.y, c.alpha, lp, c.lp)
+				c.alpha, c.y, lp, c.lp)
 		}
 		dist := Categorical{c.n}
 		x := append(c.alpha, c.y...)
