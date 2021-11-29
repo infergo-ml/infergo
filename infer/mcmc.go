@@ -278,6 +278,8 @@ func (nuts *NUTS) Sample(
 			nuts.updateDepth(depth)
 
 			// Write a sample to the channel.
+			// x need not be cloned here since it is cloned
+			// before the call to leapfrog.
 			samples <- x
 		}
 	}()
