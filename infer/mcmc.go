@@ -156,6 +156,8 @@ func (hmc *HMC) Sample(
 			}
 
 			// Write a sample to the channel.
+			// x is modified in place by leapfrog and
+			// therefore must be cloned.
 			samples <- clone(x)
 		}
 	}()
