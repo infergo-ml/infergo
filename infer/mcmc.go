@@ -127,6 +127,7 @@ func (hmc *HMC) Sample(
 			}
 		}()
 		r := make([]float64, len(x))
+		x_ := make([]float64, len(x))
 		for {
 			if hmc.Stopped {
 				break
@@ -139,7 +140,7 @@ func (hmc *HMC) Sample(
 			l0, grad := m.Observe(x), model.Gradient(m)
 			e0 := energy(l0, r) // initial energy
 			var l float64
-			x_ := clone(x)
+			copy(x_, x)
 			for i := 0; i != hmc.L; i++ {
 				l, grad = leapfrog(m, grad, x, r, hmc.Eps)
 			}
@@ -150,12 +151,12 @@ func (hmc *HMC) Sample(
 				hmc.NAcc++
 			} else {
 				// Rejected, restore x.
-				x = x_
+				x, x_ = x_, x
 				hmc.NRej++
 			}
 
 			// Write a sample to the channel.
-			samples <- x
+			samples <- clone(x)
 		}
 	}()
 }
@@ -277,7 +278,7 @@ func (nuts *NUTS) Sample(
 			nuts.updateDepth(depth)
 
 			// Write a sample to the channel.
-			samples <- x
+			samples <- clone(x)
 		}
 	}()
 }
