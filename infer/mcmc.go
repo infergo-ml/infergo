@@ -278,7 +278,7 @@ func (nuts *NUTS) Sample(
 			nuts.updateDepth(depth)
 
 			// Write a sample to the channel.
-			samples <- clone(x)
+			samples <- x
 		}
 	}()
 }
