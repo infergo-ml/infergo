@@ -86,7 +86,7 @@ func init() {
 
 // Structure model contains shared data structures for
 // differentiating the model. Functions operating on *model are
-// defined as method to use shorter names.
+// defined as methods to use shorter names.
 type model struct {
 	path   string
 	fset   *token.FileSet
