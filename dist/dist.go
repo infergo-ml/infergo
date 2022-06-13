@@ -267,13 +267,13 @@ func (dist Dirichlet) Logp(alpha []float64, y []float64) float64 {
 		sum += (alpha[j] - 1) * math.Log(y[j])
 	}
 
-	return sum - dist.logZ(alpha)
+	return sum - dist.LogZ(alpha)
 }
 
 // Logps computes log pdf of a vector of observations.
 func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
-	logZ := dist.logZ(alpha)
-	lp := -logZ * float64(len(y))
+	LogZ := dist.LogZ(alpha)
+	lp := -LogZ * float64(len(y))
 	for i := range y {
 		for j := range alpha {
 			lp += (alpha[j] - 1) * math.Log(y[i][j])
@@ -282,8 +282,8 @@ func (dist Dirichlet) Logps(alpha []float64, y ...[]float64) float64 {
 	return lp
 }
 
-// logZ computes the normalization constant.
-func (dist Dirichlet) logZ(alpha []float64) float64 {
+// LogZ computes the normalization constant.
+func (dist Dirichlet) LogZ(alpha []float64) float64 {
 	sumAlpha := 0.
 	sumLogGammaAlpha := 0.
 	for i := range alpha {
@@ -356,23 +356,23 @@ func (dist Categorical) Logp(
 	alpha []float64, y float64,
 ) float64 {
 	i := int(y)
-	return math.Log(alpha[i]) - dist.logZ(alpha)
+	return math.Log(alpha[i]) - dist.LogZ(alpha)
 }
 
 // Logps computes log pmf of a vector of observations.
 func (dist Categorical) Logps(
 	alpha []float64, y ...float64,
 ) float64 {
-	logZ := dist.logZ(alpha)
-	lp := -logZ * float64(len(y))
+	LogZ := dist.LogZ(alpha)
+	lp := -LogZ * float64(len(y))
 	for i := range y {
 		lp += math.Log(alpha[int(y[i])])
 	}
 	return lp
 }
 
-// logZ computes the normalization constant.
-func (dist Categorical) logZ(alpha []float64) float64 {
+// LogZ computes the normalization constant.
+func (dist Categorical) LogZ(alpha []float64) float64 {
 	z := 0.
 	for _, a := range alpha {
 		z += a
