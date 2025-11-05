@@ -106,6 +106,8 @@ var goidOffset uintptr
 
 func init() {
 	switch {
+	case atleast(runtime.Version(), 1, 25, 0):
+		goidOffset = 152
 	case atleast(runtime.Version(), 1, 23, 0):
 		goidOffset = 160
 	case atleast(runtime.Version(), 1, 9, 0):
