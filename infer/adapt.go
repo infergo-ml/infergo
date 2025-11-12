@@ -14,9 +14,10 @@ type DualAveraging struct {
 
 // Step implements Nesterov's primal-dual averaging,
 // oversimplified.
-//   chi = -gradSum/math.Sqrt(t)
-//   eta = Rate/t
-//   x = eta*chi + (1-eta)*x
+//
+//	chi = -gradSum/math.Sqrt(t)
+//	eta = Rate/t
+//	x = eta*chi + (1-eta)*x
 func (da *DualAveraging) Step(t, x, gradSum float64) float64 {
 	chi := -gradSum / math.Sqrt(t)
 	eta := da.Rate / t

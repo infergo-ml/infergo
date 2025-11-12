@@ -69,8 +69,9 @@ func (tape *adTape) get() *adTape {
 func (tape *adTape) drop()  {}
 func (tape *adTape) clear() {}
 
-// The default tape store is a single tape, and thus not
-// thread-safe. A thread-safe tape store is provided in gls.go.
+// The default tape store is a single tape, and thus
+// not thread-safe. A thread-safe tape store is provided
+// in mtstore.go.
 
 func init() {
 	tapes = newTape()
@@ -96,7 +97,7 @@ type elemental struct {
 
 // counters holds counters for the tape components. Counters are
 // pushed onto stack for repeated calls to automatic
-// differentiation (e.e. for nested inference).
+// differentiation (e.g. for nested inference).
 type counters struct {
 	n, // independents
 	r, // records

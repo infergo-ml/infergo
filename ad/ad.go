@@ -1,30 +1,42 @@
 // Package ad implements automatic differentiation of a model.
 // A model is defined in it's own package. The model must
 // implement interface model.Model. In the model's source code:
-//   1. Methods on the type implementing model.Model
-//	    returning a single float64 or nothing are
-//	    differentiated.
-//   2. Within the methods, the following is differentiated:
-//      a) assignments to float64 (including parallel
-//         assignments if all values are of type float64);
-//      b) returns of float64;
-//      c) standalone calls to methods on the type implementing
-//         model.Model (apparently called for side  effects on
-//         the model).
-//   3. Imported package name "ad" is reserved.
-//   4. Non-dummy identifiers starting with the prefix for
-//      generated identifiers ("_" by default) are reserved.
+//  1. Methods on the type implementing model.Model
+//     returning a single float64 or nothing are
+//     differentiated.
+//  2. Within the methods, the following is differentiated:
+//     a) assignments to float64 (including parallel
+//     assignments if all values are of type float64);
+//     b) returns of float64;
+//     c) standalone calls to methods on the type implementing
+//     model.Model (apparently called for side  effects on
+//     the model).
+//  3. Imported package name "ad" is reserved.
+//  4. Non-dummy identifiers starting with the prefix for
+//     generated identifiers ("_" by default) are reserved.
 //
 // Functions are considered elementals (and must have a
-// registered derivative) if their signature is of kind
-//         func (float64, float64*) float64
+// registered derivative) if they fall in one of two categories:
+//  1. Scalar elemental: the signature is of kind
+//     func (float64, float64*) float64
+//
 // that is, one or more non-variadic float64 argument and
-// float64 return value. For example, function
-//         func (float64, float64, float64) float64
-// is considered elemental, while functions
-//         func (...float64) float64
-//         func ([]float64) float64
-//         func (int, float64) float64
+// float64 return value.
+//  2. Vector elemental: the signature is of kind
+//     func ([]float64) float64
+//
+// that is, one argument of []float64 type and float64 return
+// value.
+// For example, functions
+//
+//	        func (float64, float64, float64) float64
+//			   func ([]float64) float64
+//
+// are considered elemental, while functions
+//
+//	func (...float64) float64
+//	func (int, float64) float64
+//
 // are not.
 //
 // Derivatives do not propagate through a function that is not
@@ -1133,8 +1145,8 @@ func (m *model) isElemental(call *ast.CallExpr) bool {
 }
 
 // isVlemental returns true iff the call is of a vector
-// elemental function. An elemental function is a function with
-// one argument of []float64 type returning float64.
+// elemental function. A vector elemental function is a function
+// with one argument of []float64 type returning float64.
 // isVlemental does not check whether this is a differentiated
 // function instead and should be called after isDifferentiated.
 func (m *model) isVlemental(call *ast.CallExpr) bool {
