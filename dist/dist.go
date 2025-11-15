@@ -426,6 +426,20 @@ func (d) SoftMax(x, p []float64) {
 	}
 }
 
+// LogSoftMax transforms unconstrained parameters x to a point p on
+// the log simplex.
+func (d) LogSoftMax(x, p []float64) {
+	if len(x) != len(p) {
+		panic(fmt.Sprintf("lengths of x and p are different: "+
+			"got len(x)=%v, len(p)=%v", len(x), len(p)))
+	}
+
+	logZ := D.LogSumExp(x)
+	for i := range p {
+		p[i] = x[i] - logZ
+	}
+}
+
 // LogSumExp computes log(sum(exp(x[0]) + exp(x[1]) + ...) robustly.
 func (d) LogSumExp(x []float64) float64 {
 	max := math.Inf(-1)

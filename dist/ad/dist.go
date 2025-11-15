@@ -619,6 +619,25 @@ func (d) SoftMax(x, p []float64) {
 	}
 }
 
+func (d) LogSoftMax(x, p []float64) {
+	if ad.Called() {
+		ad.Enter()
+	} else {
+		panic("LogSoftMax called outside Observe")
+	}
+	if len(x) != len(p) {
+		panic(fmt.Sprintf("lengths of x and p are different: "+
+			"got len(x)=%v, len(p)=%v", len(x), len(p)))
+	}
+	var logZ float64
+	ad.Assignment(&logZ, ad.Call(func(_ []float64) {
+		D.LogSumExp(x)
+	}, 0))
+	for i := range p {
+		ad.Assignment(&p[i], ad.Arithmetic(ad.OpSub, &x[i], &logZ))
+	}
+}
+
 func (d) LogSumExp(x []float64) float64 {
 	if ad.Called() {
 		ad.Enter()
