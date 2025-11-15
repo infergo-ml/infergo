@@ -9,6 +9,9 @@ EXAMPLES=hello gmm adapt schools ppv
 
 examples: build $(EXAMPLES)
 
+fmt:
+	go fmt ./...
+
 test: dist/ad/dist.go
 	for package in $(TESTPACKAGES); do $(GO) test ./$$package; done
 
@@ -21,10 +24,6 @@ build: test
 
 benchmark: test
 	for package in $(TESTPACKAGES); do $(GO) test -bench . ./$$package; done
-
-GOFILES=ad/ad.go ad/elementals.go ad/tape.go \
-	model/model.go \
-	infer/infer.go
 
 install: all test
 	for package in $(PACKAGES); do $(GO) install ./$$package; done
