@@ -35,6 +35,7 @@ func (opt *Momentum) Step(
 ) {
 	ll, grad = m.Observe(x), model.Gradient(m)
 	if opt.u == nil {
+		opt.setDefaults()
 		// u is initialized to zeros.
 		opt.u = make([]float64, len(x))
 	}
@@ -45,6 +46,12 @@ func (opt *Momentum) Step(
 	}
 	opt.Rate *= opt.Decay
 	return ll, grad
+}
+
+func (opt *Momentum) setDefaults() {
+	if opt.Decay == 0 {
+		opt.Decay = 1  // no decay
+	}
 }
 
 // Adam (https://arxiv.org/abs/1412.6980).
